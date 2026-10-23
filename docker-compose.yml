@@ -1,0 +1,15 @@
+services:
+  riskmatris:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - riskmatris_data:/app/data
+    environment:
+      - RISKMATRIS_DB_PATH=/app/data/riskmatris.db
+      - RISKMATRIS_TTL_HOURS=48
+    restart: unless-stopped
+
+volumes:
+  riskmatris_data:
+
