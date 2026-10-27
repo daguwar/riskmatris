@@ -59,6 +59,7 @@
   let sessionState = null;
   let ws = null;
   let reconnectTimer = null;
+  let reconnectAttempts = 0;
   let selectedProb = null;
   let selectedCons = null;
   let lastActiveRiskNum = null;
@@ -297,6 +298,7 @@
 
     ws.onopen = () => {
       wsStatusDot.classList.remove("disconnected");
+      reconnectAttempts = 0; // Nollställ backoff vid lyckad anslutning
     };
 
     ws.onmessage = (event) => {
@@ -312,9 +314,12 @@
 
     ws.onclose = () => {
       wsStatusDot.classList.add("disconnected");
+      // Exponential backoff: 1s, 2s, 4s, 8s ... max 30s
+      reconnectAttempts++;
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000);
       reconnectTimer = setTimeout(() => {
         if (currentSessionId) connectWebSocket();
-      }, 2000);
+      }, delay);
     };
   }
 
