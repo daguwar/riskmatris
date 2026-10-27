@@ -473,3 +473,72 @@ class TestHealthEndpoint:
         assert "active_sessions" in data
         assert isinstance(data["active_sessions"], int)
         assert "db_path" in data
+
+
+# ---------------------------------------------------------------------------
+# WebSocket-frånkoppling (regression: frånkoppling låste tidigare event-loopen)
+# ---------------------------------------------------------------------------
+
+
+class TestWebSocketDisconnect:
+    """En frånkopplad klient ska städas bort och endpointen ska avslutas.
+
+    Regressionstest: WebSocketDisconnect fångades tidigare av "except Exception"
+    runt receive_json(), så handlern snurrade i en oändlig loop utan att släppa
+    event-loopen – hela servern låste sig vid första frånkoppling (stängd flik/F5).
+    """
+
+    def test_disconnect_cleans_up_and_returns(self):
+        import asyncio
+        import threading
+        from unittest.mock import AsyncMock, MagicMock
+
+        from fastapi import WebSocketDisconnect
+
+        from app import SESSIONS, create_new_risk, manager, websocket_endpoint
+
+        sid = "TEST01"
+        SESSIONS[sid] = {
+            "session_id": sid,
+            "admin_token": "hemlig",
+            "title": "Test",
+            "threshold": 4,
+            "created_at": 0.0,
+            "updated_at": 0.0,
+            "active_risk_number": 1,
+            "risks": [create_new_risk(1, "")],
+        }
+        try:
+            ws = MagicMock()
+            ws.accept = AsyncMock()
+            ws.send_json = AsyncMock()
+            # Simulera att klienten kopplar från direkt
+            ws.receive_json = AsyncMock(side_effect=WebSocketDisconnect(1000))
+
+            result = {}
+
+            def runner():
+                try:
+                    asyncio.run(
+                        asyncio.wait_for(
+                            websocket_endpoint(ws, sid, role="participant", client_id="test-klient", admin_token=""),
+                            timeout=5,
+                        )
+                    )
+                    result["ok"] = True
+                except Exception as exc:
+                    result["ok"] = False
+                    result["error"] = exc
+
+            # Kör i daemon-tråd: om endpointen hänger (regression) ska testet
+            # fallera via timeout istället för att hänga hela testsviten.
+            thread = threading.Thread(target=runner, daemon=True)
+            thread.start()
+            thread.join(timeout=15)
+
+            assert result.get("ok") is True, f"Endpointen avslutades inte som den ska: {result.get('error')}"
+            # Anslutningen ska vara borttagen efter frånkopplingen
+            assert sid not in manager.connections
+        finally:
+            SESSIONS.pop(sid, None)
+            manager.connections.pop(sid, None)

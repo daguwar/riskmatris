@@ -652,6 +652,12 @@ async def websocket_endpoint(
             # --- Mottagning & grundvalidering ---
             try:
                 msg = await websocket.receive_json()
+            except WebSocketDisconnect:
+                # Klienten har kopplat från – låt den yttre except-handlern städa upp
+                # och avsluta. Får INTE fångas av "except Exception" nedan: då kastar
+                # receive_json direkt igen på varje varv och loopen snurrar för evigt
+                # utan att släppa event-loopen, vilket låser hela servern.
+                raise
             except Exception:
                 await _send_ws_error(websocket, "Ogiltigt JSON-meddelande.")
                 continue
