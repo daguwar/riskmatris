@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 from functools import cache
 from typing import Any, Dict, List, Optional, Set
 
-from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Header, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -447,14 +447,18 @@ async def create_session(req: CreateSessionRequest):
 @app.get("/api/sessions/{session_id}")
 async def get_session_info(
     session_id: str,
+    request: Request,
     admin_token: Optional[str] = Query(default=None),
     client_id: Optional[str] = Query(default=None),
+    x_admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
 ):
     sid = session_id.strip().upper()
     session = SESSIONS.get(sid)
     if not session:
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
-    is_admin = bool(admin_token and secrets.compare_digest(admin_token, session["admin_token"]))
+    # Prioritera header över query-param (undviker token i URL/loggar/historik)
+    token = x_admin_token or admin_token
+    is_admin = bool(token and secrets.compare_digest(token, session["admin_token"]))
     dummy_conn = ConnectionInfo(
         websocket=None,  # type: ignore
         role="admin" if is_admin else "participant",

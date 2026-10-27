@@ -39,12 +39,8 @@
   }
 
   function getAdminToken(sessionId) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlToken = urlParams.get("admin");
-    if (urlToken) {
-      localStorage.setItem(`riskmatris_admin_${sessionId}`, urlToken);
-      return urlToken;
-    }
+    // Läser admin-token enbart från localStorage – aldrig från URL:en
+    // (undviker läckage via webbläsarhistorik, serverloggar och Referer-headern)
     return localStorage.getItem(`riskmatris_admin_${sessionId}`) || "";
   }
 
@@ -219,8 +215,13 @@
     const clientId = getClientId();
 
     try {
+      const headers = { "Content-Type": "application/json" };
+      if (adminToken) {
+        headers["X-Admin-Token"] = adminToken;
+      }
       const res = await fetch(
-        `/api/sessions/${currentSessionId}?admin_token=${encodeURIComponent(adminToken)}&client_id=${encodeURIComponent(clientId)}`
+        `/api/sessions/${currentSessionId}?client_id=${encodeURIComponent(clientId)}`,
+        { headers }
       );
       if (!res.ok) {
         alert(`Sessionen "${currentSessionId}" hittades inte. Kontrollera koden.`);
