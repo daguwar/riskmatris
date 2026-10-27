@@ -1,8 +1,7 @@
 """Enhetstester för kärnfunktioner i app.py."""
 
-import math
-import sys
 import os
+import sys
 
 # Lägg till projektroten i sys.path så vi kan importera app
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -10,22 +9,21 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import pytest
 
 from app import (
-    PROBABILITY_LABELS,
     CONSEQUENCE_LABELS,
-    round_half_up,
-    get_risk_level,
-    generate_session_id,
-    create_new_risk,
-    compute_risk_stats,
-    get_local_lan_ip,
+    PROBABILITY_LABELS,
     _safe_int,
-    SESSIONS,
+    compute_risk_stats,
+    create_new_risk,
+    generate_session_id,
+    get_local_lan_ip,
+    get_risk_level,
+    round_half_up,
 )
-
 
 # ---------------------------------------------------------------------------
 # round_half_up
 # ---------------------------------------------------------------------------
+
 
 class TestRoundHalfUp:
     """Avrundning enligt försiktighetsprincipen (.5 uppåt), begränsad till 1..4."""
@@ -69,6 +67,7 @@ class TestRoundHalfUp:
 # get_risk_level
 # ---------------------------------------------------------------------------
 
+
 class TestGetRiskLevel:
     """Riskvärde 1–16 mappas till nivå och färg."""
 
@@ -108,6 +107,7 @@ class TestGetRiskLevel:
 # generate_session_id
 # ---------------------------------------------------------------------------
 
+
 class TestGenerateSessionId:
     """Sessions-ID ska vara 6 tecken, utan förväxlingsbara tecken."""
 
@@ -144,6 +144,7 @@ class TestGenerateSessionId:
 # create_new_risk
 # ---------------------------------------------------------------------------
 
+
 class TestCreateNewRisk:
     def test_defaults(self):
         risk = create_new_risk(1)
@@ -169,9 +170,9 @@ class TestCreateNewRisk:
 # compute_risk_stats
 # ---------------------------------------------------------------------------
 
+
 class TestComputeRiskStats:
-    def _make_risk(self, votes=None, revealed=False, locked=False,
-                   final_prob=None, final_cons=None, label="Testrisk"):
+    def _make_risk(self, votes=None, revealed=False, locked=False, final_prob=None, final_cons=None, label="Testrisk"):
         risk = create_new_risk(1, label)
         if votes:
             risk["votes"] = votes
@@ -301,6 +302,7 @@ class TestComputeRiskStats:
 # Konstanter
 # ---------------------------------------------------------------------------
 
+
 class TestLabels:
     def test_probability_labels_complete(self):
         assert set(PROBABILITY_LABELS.keys()) == {1, 2, 3, 4}
@@ -316,6 +318,7 @@ class TestLabels:
 # ---------------------------------------------------------------------------
 # get_local_lan_ip (cachad)
 # ---------------------------------------------------------------------------
+
 
 class TestGetLocalLanIp:
     def test_returns_valid_ip_string(self):
@@ -343,6 +346,7 @@ class TestGetLocalLanIp:
 # ---------------------------------------------------------------------------
 # _safe_int (WebSocket-validering)
 # ---------------------------------------------------------------------------
+
 
 class TestSafeInt:
     """Testar hjälpfunktionen för säker heltalskonvertering från WS-meddelanden."""
@@ -399,11 +403,13 @@ class TestSafeInt:
 # /health-endpoint (integrationstest med httpx)
 # ---------------------------------------------------------------------------
 
+
 class TestHealthEndpoint:
     """Testar att /health svarar korrekt via FastAPI TestClient."""
 
     def test_health_returns_ok(self):
         from fastapi.testclient import TestClient
+
         from app import app
 
         client = TestClient(app)

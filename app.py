@@ -8,11 +8,10 @@ import os
 import secrets
 import socket
 import sqlite3
-import string
 import time
 from contextlib import asynccontextmanager
 from functools import cache
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
@@ -59,7 +58,7 @@ def round_half_up(value: float) -> int:
     return max(1, min(4, rounded))
 
 
-def get_risk_level(score: int) -> Dict[str, str]:
+def get_risk_level(score: int) -> dict[str, str]:
     """
     Riskvärde = Sannolikhet (1-4) x Konsekvens (1-4) -> 1..16
     Grön (1-2 Låg), Gul (3-6 Medel), Orange (8-9 Hög), Röd (12-16 Mycket Hög)
@@ -143,7 +142,7 @@ async def _periodic_cleanup() -> None:
             logger.exception("Fel vid periodisk städning av sessioner")
 
 
-def save_session_to_db(session: Dict[str, Any]) -> None:
+def save_session_to_db(session: dict[str, Any]) -> None:
     session["updated_at"] = time.time()
     payload = json.dumps(session, ensure_ascii=False)
     with sqlite3.connect(DB_PATH) as conn:
@@ -166,10 +165,10 @@ def save_session_to_db(session: Dict[str, Any]) -> None:
         conn.commit()
 
 
-def load_sessions_from_db() -> Dict[str, Dict[str, Any]]:
+def load_sessions_from_db() -> dict[str, dict[str, Any]]:
     init_db()
     cleanup_expired_sessions()
-    loaded: Dict[str, Dict[str, Any]] = {}
+    loaded: dict[str, dict[str, Any]] = {}
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.execute("SELECT session_id, data_json FROM sessions")
         for sid, data_json in cursor.fetchall():
@@ -182,7 +181,7 @@ def load_sessions_from_db() -> Dict[str, Dict[str, Any]]:
     return loaded
 
 
-SESSIONS: Dict[str, Dict[str, Any]] = {}
+SESSIONS: dict[str, dict[str, Any]] = {}
 
 
 def generate_session_id() -> str:
@@ -194,7 +193,7 @@ def generate_session_id() -> str:
             return code
 
 
-def create_new_risk(number: int, label: str = "") -> Dict[str, Any]:
+def create_new_risk(number: int, label: str = "") -> dict[str, Any]:
     return {
         "number": number,
         "label": label.strip(),
@@ -206,7 +205,7 @@ def create_new_risk(number: int, label: str = "") -> Dict[str, Any]:
     }
 
 
-def compute_risk_stats(risk: Dict[str, Any], effective_threshold: int) -> Dict[str, Any]:
+def compute_risk_stats(risk: dict[str, Any], effective_threshold: int) -> dict[str, Any]:
     votes_list = list(risk["votes"].values())
     vote_count = len(votes_list)
 
@@ -216,11 +215,11 @@ def compute_risk_stats(risk: Dict[str, Any], effective_threshold: int) -> Dict[s
 
     is_revealed = bool(risk["revealed"] or risk["locked"])
 
-    avg_prob: Optional[float] = None
-    avg_cons: Optional[float] = None
-    suggested_prob: Optional[int] = None
-    suggested_cons: Optional[int] = None
-    cell_counts: Dict[str, int] = {}
+    avg_prob: float | None = None
+    avg_cons: float | None = None
+    suggested_prob: int | None = None
+    suggested_cons: int | None = None
+    cell_counts: dict[str, int] = {}
 
     if vote_count > 0:
         avg_prob = round(sum(v["probability"] for v in votes_list) / vote_count, 2)
@@ -273,50 +272,42 @@ class ConnectionInfo:
 
 class SessionConnectionManager:
     def __init__(self) -> None:
-        self.connections: Dict[str, List[ConnectionInfo]] = {}
+        self.connections: dict[str, list[ConnectionInfo]] = {}
 
     async def connect(self, session_id: str, conn: ConnectionInfo) -> None:
         await conn.websocket.accept()
         if session_id not in self.connections:
             self.connections[session_id] = []
         # Ta bort ev. tidigare anslutning med samma websocket
-        self.connections[session_id] = [
-            c for c in self.connections[session_id] if c.websocket != conn.websocket
-        ]
+        self.connections[session_id] = [c for c in self.connections[session_id] if c.websocket != conn.websocket]
         self.connections[session_id].append(conn)
 
     def disconnect(self, session_id: str, websocket: WebSocket) -> None:
         if session_id in self.connections:
-            self.connections[session_id] = [
-                c for c in self.connections[session_id] if c.websocket != websocket
-            ]
+            self.connections[session_id] = [c for c in self.connections[session_id] if c.websocket != websocket]
             if not self.connections[session_id]:
                 del self.connections[session_id]
 
     def get_participant_count(self, session_id: str) -> int:
         """Antal unika anslutna deltagare (exklusive administratören)."""
         conns = self.connections.get(session_id, [])
-        participant_ids: Set[str] = {
-            c.client_id for c in conns if c.role == "participant" and c.client_id
-        }
+        participant_ids: set[str] = {c.client_id for c in conns if c.role == "participant" and c.client_id}
         return len(participant_ids)
 
-    def get_effective_threshold(self, session: Dict[str, Any]) -> int:
+    def get_effective_threshold(self, session: dict[str, Any]) -> int:
         configured = max(1, int(session.get("threshold", 4)))
         participant_count = self.get_participant_count(session["session_id"])
         if participant_count > 0:
             return min(configured, participant_count)
         return configured
 
-    def build_client_payload(
-        self, session: Dict[str, Any], conn: Optional[ConnectionInfo] = None
-    ) -> Dict[str, Any]:
+    def build_client_payload(self, session: dict[str, Any], conn: ConnectionInfo | None = None) -> dict[str, Any]:
         sid = session["session_id"]
         participant_count = self.get_participant_count(sid)
         effective_threshold = self.get_effective_threshold(session)
 
         # Beräkna statistik för alla risker (och kolla om aktiv risk just nådde tröskeln)
-        risks_summary: List[Dict[str, Any]] = []
+        risks_summary: list[dict[str, Any]] = []
         active_num = session["active_risk_number"]
         state_changed = False
 
@@ -352,10 +343,10 @@ class SessionConnectionManager:
             "lan_ip": get_local_lan_ip(),
         }
 
-    async def broadcast(self, session: Dict[str, Any]) -> None:
+    async def broadcast(self, session: dict[str, Any]) -> None:
         sid = session["session_id"]
         conns = list(self.connections.get(sid, []))
-        dead_sockets: List[WebSocket] = []
+        dead_sockets: list[WebSocket] = []
         for conn in conns:
             try:
                 payload = self.build_client_payload(session, conn)
@@ -399,8 +390,8 @@ app = FastAPI(title="Riskmatris Live", lifespan=lifespan)
 
 
 class CreateSessionRequest(BaseModel):
-    title: Optional[str] = "Riskanalys"
-    threshold: Optional[int] = 4
+    title: str | None = "Riskanalys"
+    threshold: int | None = 4
 
 
 @app.get("/health")
@@ -448,9 +439,9 @@ async def create_session(req: CreateSessionRequest):
 async def get_session_info(
     session_id: str,
     request: Request,
-    admin_token: Optional[str] = Query(default=None),
-    client_id: Optional[str] = Query(default=None),
-    x_admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
+    admin_token: str | None = Query(default=None),
+    client_id: str | None = Query(default=None),
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
 ):
     sid = session_id.strip().upper()
     session = SESSIONS.get(sid)
@@ -571,7 +562,7 @@ async def export_session_csv(session_id: str):
 # ---------------------------------------------------------------------------
 
 
-def _safe_int(msg: Dict[str, Any], key: str, default: int, min_val: int = 0, max_val: int = 999) -> Optional[int]:
+def _safe_int(msg: dict[str, Any], key: str, default: int, min_val: int = 0, max_val: int = 999) -> int | None:
     """Hämtar ett heltal från ett WS-meddelande med felhantering och gränskontroll."""
     raw = msg.get(key, default)
     try:
@@ -620,7 +611,10 @@ async def websocket_endpoint(
     await manager.connect(sid, conn)
     logger.info(
         "WebSocket: %s ansluten till session %s (roll: %s, klient: %s)",
-        "admin" if is_admin else "deltagare", sid, effective_role, client_id,
+        "admin" if is_admin else "deltagare",
+        sid,
+        effective_role,
+        client_id,
     )
     await manager.broadcast(session)
 
@@ -669,8 +663,13 @@ async def websocket_endpoint(
                 save_session_to_db(session)
                 logger.info(
                     "Röst mottagen: session %s, risk #%d, klient %s -> S=%d, K=%d (%d röster, tröskel %d)",
-                    sid, active_num, client_id, prob, cons,
-                    len(active_risk["votes"]), eff_thresh,
+                    sid,
+                    active_num,
+                    client_id,
+                    prob,
+                    cons,
+                    len(active_risk["votes"]),
+                    eff_thresh,
                 )
                 await manager.broadcast(session)
 
@@ -722,8 +721,16 @@ async def websocket_endpoint(
                     stats = compute_risk_stats(active_risk, eff_thresh)
                     prob_raw = msg.get("probability")
                     cons_raw = msg.get("consequence")
-                    prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4) if prob_raw is not None else (stats["effective_probability"] or 2)
-                    cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=4) if cons_raw is not None else (stats["effective_consequence"] or 2)
+                    prob = (
+                        _safe_int(msg, "probability", 0, min_val=1, max_val=4)
+                        if prob_raw is not None
+                        else (stats["effective_probability"] or 2)
+                    )
+                    cons = (
+                        _safe_int(msg, "consequence", 0, min_val=1, max_val=4)
+                        if cons_raw is not None
+                        else (stats["effective_consequence"] or 2)
+                    )
                     if prob is None or cons is None:
                         await _send_ws_error(websocket, "Sannolikhet och Konsekvens måste vara heltal 1–4.")
                         continue
@@ -734,7 +741,11 @@ async def websocket_endpoint(
                     save_session_to_db(session)
                     logger.info(
                         "Admin: risk #%d låst i session %s -> S=%d, K=%d (riskvärde %d)",
-                        active_num, sid, prob, cons, prob * cons,
+                        active_num,
+                        sid,
+                        prob,
+                        cons,
+                        prob * cons,
                     )
                     await manager.broadcast(session)
 
@@ -777,7 +788,9 @@ async def websocket_endpoint(
                     save_session_to_db(session)
                     logger.info(
                         "Admin: ny risk #%d skapad i session %s (totalt %d risker)",
-                        next_num, sid, len(session["risks"]),
+                        next_num,
+                        sid,
+                        len(session["risks"]),
                     )
                     await manager.broadcast(session)
 
@@ -844,7 +857,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/s/{session_id}", response_class=HTMLResponse)
-async def serve_spa(request: Request, session_id: Optional[str] = None):
-    with open(os.path.join("static", "index.html"), "r", encoding="utf-8") as f:
+async def serve_spa(request: Request, session_id: str | None = None):
+    with open(os.path.join("static", "index.html"), encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
-
