@@ -1,0 +1,4 @@
+# Shell-skript och Dockerfile måste ha LF-radbrytningar även i Windows-checkouts,
+# annars bryts de när de körs i Linux-containern (t.ex. "/bin/sh^M: bad interpreter").
+*.sh text eol=lf
+Dockerfile text eol=lf
