@@ -381,6 +381,16 @@ class CreateSessionRequest(BaseModel):
     threshold: Optional[int] = 4
 
 
+@app.get("/health")
+async def health_check():
+    """Hälsokontroll för Docker HEALTHCHECK, Kubernetes och molnplattformar."""
+    return {
+        "status": "ok",
+        "active_sessions": len(SESSIONS),
+        "db_path": DB_PATH,
+    }
+
+
 @app.post("/api/sessions")
 async def create_session(req: CreateSessionRequest):
     cleanup_expired_sessions()

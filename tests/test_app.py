@@ -393,3 +393,24 @@ class TestSafeInt:
         """Testar med större gränser (för risknummer etc.)."""
         assert _safe_int({"number": 9999}, "number", 1, 1, 9999) == 9999
         assert _safe_int({"number": 10000}, "number", 1, 1, 9999) is None
+
+
+# ---------------------------------------------------------------------------
+# /health-endpoint (integrationstest med httpx)
+# ---------------------------------------------------------------------------
+
+class TestHealthEndpoint:
+    """Testar att /health svarar korrekt via FastAPI TestClient."""
+
+    def test_health_returns_ok(self):
+        from fastapi.testclient import TestClient
+        from app import app
+
+        client = TestClient(app)
+        resp = client.get("/health")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert "active_sessions" in data
+        assert isinstance(data["active_sessions"], int)
+        assert "db_path" in data
