@@ -208,12 +208,20 @@ def create_new_risk(number: int, label: str = "") -> dict[str, Any]:
 
 
 def compute_risk_stats(risk: dict[str, Any], effective_threshold: int) -> dict[str, Any]:
+    """Beräknar statistik för en risk utan sidoeffekter (ren funktion).
+
+    Returnerar även ``threshold_reached`` så att anroparen kan uppdatera
+    ``risk['revealed']`` explicit vid behov.
+    """
     votes_list = list(risk["votes"].values())
     vote_count = len(votes_list)
 
-    # Kontrollera om tröskeln nåtts automatiskt
-    if vote_count > 0 and vote_count >= effective_threshold:
-        risk["revealed"] = True
+    # Tröskeln är nådd om röster finns och antalet >= tröskeln (och risken inte redan är revealed)
+    threshold_reached = (
+        vote_count > 0
+        and vote_count >= effective_threshold
+        and not risk["revealed"]
+    )
 
     is_revealed = bool(risk["revealed"] or risk["locked"])
 
@@ -244,6 +252,7 @@ def compute_risk_stats(risk: dict[str, Any], effective_threshold: int) -> dict[s
         "vote_count": vote_count,
         "revealed": is_revealed,
         "locked": risk["locked"],
+        "threshold_reached": threshold_reached,
         "avg_probability": avg_prob if is_revealed else None,
         "avg_consequence": avg_cons if is_revealed else None,
         "suggested_probability": suggested_prob if is_revealed else None,
@@ -308,15 +317,16 @@ class SessionConnectionManager:
         participant_count = self.get_participant_count(sid)
         effective_threshold = self.get_effective_threshold(session)
 
-        # Beräkna statistik för alla risker (och kolla om aktiv risk just nådde tröskeln)
+        # Beräkna statistik för alla risker (och uppdatera revealed vid tröskel)
         risks_summary: list[dict[str, Any]] = []
         active_num = session["active_risk_number"]
         state_changed = False
 
         for r in session["risks"]:
-            was_revealed = r["revealed"]
             r_stats = compute_risk_stats(r, effective_threshold)
-            if r["revealed"] != was_revealed:
+            # Uppdatera revealed explicit baserat på threshold_reached (ingen sidoeffekt i compute_risk_stats)
+            if r_stats["threshold_reached"]:
+                r["revealed"] = True
                 state_changed = True
             risks_summary.append(r_stats)
 

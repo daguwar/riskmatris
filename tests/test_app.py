@@ -205,6 +205,7 @@ class TestComputeRiskStats:
         assert stats["cell_counts"] == {}
 
     def test_votes_revealed_at_threshold(self):
+        """När röster >= tröskel: threshold_reached=True, caller sätter revealed=True."""
         votes = {
             "a": {"probability": 2, "consequence": 3, "updated_at": 0},
             "b": {"probability": 3, "consequence": 2, "updated_at": 0},
@@ -214,7 +215,15 @@ class TestComputeRiskStats:
         risk = self._make_risk(votes=votes)
         stats = compute_risk_stats(risk, effective_threshold=4)
         assert stats["vote_count"] == 4
+        assert stats["threshold_reached"] is True
+        # Innan caller uppdaterar revealed: revealed är fortfarande False i stats
+        assert stats["revealed"] is False
+
+        # Simulera vad build_client_payload gör: sätt revealed=True vid threshold_reached
+        risk["revealed"] = True
+        stats = compute_risk_stats(risk, effective_threshold=4)
         assert stats["revealed"] is True
+        assert stats["threshold_reached"] is False  # redan revealed
         assert stats["avg_probability"] == 2.5
         assert stats["avg_consequence"] == 2.5
         assert stats["suggested_probability"] == 3  # .5 avrundas uppåt
@@ -286,7 +295,11 @@ class TestComputeRiskStats:
         assert stats["color"] == "yellow"
 
     def test_threshold_auto_reveals(self):
-        """När antal röster >= tröskel ska revealed sättas automatiskt."""
+        """När antal röster >= tröskel ska threshold_reached vara True.
+
+        compute_risk_stats är nu en ren funktion – ingen sidoeffekt på risk['revealed'].
+        Anroparen (build_client_payload) ansvarar för att uppdatera revealed.
+        """
         votes = {
             "a": {"probability": 2, "consequence": 2, "updated_at": 0},
             "b": {"probability": 3, "consequence": 3, "updated_at": 0},
@@ -294,8 +307,48 @@ class TestComputeRiskStats:
         risk = self._make_risk(votes=votes)
         assert risk["revealed"] is False
         stats = compute_risk_stats(risk, effective_threshold=2)
-        assert risk["revealed"] is True
-        assert stats["revealed"] is True
+        # threshold_reached ska vara True, men risk['revealed'] ska INTE ha ändrats
+        assert stats["threshold_reached"] is True
+        assert risk["revealed"] is False  # ren funktion – ingen sidoeffekt
+        assert stats["revealed"] is False  # is_revealed baseras på risk['revealed']
+
+    def test_no_side_effect_on_risk(self):
+        """compute_risk_stats ska inte mutera risk-dikten överhuvudtaget."""
+        votes = {
+            "a": {"probability": 2, "consequence": 2, "updated_at": 0},
+        }
+        risk = self._make_risk(votes=votes, revealed=False, locked=False)
+        original = {k: v for k, v in risk.items() if k != "votes"}
+        original_votes = dict(risk["votes"])
+        compute_risk_stats(risk, effective_threshold=1)
+        # Ingen förändring av risk efter anrop
+        for k, v in original.items():
+            assert risk[k] == v, f"risk['{k}'] ändrades: {risk[k]!r} != {v!r}"
+        assert risk["votes"] == original_votes
+
+    def test_threshold_not_reached_when_already_revealed(self):
+        """threshold_reached ska vara False om risken redan är revealed."""
+        votes = {
+            "a": {"probability": 2, "consequence": 2, "updated_at": 0},
+        }
+        risk = self._make_risk(votes=votes, revealed=True)
+        stats = compute_risk_stats(risk, effective_threshold=1)
+        assert stats["threshold_reached"] is False
+
+    def test_threshold_not_reached_below_threshold(self):
+        """threshold_reached ska vara False när röster < tröskel."""
+        votes = {
+            "a": {"probability": 2, "consequence": 2, "updated_at": 0},
+        }
+        risk = self._make_risk(votes=votes)
+        stats = compute_risk_stats(risk, effective_threshold=4)
+        assert stats["threshold_reached"] is False
+
+    def test_threshold_not_reached_no_votes(self):
+        """threshold_reached ska vara False när inga röster finns."""
+        risk = self._make_risk()
+        stats = compute_risk_stats(risk, effective_threshold=1)
+        assert stats["threshold_reached"] is False
 
 
 # ---------------------------------------------------------------------------
