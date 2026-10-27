@@ -389,6 +389,23 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Riskmatris Live", lifespan=lifespan)
 
 
+@app.middleware("http")
+async def add_cache_headers(request: Request, call_next):
+    """Sätter Cache-Control beroende på sökväg.
+
+    Statiska filer (CSS/JS): 1 dag (innehållsbaserad versionering via ombyggnad).
+    SPA-rutter (HTML): no-cache (måste alltid hämta senaste index.html).
+    API-rutter: no-store (standard, känslig data).
+    """
+    response = await call_next(request)
+    path = request.url.path
+    if path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=86400"
+    elif path == "/" or path.startswith("/s/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 class CreateSessionRequest(BaseModel):
     title: str | None = "Riskanalys"
     threshold: int | None = 4
