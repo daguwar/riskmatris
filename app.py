@@ -36,6 +36,7 @@ logger = logging.getLogger("riskmatris")
 
 DB_PATH = os.environ.get("RISKMATRIS_DB_PATH", "riskmatris.db")
 SESSION_TTL_SECONDS = int(os.environ.get("RISKMATRIS_TTL_HOURS", "48")) * 3600
+SESSION_CLEANUP_INTERVAL = int(os.environ.get("RISKMATRIS_CLEANUP_INTERVAL", "3600"))  # 1 timme default
 
 PROBABILITY_LABELS = {
     1: "Osannolik",
@@ -130,6 +131,16 @@ def cleanup_expired_sessions() -> None:
         SESSIONS.pop(sid, None)
     if expired_ids:
         logger.info("Rensade %d utgångna sessioner: %s", len(expired_ids), expired_ids)
+
+
+async def _periodic_cleanup() -> None:
+    """Bakgrundsloop som rensar utgångna sessioner med jämna intervall."""
+    while True:
+        await asyncio.sleep(SESSION_CLEANUP_INTERVAL)
+        try:
+            cleanup_expired_sessions()
+        except Exception:
+            logger.exception("Fel vid periodisk städning av sessioner")
 
 
 def save_session_to_db(session: Dict[str, Any]) -> None:
@@ -369,7 +380,18 @@ async def lifespan(app: FastAPI):
     logger.info("Startar Riskmatris Live – laddar sessioner från DB (%s)", DB_PATH)
     SESSIONS = load_sessions_from_db()
     logger.info("Servern är redo. %d aktiva sessioner.", len(SESSIONS))
+
+    # Starta bakgrundsrensning av utgångna sessioner (varje timme)
+    cleanup_task = asyncio.create_task(_periodic_cleanup())
+    logger.info("Periodisk städning schemalagd (intervall: %d sekunder).", SESSION_CLEANUP_INTERVAL)
+
     yield
+
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
     logger.info("Stänger ner – sessioner sparade i DB.")
 
 
