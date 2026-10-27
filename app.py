@@ -33,7 +33,9 @@ logger = logging.getLogger("riskmatris")
 # Konfiguration & Konstanter
 # ---------------------------------------------------------------------------
 
-DB_PATH = os.environ.get("RISKMATRIS_DB_PATH", "riskmatris.db")
+DB_PATH = os.environ.get("RISKMATRIS_DB_PATH", os.path.join("data", "riskmatris.db"))
+# Skapa data-katalogen om den inte finns (för lokal körning utan Docker)
+os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
 SESSION_TTL_SECONDS = int(os.environ.get("RISKMATRIS_TTL_HOURS", "48")) * 3600
 SESSION_CLEANUP_INTERVAL = int(os.environ.get("RISKMATRIS_CLEANUP_INTERVAL", "3600"))  # 1 timme default
 

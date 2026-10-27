@@ -31,6 +31,7 @@ env/
 *.db
 *.sqlite
 *.sqlite3
+data/
 
 # OS / Editor filer
 .DS_Store
