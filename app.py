@@ -535,6 +535,26 @@ async def export_session_csv(session_id: str):
 # ---------------------------------------------------------------------------
 
 
+def _safe_int(msg: Dict[str, Any], key: str, default: int, min_val: int = 0, max_val: int = 999) -> Optional[int]:
+    """Hämtar ett heltal från ett WS-meddelande med felhantering och gränskontroll."""
+    raw = msg.get(key, default)
+    try:
+        val = int(raw)
+    except (TypeError, ValueError):
+        return None
+    if val < min_val or val > max_val:
+        return None
+    return val
+
+
+async def _send_ws_error(websocket: WebSocket, message: str) -> None:
+    """Skickar ett felmeddelande tillbaka till klienten över WebSocket."""
+    try:
+        await websocket.send_json({"type": "error", "message": message})
+    except Exception:
+        pass
+
+
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
@@ -570,8 +590,21 @@ async def websocket_endpoint(
 
     try:
         while True:
-            msg = await websocket.receive_json()
+            # --- Mottagning & grundvalidering ---
+            try:
+                msg = await websocket.receive_json()
+            except Exception:
+                await _send_ws_error(websocket, "Ogiltigt JSON-meddelande.")
+                continue
+
+            if not isinstance(msg, dict):
+                await _send_ws_error(websocket, "Meddelandet måste vara ett JSON-objekt.")
+                continue
+
             action = msg.get("action")
+            if not isinstance(action, str):
+                await _send_ws_error(websocket, "Saknar giltig 'action'.")
+                continue
 
             active_num = session["active_risk_number"]
             active_risk = next(
@@ -581,26 +614,29 @@ async def websocket_endpoint(
 
             # 1. Deltagare (eller admin) röstar på aktiv risk
             if action == "vote":
-                prob = int(msg.get("probability", 0))
-                cons = int(msg.get("consequence", 0))
-                if 1 <= prob <= 4 and 1 <= cons <= 4:
-                    # Tillåt röstning/ändring så länge risken inte är låst, eller om admin tillåter
-                    if not active_risk["locked"]:
-                        active_risk["votes"][client_id] = {
-                            "probability": prob,
-                            "consequence": cons,
-                            "updated_at": time.time(),
-                        }
-                        eff_thresh = manager.get_effective_threshold(session)
-                        if len(active_risk["votes"]) >= eff_thresh:
-                            active_risk["revealed"] = True
-                        save_session_to_db(session)
-                        logger.info(
-                            "Röst mottagen: session %s, risk #%d, klient %s -> S=%d, K=%d (%d röster, tröskel %d)",
-                            sid, active_num, client_id, prob, cons,
-                            len(active_risk["votes"]), eff_thresh,
-                        )
-                        await manager.broadcast(session)
+                prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4)
+                cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=4)
+                if prob is None or cons is None:
+                    await _send_ws_error(websocket, "Sannolikhet och Konsekvens måste vara heltal 1–4.")
+                    continue
+                if active_risk["locked"]:
+                    await _send_ws_error(websocket, "Denna risk är låst – röstning ej möjlig.")
+                    continue
+                active_risk["votes"][client_id] = {
+                    "probability": prob,
+                    "consequence": cons,
+                    "updated_at": time.time(),
+                }
+                eff_thresh = manager.get_effective_threshold(session)
+                if len(active_risk["votes"]) >= eff_thresh:
+                    active_risk["revealed"] = True
+                save_session_to_db(session)
+                logger.info(
+                    "Röst mottagen: session %s, risk #%d, klient %s -> S=%d, K=%d (%d röster, tröskel %d)",
+                    sid, active_num, client_id, prob, cons,
+                    len(active_risk["votes"]), eff_thresh,
+                )
+                await manager.broadcast(session)
 
             # Nedanstående åtgärder kräver admin-behörighet
             elif is_admin:
@@ -611,7 +647,10 @@ async def websocket_endpoint(
                     await manager.broadcast(session)
 
                 elif action == "set_label":
-                    risk_num = int(msg.get("number", active_num))
+                    risk_num = _safe_int(msg, "number", active_num, min_val=1, max_val=9999)
+                    if risk_num is None:
+                        await _send_ws_error(websocket, "Ogiltigt risknummer.")
+                        continue
                     label = str(msg.get("label", "")).strip()[:120]
                     for r in session["risks"]:
                         if r["number"] == risk_num:
@@ -626,9 +665,14 @@ async def websocket_endpoint(
                         session["title"] = title
                         save_session_to_db(session)
                         await manager.broadcast(session)
+                    else:
+                        await _send_ws_error(websocket, "Titel får inte vara tom.")
 
                 elif action == "set_threshold":
-                    new_t = max(1, min(50, int(msg.get("threshold", 4))))
+                    new_t = _safe_int(msg, "threshold", 4, min_val=1, max_val=50)
+                    if new_t is None:
+                        await _send_ws_error(websocket, "Tröskelvärdet måste vara ett heltal 1–50.")
+                        continue
                     session["threshold"] = new_t
                     eff_thresh = manager.get_effective_threshold(session)
                     if len(active_risk["votes"]) > 0 and len(active_risk["votes"]) >= eff_thresh:
@@ -640,19 +684,23 @@ async def websocket_endpoint(
                     # Lås fast slutgiltig placering i sammanställningsmatrisen
                     eff_thresh = manager.get_effective_threshold(session)
                     stats = compute_risk_stats(active_risk, eff_thresh)
-                    prob = int(msg.get("probability") or stats["effective_probability"] or 2)
-                    cons = int(msg.get("consequence") or stats["effective_consequence"] or 2)
-                    if 1 <= prob <= 4 and 1 <= cons <= 4:
-                        active_risk["final_probability"] = prob
-                        active_risk["final_consequence"] = cons
-                        active_risk["revealed"] = True
-                        active_risk["locked"] = True
-                        save_session_to_db(session)
-                        logger.info(
-                            "Admin: risk #%d låst i session %s -> S=%d, K=%d (riskvärde %d)",
-                            active_num, sid, prob, cons, prob * cons,
-                        )
-                        await manager.broadcast(session)
+                    prob_raw = msg.get("probability")
+                    cons_raw = msg.get("consequence")
+                    prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4) if prob_raw is not None else (stats["effective_probability"] or 2)
+                    cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=4) if cons_raw is not None else (stats["effective_consequence"] or 2)
+                    if prob is None or cons is None:
+                        await _send_ws_error(websocket, "Sannolikhet och Konsekvens måste vara heltal 1–4.")
+                        continue
+                    active_risk["final_probability"] = prob
+                    active_risk["final_consequence"] = cons
+                    active_risk["revealed"] = True
+                    active_risk["locked"] = True
+                    save_session_to_db(session)
+                    logger.info(
+                        "Admin: risk #%d låst i session %s -> S=%d, K=%d (riskvärde %d)",
+                        active_num, sid, prob, cons, prob * cons,
+                    )
+                    await manager.broadcast(session)
 
                 elif action == "unlock_risk":
                     active_risk["locked"] = False
@@ -661,16 +709,18 @@ async def websocket_endpoint(
 
                 elif action == "set_final_cell":
                     # Administratören klickar i matrisen för att justera föreslagen/låst ruta
-                    prob = int(msg.get("probability", 0))
-                    cons = int(msg.get("consequence", 0))
-                    if 1 <= prob <= 4 and 1 <= cons <= 4:
-                        active_risk["final_probability"] = prob
-                        active_risk["final_consequence"] = cons
-                        active_risk["revealed"] = True
-                        if msg.get("lock", False):
-                            active_risk["locked"] = True
-                        save_session_to_db(session)
-                        await manager.broadcast(session)
+                    prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4)
+                    cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=4)
+                    if prob is None or cons is None:
+                        await _send_ws_error(websocket, "Sannolikhet och Konsekvens måste vara heltal 1–4.")
+                        continue
+                    active_risk["final_probability"] = prob
+                    active_risk["final_consequence"] = cons
+                    active_risk["revealed"] = True
+                    if msg.get("lock", False):
+                        active_risk["locked"] = True
+                    save_session_to_db(session)
+                    await manager.broadcast(session)
 
                 elif action == "next_risk":
                     # Om nuvarande risk har röster och auto_lock skickas med, lås den på sitt förslag/val
@@ -696,11 +746,16 @@ async def websocket_endpoint(
                     await manager.broadcast(session)
 
                 elif action == "select_risk":
-                    target_num = int(msg.get("number", 1))
+                    target_num = _safe_int(msg, "number", 1, min_val=1, max_val=9999)
+                    if target_num is None:
+                        await _send_ws_error(websocket, "Ogiltigt risknummer.")
+                        continue
                     if any(r["number"] == target_num for r in session["risks"]):
                         session["active_risk_number"] = target_num
                         save_session_to_db(session)
                         await manager.broadcast(session)
+                    else:
+                        await _send_ws_error(websocket, f"Risk #{target_num} finns inte.")
 
                 elif action == "reset_votes":
                     active_risk["votes"] = {}
@@ -712,13 +767,26 @@ async def websocket_endpoint(
                     await manager.broadcast(session)
 
                 elif action == "delete_risk":
-                    target_num = int(msg.get("number", active_num))
+                    target_num = _safe_int(msg, "number", active_num, min_val=1, max_val=9999)
+                    if target_num is None:
+                        await _send_ws_error(websocket, "Ogiltigt risknummer.")
+                        continue
                     if len(session["risks"]) > 1:
                         session["risks"] = [r for r in session["risks"] if r["number"] != target_num]
                         if session["active_risk_number"] == target_num:
                             session["active_risk_number"] = session["risks"][-1]["number"]
                         save_session_to_db(session)
                         await manager.broadcast(session)
+                    else:
+                        await _send_ws_error(websocket, "Kan inte ta bort den enda risken.")
+
+                else:
+                    await _send_ws_error(websocket, f"Okänd admin-action: {action}")
+
+            else:
+                # Icke-admin som försöker admin-action, eller okänd action
+                if action != "vote":
+                    await _send_ws_error(websocket, "Du saknar behörighet för denna åtgärd.")
 
     except WebSocketDisconnect:
         manager.disconnect(sid, websocket)

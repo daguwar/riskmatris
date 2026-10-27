@@ -303,6 +303,8 @@
         const data = JSON.parse(event.data);
         if (data.type === "session_state") {
           handleSessionState(data);
+        } else if (data.type === "error") {
+          showWsError(data.message);
         }
       } catch (_) {}
     };
@@ -319,6 +321,24 @@
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(payload));
     }
+  }
+
+  // Visa ett tillfälligt felmeddelande från servern (WebSocket-validering)
+  let wsErrorTimer = null;
+  function showWsError(message) {
+    let banner = document.getElementById("wsErrorBanner");
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.id = "wsErrorBanner";
+      banner.className = "ws-error-banner";
+      const main = document.querySelector(".session-main");
+      if (main) main.insertBefore(banner, main.firstChild);
+      else document.body.appendChild(banner);
+    }
+    banner.textContent = message;
+    banner.classList.remove("hidden");
+    if (wsErrorTimer) clearTimeout(wsErrorTimer);
+    wsErrorTimer = setTimeout(() => banner.classList.add("hidden"), 4000);
   }
 
   // -------------------------------------------------------------------------

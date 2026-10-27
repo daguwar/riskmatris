@@ -1390,3 +1390,17 @@ body {
   }
 }
 
+/* -------------------------------------------------------------------------
+   WebSocket-felmeddelande (banner)
+   ------------------------------------------------------------------------- */
+.ws-error-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
