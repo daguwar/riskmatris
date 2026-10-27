@@ -51,3 +51,20 @@ Applikationen nås då på **http://localhost:8000** och sparar pågående sessi
 
 Eftersom projektet har både `Dockerfile` och `requirements.txt` samt lyssnar på miljövariabeln `PORT` kan du ladda upp projektet direkt till valfri molntjänst utan ändringar.
 
+### 4. Köra på egen server bakom befintlig Traefik (HTTPS)
+
+Har du en server där Traefik redan sköter HTTPS och certifikat kör du appen **utan publicerade portar** – Traefik routar trafiken till containern via ett gemensamt Docker-nätverk (labels på containern, se `docker-compose.traefik.yml`):
+
+```bash
+cp .env.example .env    # fyll i dina värden
+docker compose -f docker-compose.traefik.yml up -d --build
+```
+
+Fyll i i `.env`:
+
+- `RISKMATRIS_DOMAIN` – domänen Traefik ska svara på (obligatorisk), t.ex. `riskmatris.example.com`
+- `TRAEFIK_NETWORK` – namnet på Docker-nätverket din Traefik kör på (ofta `traefik-public`; nätverket måste redan finnas)
+- `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERT_RESOLVER` – namn på entrypoint och cert-resolver (standard: `websecure` / `letsencrypt`)
+
+Öppna appen via din domän (`https://riskmatris.example.com`). Delningslänk och QR-kod pekar då automatiskt på rätt adress, och WebSockets (`wss://`) fungerar genom Traefik utan extra konfiguration. Vill du felsöka lokalt på servern kan du lägga till `ports: - "127.0.0.1:8000:8000"` i compose-filen (bind då endast till localhost).
+

@@ -42,3 +42,6 @@ Thumbs.db
 # Test
 .pytest_cache/
 
+# Miljö / deployment (lokala värden – commita inte)
+.env
+
