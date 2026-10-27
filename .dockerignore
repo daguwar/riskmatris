@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtuella miljöer
+.venv/
+venv/
+ENV/
+env/
+
+# Test & utveckling
+tests/
+.pytest_cache/
+requirements-dev.txt
+
+# SQLite & lokal data
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Startskript (plattformsspecifika)
+start.bat
+start.sh
