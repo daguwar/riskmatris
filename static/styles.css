@@ -1099,7 +1099,7 @@ button {
 
 .vote-options-list {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
@@ -1109,8 +1109,6 @@ button {
   justify-content: center;
   min-height: 76px;
   height: 76px;
-  flex: 1;
-  min-width: 0;
   padding: 0;
   background: var(--surface);
   border: 1.5px solid var(--border-strong);
@@ -1175,6 +1173,11 @@ button {
 
 .vote-option-btn.selected .vote-num {
   color: #fff;
+}
+
+/* Fix för att centrera siffrorna i knapparna */
+.vote-option-btn {
+  min-width: 0;
 }
 
 .voting-footer {
