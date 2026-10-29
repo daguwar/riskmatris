@@ -25,9 +25,9 @@ En öppen, interaktiv webbapplikation i realtid för att genomföra riskbedömni
 
 ## Köra applikationen
 
-### 1. Köra lokalt (Windows / macOS / Linux)
+### 1. Köra lokalt (manuellt, utan Docker)
 
-Dubbelklicka på `start.bat` (i Windows), kör `./start.sh` i terminalen (funkar i Git Bash på Windows, i WSL – t.ex. Fedora – samt på macOS/Linux), eller kör följande manuellt i terminalen:
+Skapa en virtuell Python-miljö, installera beroenden och starta servern i terminalen:
 
 ```powershell
 python -m venv .venv

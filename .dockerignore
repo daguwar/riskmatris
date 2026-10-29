@@ -39,7 +39,3 @@ docker-compose.yml
 Thumbs.db
 .vscode/
 .idea/
-
-# Startskript (plattformsspecifika)
-start.bat
-start.sh
