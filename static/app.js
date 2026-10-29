@@ -92,12 +92,19 @@
   const adminThresholdInput = document.getElementById("adminThresholdInput");
   const effectiveThresholdInfo = document.getElementById("effectiveThresholdInfo");
 
-  const tabBtnActiveRisk = document.getElementById("tabBtnActiveRisk");
-  const tabBtnSummaryMatrix = document.getElementById("tabBtnSummaryMatrix");
+  const tabBtnVote = document.getElementById("tabBtnVote");
+  const tabBtnPresent = document.getElementById("tabBtnPresent");
+  const tabBtnAdmin = document.getElementById("tabBtnAdmin");
   const tabActiveRiskNum = document.getElementById("tabActiveRiskNum");
   const tabLockedCount = document.getElementById("tabLockedCount");
-  const activeRiskTab = document.getElementById("activeRiskTab");
-  const summaryMatrixTab = document.getElementById("summaryMatrixTab");
+  const voteView = document.getElementById("voteView");
+  const presentView = document.getElementById("presentView");
+  const adminView = document.getElementById("adminView");
+  const presentActive = document.getElementById("presentActive");
+  const presentSummary = document.getElementById("presentSummary");
+  const tabBtnPresentActive = document.getElementById("tabBtnPresentActive");
+  const tabBtnPresentSummary = document.getElementById("tabBtnPresentSummary");
+  const adminVoteHint = document.getElementById("adminVoteHint");
 
   const adminSelfVoteToggleBox = document.getElementById("adminSelfVoteToggleBox");
   const btnToggleAdminVote = document.getElementById("btnToggleAdminVote");
@@ -139,8 +146,6 @@
   const summaryTableBody = document.getElementById("summaryTableBody");
 
   const qrModal = document.getElementById("qrModal");
-  const adminToolbar = document.getElementById("adminToolbar");
-  const shareCard = document.getElementById("shareCard");
 
   // -------------------------------------------------------------------------
   // Initiering & Routing
@@ -401,9 +406,11 @@
     adminRiskLabelInput.classList.toggle("hidden", !isAdmin);
     participantRiskLabelDisplay.classList.toggle("hidden", isAdmin);
 
-    // Verktygsrad och delningskort visas enbart för admin (deltagare ser bara röstningen)
-    adminToolbar.classList.toggle("hidden", !isAdmin);
-    shareCard.classList.toggle("hidden", !isAdmin);
+    // Vyväljaren: deltagare ser bara "Rösta" och hålls kvar där; admin ser alla tre vyer
+    tabBtnPresent.classList.toggle("hidden", !isAdmin);
+    tabBtnAdmin.classList.toggle("hidden", !isAdmin);
+    if (!isAdmin) switchView("voteView");
+    adminVoteHint.classList.toggle("hidden", !(isAdmin && !adminWantsToVote));
 
     const maxNum = Math.max(...state.risks.map((r) => r.number));
     btnNextRiskSidebar.textContent = `+ Nästa risk (#${maxNum + 1})`;
@@ -491,10 +498,8 @@
       btn.addEventListener("click", () => {
         if (isAdmin) {
           sendWsAction({ action: "select_risk", number: r.number });
-          switchTab("activeRiskTab");
-        } else {
-          switchTab("activeRiskTab");
         }
+        switchView("presentView");
       });
 
       riskListContainer.appendChild(btn);
@@ -765,7 +770,7 @@
             if (isAdmin) {
               sendWsAction({ action: "select_risk", number: r.number });
             }
-            switchTab("activeRiskTab");
+            switchView("presentView");
           });
           chipsContainer.appendChild(chip);
         });
@@ -837,12 +842,25 @@
   // -------------------------------------------------------------------------
   // Event-bindningar i Sessionsvyn
   // -------------------------------------------------------------------------
-  function switchTab(tabId) {
-    const isSummary = tabId === "summaryMatrixTab";
-    activeRiskTab.classList.toggle("hidden", isSummary);
-    summaryMatrixTab.classList.toggle("hidden", !isSummary);
-    tabBtnActiveRisk.classList.toggle("active", !isSummary);
-    tabBtnSummaryMatrix.classList.toggle("active", isSummary);
+  const VIEW_IDS = ["voteView", "presentView", "adminView"];
+  const viewButtons = { voteView: tabBtnVote, presentView: tabBtnPresent, adminView: tabBtnAdmin };
+  const viewContainers = { voteView: voteView, presentView: presentView, adminView: adminView };
+  let currentPresentSub = "presentActive";
+
+  function switchView(viewId) {
+    VIEW_IDS.forEach((id) => {
+      viewContainers[id].classList.toggle("hidden", id !== viewId);
+      viewButtons[id].classList.toggle("active", id === viewId);
+    });
+    if (viewId === "presentView") switchPresentSub(currentPresentSub);
+  }
+
+  function switchPresentSub(subId) {
+    currentPresentSub = subId;
+    presentActive.classList.toggle("hidden", subId !== "presentActive");
+    presentSummary.classList.toggle("hidden", subId !== "presentSummary");
+    tabBtnPresentActive.classList.toggle("active", subId === "presentActive");
+    tabBtnPresentSummary.classList.toggle("active", subId === "presentSummary");
   }
 
   // Kopiera text till urklipp. navigator.clipboard finns bara i säker kontext
@@ -874,8 +892,12 @@
   }
 
   function bindSessionEvents() {
-    tabBtnActiveRisk.addEventListener("click", () => switchTab("activeRiskTab"));
-    tabBtnSummaryMatrix.addEventListener("click", () => switchTab("summaryMatrixTab"));
+    document.querySelectorAll("#viewSwitcher .tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => switchView(btn.getAttribute("data-view")));
+    });
+    document.querySelectorAll("#presentSubTabs .tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => switchPresentSub(btn.getAttribute("data-subview")));
+    });
 
     // Röstningsknappar Sannolikhet (1-4)
     probOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
@@ -943,7 +965,7 @@
 
     btnNextRiskSidebar.addEventListener("click", () => {
       sendWsAction({ action: "next_risk", auto_lock: true });
-      switchTab("activeRiskTab");
+      switchView("voteView");
     });
 
     // Kopiera delningslänk

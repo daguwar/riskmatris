@@ -99,73 +99,24 @@
     </div>
   </main>
 
-  <!-- VY 2: AKTIV SESSION -->
+  <!-- VY 2: AKTIV SESSION – tre vyer: Rösta / Presentation / Admin -->
   <main id="sessionView" class="session-layout hidden">
     <div class="session-main">
-      <!-- Adminverktygsrad (dold för deltagare) -->
-      <div class="card admin-toolbar hidden" id="adminToolbar">
-        <div class="admin-toolbar-row">
-          <div class="admin-toolbar-group admin-toolbar-risks">
-            <span class="small-caps">Risker <span class="risk-count-badge" id="riskCountBadge">1 st</span></span>
-            <div class="risk-list" id="riskListContainer"></div>
-            <div id="adminNextRiskBox" class="hidden">
-              <button type="button" class="btn btn-outline btn-sm" id="btnNextRiskSidebar">+ Nästa risk</button>
-            </div>
-          </div>
-          <div class="admin-toolbar-group hidden" id="adminSettingsCard">
-            <span class="small-caps">Tröskel</span>
-            <div class="threshold-control-row">
-              <input type="number" id="adminThresholdInput" class="form-input form-input-sm" min="1" max="50" value="4" />
-              <span class="small-muted" id="effectiveThresholdInfo"></span>
-            </div>
-          </div>
-        </div>
-        <div class="admin-toolbar-row admin-toolbar-actions">
-          <div id="adminSelfVoteToggleBox" class="hidden">
-            <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote">Rösta själv</button>
-          </div>
-          <div class="admin-action-buttons hidden" id="adminRiskActions">
-            <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow">Visa resultat nu</button>
-            <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" title="Nollställ rösterna för denna risk">Nollställ</button>
-            <button type="button" class="btn btn-success btn-sm" id="btnLockRisk">Lås placering</button>
-            <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext">Nästa &rarr;</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Delningskort (dolt för deltagare) -->
-      <div class="card share-card hidden" id="shareCard">
-        <div class="share-card-head">
-          <div>
-            <span class="small-caps">Dela sessionen</span>
-            <div class="share-session-code" id="sidebarSessionCode">------</div>
-          </div>
-          <button type="button" class="btn btn-outline btn-sm" id="btnExpandQr">Förstora QR</button>
-        </div>
-        <div class="qr-preview-wrapper" id="qrPreviewWrapper" title="Klicka för att förstora QR-koden">
-          <div id="sidebarQrContainer" class="qr-box"></div>
-        </div>
-        <div class="share-url-group">
-          <input type="text" id="shareUrlInput" class="form-input form-input-sm" readonly />
-          <button type="button" class="btn btn-secondary btn-sm" id="btnCopyShareUrl">Kopiera</button>
-        </div>
-        <p class="qr-lan-hint hidden" id="lanIpHint"></p>
-      </div>
-
-      <!-- Flikväljare: Aktuell omröstning vs Sammanställningsmatris -->
+      <!-- Vyväljare (deltagare ser bara "Rösta") -->
       <div class="view-tabs-bar">
-        <div class="view-tabs">
-          <button type="button" class="tab-btn active" data-tab="activeRiskTab" id="tabBtnActiveRisk">
-            Omröstning <span class="tab-risk-num" id="tabActiveRiskNum">#1</span>
+        <div class="view-tabs" id="viewSwitcher">
+          <button type="button" class="tab-btn active" data-view="voteView" id="tabBtnVote">
+            Rösta <span class="tab-risk-num" id="tabActiveRiskNum">#1</span>
           </button>
-          <button type="button" class="tab-btn" data-tab="summaryMatrixTab" id="tabBtnSummaryMatrix">
-            Sammanställning <span class="tab-count" id="tabLockedCount">0</span>
+          <button type="button" class="tab-btn hidden" data-view="presentView" id="tabBtnPresent">Presentation</button>
+          <button type="button" class="tab-btn hidden" data-view="adminView" id="tabBtnAdmin">
+            Admin <span class="tab-count" id="tabLockedCount">0</span>
           </button>
         </div>
       </div>
 
-      <!-- FLIK 1: AKTUELL OMRÖSTNING -->
-      <div id="activeRiskTab" class="tab-content">
+      <!-- VY: RÖSTA (huvudvy för deltagare i telefonen) -->
+      <div id="voteView" class="tab-content vote-view">
         <!-- Rubrikkort för aktuell risk -->
         <div class="card active-risk-header-card">
           <div class="active-risk-title-row">
@@ -201,6 +152,10 @@
             </div>
           </div>
         </div>
+
+        <p class="admin-vote-hint hidden" id="adminVoteHint">
+          Du är mötesledare – öppna <strong>Admin</strong>-vyn och klicka ”Rösta själv” för att avge egen röst.
+        </p>
 
         <!-- DELTAGARENS RÖSTNINGSPANEL -->
         <div class="card voting-card" id="votingPanelCard">
@@ -269,78 +224,169 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- MATRIS FÖR AKTUELL RISK -->
-        <div class="card matrix-section-card">
-          <div class="matrix-card-top">
-            <div>
-              <h3 id="activeMatrixHeading">Resultatmatris för Risk #1</h3>
-              <p class="matrix-subtitle" id="activeMatrixSubtitle">
-                Resultatet visas automatiskt när tillräckligt många röster har kommit in.
+      <!-- VY: PRESENTATION (stor matris för projektorn; admin) -->
+      <div id="presentView" class="tab-content present-view hidden">
+        <div class="view-tabs-bar present-subtabs">
+          <div class="view-tabs" id="presentSubTabs">
+            <button type="button" class="tab-btn active" data-subview="presentActive" id="tabBtnPresentActive">Aktuell risk</button>
+            <button type="button" class="tab-btn" data-subview="presentSummary" id="tabBtnPresentSummary">Sammanställning</button>
+          </div>
+        </div>
+
+        <!-- Aktuell risks resultatmatris -->
+        <div id="presentActive">
+          <div class="card matrix-section-card">
+            <div class="matrix-card-top">
+              <div>
+                <h3 id="activeMatrixHeading">Resultatmatris för Risk #1</h3>
+                <p class="matrix-subtitle" id="activeMatrixSubtitle">
+                  Resultatet visas automatiskt när tillräckligt många röster har kommit in.
+                </p>
+              </div>
+
+              <!-- Sammanfattningsbox för snitt & föreslagen placering -->
+              <div class="stats-summary-pills hidden" id="activeStatsSummaryBox">
+                <div class="stat-chip">
+                  <span class="stat-label">Snitt Sannolikhet</span>
+                  <strong id="statAvgProb">-</strong>
+                </div>
+                <div class="stat-chip">
+                  <span class="stat-label">Snitt Konsekvens</span>
+                  <strong id="statAvgCons">-</strong>
+                </div>
+                <div class="stat-chip stat-chip-highlight" id="statFinalChip">
+                  <span class="stat-label">Placering</span>
+                  <strong id="statSuggestedCell">-</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tomt läge innan tröskeln nåtts -->
+            <div class="matrix-masked-banner" id="matrixMaskedBanner">
+              <div class="masked-spinner"></div>
+              <h4>Inväntar svar från deltagarna</h4>
+              <p id="maskedBannerText">
+                För att ingen ska påverkas av tidiga röster visas matrisen så snart
+                tröskelvärdet har uppnåtts.
               </p>
             </div>
 
-            <!-- Sammanfattningsbox för snitt & föreslagen placering -->
-            <div class="stats-summary-pills hidden" id="activeStatsSummaryBox">
-              <div class="stat-chip">
-                <span class="stat-label">Snitt Sannolikhet</span>
-                <strong id="statAvgProb">-</strong>
-              </div>
-              <div class="stat-chip">
-                <span class="stat-label">Snitt Konsekvens</span>
-                <strong id="statAvgCons">-</strong>
-              </div>
-              <div class="stat-chip stat-chip-highlight" id="statFinalChip">
-                <span class="stat-label">Placering</span>
-                <strong id="statSuggestedCell">-</strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tomt läge innan tröskeln nåtts -->
-          <div class="matrix-masked-banner" id="matrixMaskedBanner">
-            <div class="masked-spinner"></div>
-            <h4>Inväntar svar från deltagarna</h4>
-            <p id="maskedBannerText">
-              För att ingen ska påverkas av tidiga röster visas matrisen så snart
-              tröskelvärdet har uppnåtts.
-            </p>
-          </div>
-
-          <!-- 4x4 Matrisen (Konsekvens Y 4->1, Sannolikhet X 1->4) -->
-          <div class="matrix-board-wrapper" id="activeMatrixWrapper">
-            <div class="matrix-board">
-              <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
-              <div class="matrix-main-area">
-                <div class="matrix-grid-4x4" id="activeMatrixGrid">
-                  <!-- Genereras dynamiskt av app.js -->
+            <!-- 4x4 Matrisen (Konsekvens Y 4->1, Sannolikhet X 1->4) -->
+            <div class="matrix-board-wrapper" id="activeMatrixWrapper">
+              <div class="matrix-board">
+                <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
+                <div class="matrix-main-area">
+                  <div class="matrix-grid-4x4" id="activeMatrixGrid">
+                    <!-- Genereras dynamiskt av app.js -->
+                  </div>
+                  <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
                 </div>
-                <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
               </div>
             </div>
-          </div>
 
-          <!-- Färgförklaring -->
-          <div class="matrix-legend">
-            <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg</span>
-            <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medel</span>
-            <span class="legend-item"><span class="legend-swatch swatch-orange"></span> 8–9 Hög</span>
-            <span class="legend-item"><span class="legend-swatch swatch-red"></span> 12–16 Mycket hög</span>
-            <span class="legend-hint" id="adminClickMatrixHint"></span>
+            <!-- Färgförklaring -->
+            <div class="matrix-legend">
+              <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg</span>
+              <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medel</span>
+              <span class="legend-item"><span class="legend-swatch swatch-orange"></span> 8–9 Hög</span>
+              <span class="legend-item"><span class="legend-swatch swatch-red"></span> 12–16 Mycket hög</span>
+              <span class="legend-hint" id="adminClickMatrixHint"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sammanställningsmatris (alla låsta risker) -->
+        <div id="presentSummary" class="hidden">
+          <div class="card matrix-section-card">
+            <div class="matrix-card-top">
+              <div>
+                <h3>Sammanställningsmatris</h3>
+                <p class="matrix-subtitle">
+                  Alla bedömda risker (#1, #2, #3...) i samma 4&times;4-matris. Klicka på en riskbricka för att visa dess röstdetaljer.
+                </p>
+              </div>
+            </div>
+
+            <div class="matrix-board-wrapper">
+              <div class="matrix-board">
+                <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
+                <div class="matrix-main-area">
+                  <div class="matrix-grid-4x4" id="summaryMatrixGrid">
+                    <!-- Genereras dynamiskt av app.js -->
+                  </div>
+                  <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="matrix-legend">
+              <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg</span>
+              <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medel</span>
+              <span class="legend-item"><span class="legend-swatch swatch-orange"></span> 8–9 Hög</span>
+              <span class="legend-item"><span class="legend-swatch swatch-red"></span> 12–16 Mycket hög</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- FLIK 2: SAMMANSTÄLLNINGSMATRIS -->
-      <div id="summaryMatrixTab" class="tab-content hidden">
-        <div class="card matrix-section-card">
-          <div class="matrix-card-top">
-            <div>
-              <h3>Sammanställningsmatris</h3>
-              <p class="matrix-subtitle">
-                Alla bedömda risker (#1, #2, #3...) i samma 4&times;4-matris. Klicka på en riskbricka för att visa dess röstdetaljer.
-              </p>
+      <!-- VY: ADMIN (verktyg, delning, export; enbart mötesledare) -->
+      <div id="adminView" class="tab-content admin-view hidden">
+        <!-- Adminverktygsrad -->
+        <div class="card admin-toolbar" id="adminToolbar">
+          <div class="admin-toolbar-row">
+            <div class="admin-toolbar-group admin-toolbar-risks">
+              <span class="small-caps">Risker <span class="risk-count-badge" id="riskCountBadge">1 st</span></span>
+              <div class="risk-list" id="riskListContainer"></div>
+              <div id="adminNextRiskBox" class="hidden">
+                <button type="button" class="btn btn-outline btn-sm" id="btnNextRiskSidebar">+ Nästa risk</button>
+              </div>
             </div>
+            <div class="admin-toolbar-group hidden" id="adminSettingsCard">
+              <span class="small-caps">Tröskel</span>
+              <div class="threshold-control-row">
+                <input type="number" id="adminThresholdInput" class="form-input form-input-sm" min="1" max="50" value="4" />
+                <span class="small-muted" id="effectiveThresholdInfo"></span>
+              </div>
+            </div>
+          </div>
+          <div class="admin-toolbar-row admin-toolbar-actions">
+            <div id="adminSelfVoteToggleBox" class="hidden">
+              <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote">Rösta själv</button>
+            </div>
+            <div class="admin-action-buttons hidden" id="adminRiskActions">
+              <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow">Visa resultat nu</button>
+              <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" title="Nollställ rösterna för denna risk">Nollställ</button>
+              <button type="button" class="btn btn-success btn-sm" id="btnLockRisk">Lås placering</button>
+              <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext">Nästa &rarr;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delningskort -->
+        <div class="card share-card" id="shareCard">
+          <div class="share-card-head">
+            <div>
+              <span class="small-caps">Dela sessionen</span>
+              <div class="share-session-code" id="sidebarSessionCode">------</div>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" id="btnExpandQr">Förstora QR</button>
+          </div>
+          <div class="qr-preview-wrapper" id="qrPreviewWrapper" title="Klicka för att förstora QR-koden">
+            <div id="sidebarQrContainer" class="qr-box"></div>
+          </div>
+          <div class="share-url-group">
+            <input type="text" id="shareUrlInput" class="form-input form-input-sm" readonly />
+            <button type="button" class="btn btn-secondary btn-sm" id="btnCopyShareUrl">Kopiera</button>
+          </div>
+          <p class="qr-lan-hint hidden" id="lanIpHint"></p>
+        </div>
+
+        <!-- Tabellöversikt över alla risker + export -->
+        <div class="card summary-table-card">
+          <div class="summary-table-head">
+            <h3>Tabellöversikt över risker</h3>
             <div class="export-buttons-row">
               <button type="button" class="btn btn-primary btn-sm" id="btnExportPng">
                 PNG-bild (PowerPoint)
@@ -350,31 +396,6 @@
               </button>
             </div>
           </div>
-
-          <!-- 4x4 Sammanställningsmatris -->
-          <div class="matrix-board-wrapper">
-            <div class="matrix-board">
-              <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
-              <div class="matrix-main-area">
-                <div class="matrix-grid-4x4" id="summaryMatrixGrid">
-                  <!-- Genereras dynamiskt av app.js -->
-                </div>
-                <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="matrix-legend">
-            <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg</span>
-            <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medel</span>
-            <span class="legend-item"><span class="legend-swatch swatch-orange"></span> 8–9 Hög</span>
-            <span class="legend-item"><span class="legend-swatch swatch-red"></span> 12–16 Mycket hög</span>
-          </div>
-        </div>
-
-        <!-- Tabellöversikt över alla risker -->
-        <div class="card summary-table-card">
-          <h3>Tabellöversikt över risker</h3>
           <div class="table-responsive">
             <table class="risk-summary-table">
               <thead>

@@ -557,6 +557,54 @@ button {
   gap: 16px;
 }
 
+/* Tre vyer: Rösta (smal, centrerad – telefon), Presentation (bred – projektor), Admin */
+.vote-view {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.present-view {
+  width: 100%;
+}
+
+.present-view .matrix-cell {
+  min-height: 150px;
+  padding: 12px 14px;
+}
+
+.present-view .matrix-axis-header {
+  min-height: 88px;
+}
+
+.present-subtabs {
+  margin-bottom: -6px;
+}
+
+.admin-view {
+  width: 100%;
+}
+
+.admin-vote-hint {
+  margin: -4px 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.summary-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.summary-table-head h3 {
+  margin: 0;
+}
+
 /* --------------------------------------------------------------------------
    Adminverktygsrad
    -------------------------------------------------------------------------- */
