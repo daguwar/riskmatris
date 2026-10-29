@@ -1,3 +1,9 @@
+# Alla textfiler normaliseras till LF i repot och checkas ut med LF överallt
+# (även på Windows). Undviker "phantom-modified" (git status säger modified
+# men git diff är tom) när arbetskatalogen delas mellan Windows och WSL och
+# filer sparas om med olika radbrytningar (CRLF/LF).
+* text=auto eol=lf
+
 # Shell-skript och Dockerfile måste ha LF-radbrytningar även i Windows-checkouts,
 # annars bryts de när de körs i Linux-containern (t.ex. "/bin/sh^M: bad interpreter").
 *.sh text eol=lf
