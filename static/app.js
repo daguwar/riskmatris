@@ -397,6 +397,9 @@
         selectedProb = null;
         selectedCons = null;
       }
+      // Nollställ även admin's valda knappar vid ny risk
+      adminSelectedProb = null;
+      adminSelectedCons = null;
     } else if (state.my_vote) {
       selectedProb = state.my_vote.probability;
       selectedCons = state.my_vote.consequence;
@@ -421,8 +424,14 @@
     tabBtnVote.classList.toggle("hidden", isAdmin);
     tabBtnPresent.classList.toggle("hidden", !isAdmin);
     tabBtnAdmin.classList.toggle("hidden", !isAdmin);
-    if (!isAdmin) switchView("voteView");
-    else if (currentView === "voteView") switchView("presentView");
+    if (!isAdmin) {
+      switchView("voteView");
+    } else {
+      // Admin ska starta på adminView som default
+      if (currentView !== "adminView" && currentView !== "presentView") {
+        switchView("adminView");
+      }
+    }
     adminVoteHint.classList.toggle("hidden", true); // Alltid dölja nu
 
     const maxNum = Math.max(...state.risks.map((r) => r.number));
@@ -973,7 +982,18 @@
     // Admin: växla egen röstning
     btnToggleAdminVote.addEventListener("click", () => {
       adminWantsToVote = !adminWantsToVote;
-      if (sessionState) handleSessionState(sessionState);
+      // Visa/dölj röstningspanelen direkt utan att växla vy
+      if (adminVotePanel) {
+        adminVotePanel.classList.toggle("hidden", !adminWantsToVote);
+      }
+      if (adminWantsToVote && sessionState) {
+        const activeRisk = sessionState.risks.find((r) => r.number === sessionState.active_risk_number) ||
+          sessionState.risks[sessionState.risks.length - 1];
+        if (adminVotingCardRiskNum) {
+          adminVotingCardRiskNum.textContent = `Risk #${activeRisk.number}`;
+        }
+        renderAdminVotingControls(activeRisk, Boolean(sessionState.my_vote));
+      }
     });
 
     // Admin's röstningsknappar Sannolikhet (1-4)
