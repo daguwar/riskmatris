@@ -845,6 +845,34 @@
     tabBtnSummaryMatrix.classList.toggle("active", isSummary);
   }
 
+  // Kopiera text till urklipp. navigator.clipboard finns bara i säker kontext
+  // (HTTPS eller localhost) – vid åtkomst över LAN-IP med vanlig HTTP saknas
+  // API:et helt, så då faller vi tillbaka på execCommand som fungerar överallt.
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (err) {
+        // Fortsätt till execCommand-fallbacken nedan.
+      }
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (err) {
+      return false;
+    }
+  }
+
   function bindSessionEvents() {
     tabBtnActiveRisk.addEventListener("click", () => switchTab("activeRiskTab"));
     tabBtnSummaryMatrix.addEventListener("click", () => switchTab("summaryMatrixTab"));
@@ -920,10 +948,18 @@
 
     // Kopiera delningslänk
     const btnCopyShareUrl = document.getElementById("btnCopyShareUrl");
-    btnCopyShareUrl.addEventListener("click", () => {
-      navigator.clipboard.writeText(shareUrlInput.value);
+    btnCopyShareUrl.addEventListener("click", async () => {
+      const ok = await copyTextToClipboard(shareUrlInput.value);
       const old = btnCopyShareUrl.textContent;
-      btnCopyShareUrl.textContent = "Kopierad!";
+      if (ok) {
+        btnCopyShareUrl.textContent = "Kopierad!";
+      } else {
+        // Automatisk kopiering nekades – markera länken så användaren kan
+        // kopiera manuellt med Ctrl+C.
+        shareUrlInput.focus();
+        shareUrlInput.select();
+        btnCopyShareUrl.textContent = "Kunde inte kopiera";
+      }
       setTimeout(() => (btnCopyShareUrl.textContent = old), 1500);
     });
 
