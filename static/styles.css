@@ -1105,12 +1105,12 @@ button {
 
 .vote-option-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
   min-height: 76px;
-  padding: 12px 6px;
+  height: 76px;
+  width: 76px;
+  padding: 0;
   background: var(--surface);
   border: 1.5px solid var(--border-strong);
   border-radius: 12px;
@@ -1131,49 +1131,35 @@ button {
   box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
 }
 
-/* Färgkodade röstningsknappar baserat på risknivå */
-.vote-option-btn.risk-green {
+/* Statiska färger på röstningsknappar (1=grön, 2=gul, 3=orange, 4=röd) */
+.vote-option-btn[data-prob="1"],
+.vote-option-btn[data-cons="1"] {
   background: var(--green-bg);
   border-color: var(--green-border);
 }
 
-.vote-option-btn.risk-green:hover:not(:disabled):not(.selected) {
-  background: var(--green-bg);
-  border-color: var(--green-border);
-  transform: translateY(-1px);
-}
-
-.vote-option-btn.risk-yellow {
+.vote-option-btn[data-prob="2"],
+.vote-option-btn[data-cons="2"] {
   background: var(--yellow-bg);
   border-color: var(--yellow-border);
 }
 
-.vote-option-btn.risk-yellow:hover:not(:disabled):not(.selected) {
-  background: var(--yellow-bg);
-  border-color: var(--yellow-border);
-  transform: translateY(-1px);
-}
-
-.vote-option-btn.risk-orange {
+.vote-option-btn[data-prob="3"],
+.vote-option-btn[data-cons="3"] {
   background: var(--orange-bg);
   border-color: var(--orange-border);
 }
 
-.vote-option-btn.risk-orange:hover:not(:disabled):not(.selected) {
-  background: var(--orange-bg);
-  border-color: var(--orange-border);
-  transform: translateY(-1px);
-}
-
-.vote-option-btn.risk-red {
+.vote-option-btn[data-prob="4"],
+.vote-option-btn[data-cons="4"] {
   background: var(--red-bg);
   border-color: var(--red-border);
 }
 
-.vote-option-btn.risk-red:hover:not(:disabled):not(.selected) {
-  background: var(--red-bg);
-  border-color: var(--red-border);
-  transform: translateY(-1px);
+/* Lika storlek på alla röstningsknappar */
+.vote-option-btn {
+  min-height: 76px;
+  height: 76px;
 }
 
 .vote-option-btn:disabled {
@@ -1182,19 +1168,12 @@ button {
 }
 
 .vote-num {
-  font-size: 1.15rem;
+  font-size: 1.5rem;
   font-weight: 750;
 }
 
-.vote-text {
-  font-size: 0.72rem;
-  font-weight: 550;
-  color: var(--text-muted);
-  text-align: center;
-}
-
-.vote-option-btn.selected .vote-text {
-  color: rgba(255, 255, 255, 0.85);
+.vote-option-btn.selected .vote-num {
+  color: #fff;
 }
 
 .voting-footer {

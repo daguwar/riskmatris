@@ -417,11 +417,13 @@
     adminSelfVoteToggleBox.classList.toggle("hidden", !isAdmin);
     participantRiskLabelDisplay.classList.toggle("hidden", isAdmin);
 
-    // Vyväljaren: deltagare ser bara "Rösta" och hålls kvar där; admin ser alla tre vyer
+    // Vyväljaren: deltagare ser bara "Rösta", admin ser "Presentation" och "Admin"
+    tabBtnVote.classList.toggle("hidden", isAdmin);
     tabBtnPresent.classList.toggle("hidden", !isAdmin);
     tabBtnAdmin.classList.toggle("hidden", !isAdmin);
     if (!isAdmin) switchView("voteView");
-    adminVoteHint.classList.toggle("hidden", !(isAdmin && !adminWantsToVote));
+    else if (currentView === "voteView") switchView("presentView");
+    adminVoteHint.classList.toggle("hidden", true); // Alltid dölja nu
 
     const maxNum = Math.max(...state.risks.map((r) => r.number));
     btnNextRiskSidebar.textContent = `+ Nästa risk (#${maxNum + 1})`;
@@ -565,26 +567,12 @@
       const p = parseInt(btn.getAttribute("data-prob"), 10);
       btn.classList.toggle("selected", p === selectedProb);
       btn.disabled = Boolean(risk.locked);
-      // Lägg till riskfärg baserat på kombinerat värde med vald konsekvens
-      if (selectedCons) {
-        const meta = getCellMeta(p, selectedCons);
-        btn.className = `vote-option-btn ${p === selectedProb ? 'selected' : ''} risk-${meta.pillClass}`;
-      } else {
-        btn.className = `vote-option-btn ${p === selectedProb ? 'selected' : ''}`;
-      }
     });
 
     consOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
       const c = parseInt(btn.getAttribute("data-cons"), 10);
       btn.classList.toggle("selected", c === selectedCons);
       btn.disabled = Boolean(risk.locked);
-      // Lägg till riskfärg baserat på kombinerat värde med vald sannolikhet
-      if (selectedProb) {
-        const meta = getCellMeta(selectedProb, c);
-        btn.className = `vote-option-btn ${c === selectedCons ? 'selected' : ''} risk-${meta.pillClass}`;
-      } else {
-        btn.className = `vote-option-btn ${c === selectedCons ? 'selected' : ''}`;
-      }
     });
 
     if (risk.locked) {
@@ -609,26 +597,12 @@
       const p = parseInt(btn.getAttribute("data-prob"), 10);
       btn.classList.toggle("selected", p === adminSelectedProb);
       btn.disabled = Boolean(risk.locked);
-      // Lägg till riskfärg baserat på kombinerat värde med vald konsekvens
-      if (adminSelectedCons) {
-        const meta = getCellMeta(p, adminSelectedCons);
-        btn.className = `vote-option-btn ${p === adminSelectedProb ? 'selected' : ''} risk-${meta.pillClass}`;
-      } else {
-        btn.className = `vote-option-btn ${p === adminSelectedProb ? 'selected' : ''}`;
-      }
     });
 
     adminConsOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
       const c = parseInt(btn.getAttribute("data-cons"), 10);
       btn.classList.toggle("selected", c === adminSelectedCons);
       btn.disabled = Boolean(risk.locked);
-      // Lägg till riskfärg baserat på kombinerat värde med vald sannolikhet
-      if (adminSelectedProb) {
-        const meta = getCellMeta(adminSelectedProb, c);
-        btn.className = `vote-option-btn ${c === adminSelectedCons ? 'selected' : ''} risk-${meta.pillClass}`;
-      } else {
-        btn.className = `vote-option-btn ${c === adminSelectedCons ? 'selected' : ''}`;
-      }
     });
 
     if (risk.locked) {
