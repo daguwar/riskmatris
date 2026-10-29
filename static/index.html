@@ -78,9 +78,11 @@
             id="inputSessionTitle"
             class="form-input"
             placeholder="T.ex. Riskanalys – Projekt Alfa"
-            value="Riskanalys"
             maxlength="80"
           />
+          <p class="input-hint">
+            Data sparas på servern. Ange inte känsliga uppgifter som personuppgifter eller förtrolig information.
+          </p>
           <label class="form-label" for="inputDefaultThreshold">Rösttröskel för automatisk visning</label>
           <input
             type="number"
@@ -122,14 +124,6 @@
           <div class="active-risk-title-row">
             <div class="risk-number-pill" id="activeRiskBadge">Risk #1</div>
             <div class="active-risk-label-area">
-              <!-- För admin: redigerbart textfält för valfri etikett -->
-              <input
-                type="text"
-                id="adminRiskLabelInput"
-                class="risk-label-input hidden"
-                placeholder="Valfri benämning (t.ex. från PowerPoint)..."
-                maxlength="120"
-              />
               <!-- För deltagare: läsbar etikett -->
               <h2 id="participantRiskLabelDisplay" class="participant-risk-title">
                 Bedöm Sannolikhet och Konsekvens
@@ -351,15 +345,100 @@
               </div>
             </div>
           </div>
+          <div class="admin-toolbar-row">
+            <div class="admin-toolbar-group admin-toolbar-label">
+              <label class="form-label" for="adminRiskLabelInput">Etikett för risk #<span id="adminLabelRiskNum">1</span></label>
+              <input
+                type="text"
+                id="adminRiskLabelInput"
+                class="form-input"
+                placeholder="Valfri benämning (t.ex. från PowerPoint)..."
+                maxlength="120"
+              />
+              <p class="input-hint">
+                Data sparas på servern. Undvik känsliga uppgifter.
+              </p>
+            </div>
+          </div>
           <div class="admin-toolbar-row admin-toolbar-actions">
             <div id="adminSelfVoteToggleBox" class="hidden">
-              <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote">Rösta själv</button>
+              <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote">Rösta själv på denna risk</button>
             </div>
             <div class="admin-action-buttons hidden" id="adminRiskActions">
               <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow">Visa resultat nu</button>
               <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" title="Nollställ rösterna för denna risk">Nollställ</button>
               <button type="button" class="btn btn-success btn-sm" id="btnLockRisk">Lås placering</button>
               <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext">Nästa &rarr;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Röstningskort för admin (fälls ut när "Rösta själv" klickas) -->
+        <div id="adminVotePanel" class="admin-vote-panel hidden">
+          <div class="card voting-card">
+            <div class="voting-card-header">
+              <h3>Din bedömning av <span id="adminVotingCardRiskNum">Risk #1</span></h3>
+              <span class="vote-saved-indicator hidden" id="adminMyVoteSavedBadge">Din röst är registrerad</span>
+            </div>
+
+            <div class="voting-axes-grid">
+              <!-- Sannolikhet (1-4) -->
+              <div class="voting-axis-box">
+                <div class="axis-title-row">
+                  <h4>Sannolikhet</h4>
+                  <span class="axis-subtitle">Hur troligt är det att risken inträffar?</span>
+                </div>
+                <div class="vote-options-list" id="adminProbOptionsGroup">
+                  <button type="button" class="vote-option-btn" data-prob="1">
+                    <span class="vote-num">1</span>
+                    <span class="vote-text">Osannolik</span>
+                  </button>
+                  <button type="button" class="vote-option-btn" data-prob="2">
+                    <span class="vote-num">2</span>
+                    <span class="vote-text">Möjlig</span>
+                  </button>
+                  <button type="button" class="vote-option-btn" data-prob="3">
+                    <span class="vote-num">3</span>
+                    <span class="vote-text">Sannolik</span>
+                  </button>
+                  <button type="button" class="vote-option-btn" data-prob="4">
+                    <span class="vote-num">4</span>
+                    <span class="vote-text">Mycket sannolik</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Konsekvens (1-4) -->
+              <div class="voting-axis-box">
+                <div class="axis-title-row">
+                  <h4>Konsekvens</h4>
+                  <span class="axis-subtitle">Hur allvarlig blir följden om det sker?</span>
+                </div>
+                <div class="vote-options-list" id="adminConsOptionsGroup">
+                  <button type="button" class="vote-option-btn" data-cons="1">
+                    <span class="vote-num">1</span>
+                    <span class="vote-text">Försumbar</span>
+                  </button>
+                  <button type="button" class="vote-option-btn" data-cons="2">
+                    <span class="vote-num">2</span>
+                    <span class="vote-text">Måttlig</span>
+                  </button>
+                  <button type="button" class="vote-option-btn" data-cons="3">
+                    <span class="vote-num">3</span>
+                    <span class="vote-text">Allvarlig</span>
+                  </button>
+                  <button type="button" class="vote-option-btn" data-cons="4">
+                    <span class="vote-num">4</span>
+                    <span class="vote-text">Mycket allvarlig</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="voting-footer">
+              <div class="my-selection-preview" id="adminMySelectionPreview">
+                Välj både Sannolikhet (1–4) och Konsekvens (1–4) ovan.
+              </div>
             </div>
           </div>
         </div>

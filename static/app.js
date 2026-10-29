@@ -64,7 +64,10 @@
   let selectedCons = null;
   let lastActiveRiskNum = null;
   let adminWantsToVote = false;
+  let adminSelectedProb = null;
+  let adminSelectedCons = null;
   let customShareBaseUrl = "";
+  let currentView = "voteView";
 
   // DOM-element
   const landingView = document.getElementById("landingView");
@@ -130,6 +133,15 @@
   const probOptionsGroup = document.getElementById("probOptionsGroup");
   const consOptionsGroup = document.getElementById("consOptionsGroup");
   const mySelectionPreview = document.getElementById("mySelectionPreview");
+  
+  // Admin vote panel elements
+  const adminVotePanel = document.getElementById("adminVotePanel");
+  const adminVotingCardRiskNum = document.getElementById("adminVotingCardRiskNum");
+  const adminMyVoteSavedBadge = document.getElementById("adminMyVoteSavedBadge");
+  const adminProbOptionsGroup = document.getElementById("adminProbOptionsGroup");
+  const adminConsOptionsGroup = document.getElementById("adminConsOptionsGroup");
+  const adminMySelectionPreview = document.getElementById("adminMySelectionPreview");
+  const adminLabelRiskNum = document.getElementById("adminLabelRiskNum");
 
   const activeMatrixHeading = document.getElementById("activeMatrixHeading");
   const activeMatrixSubtitle = document.getElementById("activeMatrixSubtitle");
@@ -403,7 +415,6 @@
     adminSettingsCard.classList.toggle("hidden", !isAdmin);
     adminRiskActions.classList.toggle("hidden", !isAdmin);
     adminSelfVoteToggleBox.classList.toggle("hidden", !isAdmin);
-    adminRiskLabelInput.classList.toggle("hidden", !isAdmin);
     participantRiskLabelDisplay.classList.toggle("hidden", isAdmin);
 
     // Vyväljaren: deltagare ser bara "Rösta" och hålls kvar där; admin ser alla tre vyer
@@ -425,6 +436,10 @@
         adminRiskLabelInput.value = activeRisk.label || "";
         adminRiskLabelInput.placeholder = `Valfri etikett för Risk #${activeRisk.number} (t.ex. från PowerPoint)...`;
       }
+      // Uppdatera risknumret i etikettfältets label
+      if (adminLabelRiskNum) {
+        adminLabelRiskNum.textContent = activeRisk.number;
+      }
       adminClickMatrixHint.textContent =
         "Tips för mötesledare: Klicka på valfri ruta i matrisen för att manuellt justera placeringen efter diskussion.";
     } else {
@@ -434,10 +449,18 @@
       adminClickMatrixHint.textContent = "";
     }
 
-    // Visa röstningskortet alltid för deltagare, och för admin om admin klickat "Rösta själv"
-    const showVotingCard = !isAdmin || adminWantsToVote;
-    votingPanelCard.classList.toggle("hidden", !showVotingCard);
-    btnToggleAdminVote.textContent = adminWantsToVote ? "Dölj egen röstning" : "Rösta själv på denna fråga";
+    // Visa röstningskortet alltid för deltagare
+    votingPanelCard.classList.toggle("hidden", isAdmin);
+    btnToggleAdminVote.textContent = adminWantsToVote ? "Dölj egen röstning" : "Rösta själv på denna risk";
+    
+    // Visa admin's röstningspanel när admin vill rösta
+    if (adminVotePanel) {
+      adminVotePanel.classList.toggle("hidden", !adminWantsToVote);
+      if (adminWantsToVote && adminVotingCardRiskNum) {
+        adminVotingCardRiskNum.textContent = `Risk #${activeRisk.number}`;
+        renderAdminVotingControls(activeRisk, Boolean(state.my_vote));
+      }
+    }
 
     // Renderera sidopanelens risklista
     renderSidebarRiskList(state.risks, activeRisk.number, isAdmin);
@@ -542,12 +565,26 @@
       const p = parseInt(btn.getAttribute("data-prob"), 10);
       btn.classList.toggle("selected", p === selectedProb);
       btn.disabled = Boolean(risk.locked);
+      // Lägg till riskfärg baserat på kombinerat värde med vald konsekvens
+      if (selectedCons) {
+        const meta = getCellMeta(p, selectedCons);
+        btn.className = `vote-option-btn ${p === selectedProb ? 'selected' : ''} risk-${meta.pillClass}`;
+      } else {
+        btn.className = `vote-option-btn ${p === selectedProb ? 'selected' : ''}`;
+      }
     });
 
     consOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
       const c = parseInt(btn.getAttribute("data-cons"), 10);
       btn.classList.toggle("selected", c === selectedCons);
       btn.disabled = Boolean(risk.locked);
+      // Lägg till riskfärg baserat på kombinerat värde med vald sannolikhet
+      if (selectedProb) {
+        const meta = getCellMeta(selectedProb, c);
+        btn.className = `vote-option-btn ${c === selectedCons ? 'selected' : ''} risk-${meta.pillClass}`;
+      } else {
+        btn.className = `vote-option-btn ${c === selectedCons ? 'selected' : ''}`;
+      }
     });
 
     if (risk.locked) {
@@ -560,6 +597,50 @@
         `&rarr; Riskvärde <strong>${meta.score} (${meta.level})</strong>`;
     } else {
       mySelectionPreview.textContent = "Klicka på en Sannolikhet (1–4) och en Konsekvens (1–4) ovan för att rösta.";
+    }
+  }
+
+  function renderAdminVotingControls(risk, hasVoted) {
+    if (!adminMyVoteSavedBadge || !adminProbOptionsGroup || !adminConsOptionsGroup || !adminMySelectionPreview) return;
+    
+    adminMyVoteSavedBadge.classList.toggle("hidden", !hasVoted);
+
+    adminProbOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
+      const p = parseInt(btn.getAttribute("data-prob"), 10);
+      btn.classList.toggle("selected", p === adminSelectedProb);
+      btn.disabled = Boolean(risk.locked);
+      // Lägg till riskfärg baserat på kombinerat värde med vald konsekvens
+      if (adminSelectedCons) {
+        const meta = getCellMeta(p, adminSelectedCons);
+        btn.className = `vote-option-btn ${p === adminSelectedProb ? 'selected' : ''} risk-${meta.pillClass}`;
+      } else {
+        btn.className = `vote-option-btn ${p === adminSelectedProb ? 'selected' : ''}`;
+      }
+    });
+
+    adminConsOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
+      const c = parseInt(btn.getAttribute("data-cons"), 10);
+      btn.classList.toggle("selected", c === adminSelectedCons);
+      btn.disabled = Boolean(risk.locked);
+      // Lägg till riskfärg baserat på kombinerat värde med vald sannolikhet
+      if (adminSelectedProb) {
+        const meta = getCellMeta(adminSelectedProb, c);
+        btn.className = `vote-option-btn ${c === adminSelectedCons ? 'selected' : ''} risk-${meta.pillClass}`;
+      } else {
+        btn.className = `vote-option-btn ${c === adminSelectedCons ? 'selected' : ''}`;
+      }
+    });
+
+    if (risk.locked) {
+      adminMySelectionPreview.textContent = "Omröstningen för denna risk är låst.";
+    } else if (adminSelectedProb && adminSelectedCons) {
+      const meta = getCellMeta(adminSelectedProb, adminSelectedCons);
+      adminMySelectionPreview.innerHTML =
+        `Ditt val: <strong>Sannolikhet ${adminSelectedProb} (${PROB_LABELS[adminSelectedProb]})</strong> &times; ` +
+        `<strong>Konsekvens ${adminSelectedCons} (${CONS_LABELS[adminSelectedCons]})</strong> ` +
+        `&rarr; Riskvärde <strong>${meta.score} (${meta.level})</strong>`;
+    } else {
+      adminMySelectionPreview.textContent = "Klicka på en Sannolikhet (1–4) och en Konsekvens (1–4) ovan för att rösta.";
     }
   }
 
@@ -921,6 +1002,26 @@
       if (sessionState) handleSessionState(sessionState);
     });
 
+    // Admin's röstningsknappar Sannolikhet (1-4)
+    if (adminProbOptionsGroup) {
+      adminProbOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          adminSelectedProb = parseInt(btn.getAttribute("data-prob"), 10);
+          submitAdminVoteIfComplete();
+        });
+      });
+    }
+
+    // Admin's röstningsknappar Konsekvens (1-4)
+    if (adminConsOptionsGroup) {
+      adminConsOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          adminSelectedCons = parseInt(btn.getAttribute("data-cons"), 10);
+          submitAdminVoteIfComplete();
+        });
+      });
+    }
+
     // Admin: ändra etikett på risk
     let labelDebounce = null;
     adminRiskLabelInput.addEventListener("input", () => {
@@ -1026,6 +1127,22 @@
         action: "vote",
         probability: selectedProb,
         consequence: selectedCons,
+      });
+    }
+  }
+
+  function submitAdminVoteIfComplete() {
+    if (sessionState) {
+      const activeRisk =
+        sessionState.risks.find((r) => r.number === sessionState.active_risk_number) ||
+        sessionState.risks[sessionState.risks.length - 1];
+      renderAdminVotingControls(activeRisk, Boolean(sessionState.my_vote));
+    }
+    if (adminSelectedProb && adminSelectedCons) {
+      sendWsAction({
+        action: "vote",
+        probability: adminSelectedProb,
+        consequence: adminSelectedCons,
       });
     }
   }
