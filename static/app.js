@@ -139,6 +139,8 @@
   const summaryTableBody = document.getElementById("summaryTableBody");
 
   const qrModal = document.getElementById("qrModal");
+  const adminToolbar = document.getElementById("adminToolbar");
+  const shareCard = document.getElementById("shareCard");
 
   // -------------------------------------------------------------------------
   // Initiering & Routing
@@ -398,6 +400,10 @@
     adminSelfVoteToggleBox.classList.toggle("hidden", !isAdmin);
     adminRiskLabelInput.classList.toggle("hidden", !isAdmin);
     participantRiskLabelDisplay.classList.toggle("hidden", isAdmin);
+
+    // Verktygsrad och delningskort visas enbart för admin (deltagare ser bara röstningen)
+    adminToolbar.classList.toggle("hidden", !isAdmin);
+    shareCard.classList.toggle("hidden", !isAdmin);
 
     const maxNum = Math.max(...state.risks.map((r) => r.number));
     btnNextRiskSidebar.textContent = `+ Nästa risk (#${maxNum + 1})`;

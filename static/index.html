@@ -9,106 +9,53 @@
 <body>
   <!-- Toppnavigering -->
   <header class="topbar">
-    <div class="topbar-left">
+    <div class="topbar-inner">
       <a href="/" class="brand" id="brandLink" title="Till startsidan">
         <span class="brand-grid-icon">
-          <span class="g-yellow"></span><span class="g-red"></span>
-          <span class="g-green"></span><span class="g-orange"></span>
+          <span class="g-green"></span><span class="g-yellow"></span>
+          <span class="g-orange"></span><span class="g-red"></span>
         </span>
         <span class="brand-text">Riskmatris <span class="brand-badge">LIVE</span></span>
       </a>
       <span id="sessionTitleDisplay" class="session-title-display hidden"></span>
-    </div>
 
-    <div class="topbar-right hidden" id="sessionHeaderControls">
-      <div class="status-pill" id="participantsPill" title="Antal anslutna deltagare (exkl. mötesledare)">
-        <span class="dot-live" id="wsStatusDot"></span>
-        <span id="participantCountText">0 deltagare</span>
-      </div>
-
-      <div class="session-code-pill" id="topSessionCodeBox" title="Klicka för att visa QR-kod och länk">
-        <span class="code-label">Kod:</span>
-        <strong id="headerSessionCode">------</strong>
-        <button type="button" class="btn-icon-small" id="btnShowQrModal" title="Förstora QR-kod">QR</button>
+      <div class="topbar-right hidden" id="sessionHeaderControls">
+        <div class="status-pill" id="participantsPill" title="Antal anslutna deltagare (exkl. mötesledare)">
+          <span class="dot-live" id="wsStatusDot"></span>
+          <span id="participantCountText">0 deltagare</span>
+        </div>
+        <button type="button" class="session-code-pill" id="topSessionCodeBox" title="Visa QR-kod och delningslänk">
+          <span class="code-label">Kod</span>
+          <strong id="headerSessionCode">------</strong>
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- VY 1: STARTSIDA (Skapa eller anslut till session) -->
-  <main id="landingView" class="landing-container">
-    <div class="landing-hero">
-      <h1>Gemensam Riskmatris i Realtid</h1>
-      <p>
-        Starta en öppen röstningssession för er riskanalys. Deltagarna ansluter direkt via
-        QR-kod eller länk – helt anonymt och utan inloggning.
-      </p>
-    </div>
+  <!-- VY 1: STARTSIDA (Anslut med kod i fokus, skapa session sekundärt) -->
+  <main id="landingView" class="landing">
+    <div class="landing-inner">
+      <div class="landing-hero">
+        <h1>Riskbedömning i realtid</h1>
+        <p>Skriv in koden du fått av mötesledaren och rösta anonymt – direkt i mobilen.</p>
+      </div>
 
-    <div class="landing-cards">
-      <!-- Kort 1: Starta ny session -->
+      <!-- Anslut till session (primär åtgärd) -->
       <section class="card landing-card">
-        <div class="card-badge">För mötesledare / administratör</div>
-        <h2>Starta en ny session</h2>
-        <p class="card-desc">
-          Genererar ett unikt sessions-ID med QR-kod och delningslänk som du kan visa på projektorn.
-        </p>
-        <form id="createSessionForm" class="form-stack">
-          <label class="form-label">
-            Namn på sessionen (valfritt)
-            <input
-              type="text"
-              id="inputSessionTitle"
-              class="form-input"
-              placeholder="T.ex. Riskanalys – Projekt Alfa"
-              value="Riskanalys"
-              maxlength="80"
-            />
-          </label>
-          <label class="form-label">
-            Rösttröskel för automatisk visning
-            <div class="input-with-hint">
-              <input
-                type="number"
-                id="inputDefaultThreshold"
-                class="form-input"
-                value="4"
-                min="1"
-                max="50"
-              />
-              <span class="input-hint">
-                Matrisen visas när minst detta antal svar (eller alla anslutna om färre) har kommit in.
-              </span>
-            </div>
-          </label>
-          <button type="submit" class="btn btn-primary btn-large">
-            Starta session &amp; skapa QR-kod
-          </button>
-        </form>
-      </section>
-
-      <!-- Kort 2: Anslut till session -->
-      <section class="card landing-card">
-        <div class="card-badge badge-secondary">För deltagare</div>
-        <h2>Anslut med sessionskod</h2>
-        <p class="card-desc">
-          Har du fått en 6-teckens sessionskod? Skriv in den nedan för att gå direkt till omröstningen.
-        </p>
+        <h2>Anslut till en session</h2>
         <form id="joinSessionForm" class="form-stack">
-          <label class="form-label">
-            Sessionskod
-            <input
-              type="text"
-              id="inputJoinCode"
-              class="form-input input-code"
-              placeholder="T.ex. K7M9P2"
-              maxlength="10"
-              autocomplete="off"
-              required
-            />
-          </label>
-          <button type="submit" class="btn btn-secondary btn-large">
-            Anslut till session
-          </button>
+          <label class="form-label" for="inputJoinCode">Sessionskod</label>
+          <input
+            type="text"
+            id="inputJoinCode"
+            class="form-input input-code"
+            placeholder="K7M9P2"
+            maxlength="10"
+            autocomplete="off"
+            autocapitalize="characters"
+            required
+          />
+          <button type="submit" class="btn btn-primary btn-large btn-block">Anslut</button>
         </form>
 
         <div id="recentSessionsBox" class="recent-sessions hidden">
@@ -116,87 +63,101 @@
           <div id="recentSessionsList" class="recent-list"></div>
         </div>
       </section>
+
+      <div class="landing-divider"><span>eller</span></div>
+
+      <!-- Starta ny session (sekundär åtgärd) -->
+      <section class="card landing-card landing-card-muted">
+        <h2>Starta ny session <span class="card-tag">för mötesledare</span></h2>
+        <form id="createSessionForm" class="form-stack">
+          <label class="form-label" for="inputSessionTitle">Namn på sessionen (valfritt)</label>
+          <input
+            type="text"
+            id="inputSessionTitle"
+            class="form-input"
+            placeholder="T.ex. Riskanalys – Projekt Alfa"
+            value="Riskanalys"
+            maxlength="80"
+          />
+          <label class="form-label" for="inputDefaultThreshold">Rösttröskel för automatisk visning</label>
+          <input
+            type="number"
+            id="inputDefaultThreshold"
+            class="form-input form-input-compact"
+            value="4"
+            min="1"
+            max="50"
+          />
+          <p class="input-hint">
+            Matrisen visas när minst detta antal svar (eller alla anslutna om färre) har kommit in.
+          </p>
+          <button type="submit" class="btn btn-secondary btn-large btn-block">Starta session &amp; skapa QR-kod</button>
+        </form>
+      </section>
     </div>
   </main>
 
   <!-- VY 2: AKTIV SESSION -->
   <main id="sessionView" class="session-layout hidden">
-    <!-- Vänster/Sidopanel: Anslutning (QR) + Risklista -->
-    <aside class="session-sidebar" id="sessionSidebar">
-      <!-- QR & Delningskort (visas primärt för admin, komprimerat för deltagare) -->
-      <div class="card sidebar-qr-card" id="sidebarQrCard">
-        <div class="sidebar-qr-header">
-          <div>
-            <span class="small-caps">Anslut till session</span>
-            <div class="sidebar-session-code" id="sidebarSessionCode">------</div>
+    <div class="session-main">
+      <!-- Adminverktygsrad (dold för deltagare) -->
+      <div class="card admin-toolbar hidden" id="adminToolbar">
+        <div class="admin-toolbar-row">
+          <div class="admin-toolbar-group admin-toolbar-risks">
+            <span class="small-caps">Risker <span class="risk-count-badge" id="riskCountBadge">1 st</span></span>
+            <div class="risk-list" id="riskListContainer"></div>
+            <div id="adminNextRiskBox" class="hidden">
+              <button type="button" class="btn btn-outline btn-sm" id="btnNextRiskSidebar">+ Nästa risk</button>
+            </div>
           </div>
-          <button type="button" class="btn btn-outline btn-sm" id="btnExpandQr">
-            Förstora QR
-          </button>
+          <div class="admin-toolbar-group hidden" id="adminSettingsCard">
+            <span class="small-caps">Tröskel</span>
+            <div class="threshold-control-row">
+              <input type="number" id="adminThresholdInput" class="form-input form-input-sm" min="1" max="50" value="4" />
+              <span class="small-muted" id="effectiveThresholdInfo"></span>
+            </div>
+          </div>
         </div>
+        <div class="admin-toolbar-row admin-toolbar-actions">
+          <div id="adminSelfVoteToggleBox" class="hidden">
+            <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote">Rösta själv</button>
+          </div>
+          <div class="admin-action-buttons hidden" id="adminRiskActions">
+            <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow">Visa resultat nu</button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" title="Nollställ rösterna för denna risk">Nollställ</button>
+            <button type="button" class="btn btn-success btn-sm" id="btnLockRisk">Lås placering</button>
+            <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext">Nästa &rarr;</button>
+          </div>
+        </div>
+      </div>
 
+      <!-- Delningskort (dolt för deltagare) -->
+      <div class="card share-card hidden" id="shareCard">
+        <div class="share-card-head">
+          <div>
+            <span class="small-caps">Dela sessionen</span>
+            <div class="share-session-code" id="sidebarSessionCode">------</div>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" id="btnExpandQr">Förstora QR</button>
+        </div>
         <div class="qr-preview-wrapper" id="qrPreviewWrapper" title="Klicka för att förstora QR-koden">
           <div id="sidebarQrContainer" class="qr-box"></div>
         </div>
-
         <div class="share-url-group">
           <input type="text" id="shareUrlInput" class="form-input form-input-sm" readonly />
-          <button type="button" class="btn btn-secondary btn-sm" id="btnCopyShareUrl">
-            Kopiera
-          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnCopyShareUrl">Kopiera</button>
         </div>
         <p class="qr-lan-hint hidden" id="lanIpHint"></p>
       </div>
 
-      <!-- Lista över risker (#1, #2, #3...) -->
-      <div class="card sidebar-risks-card">
-        <div class="sidebar-section-header">
-          <h3>Risker i sessionen</h3>
-          <span class="risk-count-badge" id="riskCountBadge">1 st</span>
-        </div>
-
-        <div class="risk-list" id="riskListContainer"></div>
-
-        <!-- Admin-knapp för att starta nästa risk -->
-        <div id="adminNextRiskBox" class="admin-next-risk-box hidden">
-          <button type="button" class="btn btn-primary btn-block" id="btnNextRiskSidebar">
-            + Nästa risk (#2)
-          </button>
-        </div>
-      </div>
-
-      <!-- Admin-inställningar för tröskelvärde -->
-      <div class="card sidebar-settings-card hidden" id="adminSettingsCard">
-        <div class="sidebar-section-header">
-          <h3>Rösttröskel</h3>
-        </div>
-        <div class="threshold-control-row">
-          <label for="adminThresholdInput">Minsta antal svar:</label>
-          <input type="number" id="adminThresholdInput" class="form-input form-input-sm" min="1" max="50" value="4" />
-        </div>
-        <p class="small-muted" id="effectiveThresholdInfo">
-          Effektiv tröskel just nu: 4 svar
-        </p>
-      </div>
-    </aside>
-
-    <!-- Huvudyta -->
-    <section class="session-main">
       <!-- Flikväljare: Aktuell omröstning vs Sammanställningsmatris -->
       <div class="view-tabs-bar">
         <div class="view-tabs">
           <button type="button" class="tab-btn active" data-tab="activeRiskTab" id="tabBtnActiveRisk">
-            Aktuell omröstning (<span id="tabActiveRiskNum">#1</span>)
+            Omröstning <span class="tab-risk-num" id="tabActiveRiskNum">#1</span>
           </button>
           <button type="button" class="tab-btn" data-tab="summaryMatrixTab" id="tabBtnSummaryMatrix">
-            Sammanställningsmatris (<span id="tabLockedCount">0</span> låsta)
-          </button>
-        </div>
-
-        <!-- För admin: möjlighet att även själv avge en röst -->
-        <div id="adminSelfVoteToggleBox" class="hidden">
-          <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote">
-            Rösta själv på denna fråga
+            Sammanställning <span class="tab-count" id="tabLockedCount">0</span>
           </button>
         </div>
       </div>
@@ -213,7 +174,7 @@
                 type="text"
                 id="adminRiskLabelInput"
                 class="risk-label-input hidden"
-                placeholder="Valfri benämning (t.ex. från PowerPoint, eller lämna tomt för #1)..."
+                placeholder="Valfri benämning (t.ex. från PowerPoint)..."
                 maxlength="120"
               />
               <!-- För deltagare: läsbar etikett -->
@@ -224,51 +185,33 @@
             <div id="activeRiskStatusTag" class="risk-status-tag">Öppen för röstning</div>
           </div>
 
-          <!-- Förloppsindikator & Admin-styrknappar -->
+          <!-- Förloppsindikator -->
           <div class="vote-progress-row">
             <div class="vote-progress-info">
               <div class="vote-count-headline">
                 <strong id="currentVoteCountText">0</strong> av
-                <strong id="currentThresholdText">4</strong> svar för visning
-                <span class="vote-total-sub" id="totalVotesSubtext">(Totalt 0 röster)</span>
+                <strong id="currentThresholdText">4</strong> svar
+                <span class="vote-total-sub" id="totalVotesSubtext">(0 röster inkomna)</span>
               </div>
               <div class="progress-bar-track">
                 <div class="progress-bar-fill" id="voteProgressBar" style="width: 0%"></div>
               </div>
             </div>
-
-            <!-- Admin-knappar för aktuell risk -->
-            <div class="admin-action-buttons hidden" id="adminRiskActions">
-              <button type="button" class="btn btn-secondary btn-sm" id="btnRevealNow">
-                Visa resultat nu
-              </button>
-              <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" title="Nollställ rösterna för denna risk">
-                Nollställ röster
-              </button>
-              <button type="button" class="btn btn-success btn-sm" id="btnLockRisk">
-                Lås placering i sammanställning
-              </button>
-              <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext">
-                Spara &amp; Nästa risk &rarr;
-              </button>
-            </div>
           </div>
         </div>
 
-        <!-- DELTAGARENS RÖSTNINGSPANEL (visas alltid för deltagare, och valfritt för admin) -->
+        <!-- DELTAGARENS RÖSTNINGSPANEL -->
         <div class="card voting-card" id="votingPanelCard">
           <div class="voting-card-header">
             <h3>Din bedömning av <span id="votingCardRiskNum">Risk #1</span></h3>
-            <span class="vote-saved-indicator hidden" id="myVoteSavedBadge">
-              ✓ Din röst är registrerad (du kan ändra tills frågan låses)
-            </span>
+            <span class="vote-saved-indicator hidden" id="myVoteSavedBadge">Din röst är registrerad</span>
           </div>
 
           <div class="voting-axes-grid">
             <!-- Sannolikhet (1-4) -->
             <div class="voting-axis-box">
               <div class="axis-title-row">
-                <h4>Sannolikhet (X-axel)</h4>
+                <h4>Sannolikhet</h4>
                 <span class="axis-subtitle">Hur troligt är det att risken inträffar?</span>
               </div>
               <div class="vote-options-list" id="probOptionsGroup">
@@ -294,7 +237,7 @@
             <!-- Konsekvens (1-4) -->
             <div class="voting-axis-box">
               <div class="axis-title-row">
-                <h4>Konsekvens (Y-axel)</h4>
+                <h4>Konsekvens</h4>
                 <span class="axis-subtitle">Hur allvarlig blir följden om det sker?</span>
               </div>
               <div class="vote-options-list" id="consOptionsGroup">
@@ -338,24 +281,24 @@
             <!-- Sammanfattningsbox för snitt & föreslagen placering -->
             <div class="stats-summary-pills hidden" id="activeStatsSummaryBox">
               <div class="stat-chip">
-                <span class="stat-label">Snitt Sannolikhet:</span>
+                <span class="stat-label">Snitt Sannolikhet</span>
                 <strong id="statAvgProb">-</strong>
               </div>
               <div class="stat-chip">
-                <span class="stat-label">Snitt Konsekvens:</span>
+                <span class="stat-label">Snitt Konsekvens</span>
                 <strong id="statAvgCons">-</strong>
               </div>
               <div class="stat-chip stat-chip-highlight" id="statFinalChip">
-                <span class="stat-label">Placering:</span>
+                <span class="stat-label">Placering</span>
                 <strong id="statSuggestedCell">-</strong>
               </div>
             </div>
           </div>
 
-          <!-- Dold-overlay innan tröskeln nåtts -->
+          <!-- Tomt läge innan tröskeln nåtts -->
           <div class="matrix-masked-banner" id="matrixMaskedBanner">
-            <div class="masked-icon">⏳</div>
-            <h4>Inväntar svar från deltagarna...</h4>
+            <div class="masked-spinner"></div>
+            <h4>Inväntar svar från deltagarna</h4>
             <p id="maskedBannerText">
               För att ingen ska påverkas av tidiga röster visas matrisen så snart
               tröskelvärdet har uppnåtts.
@@ -364,62 +307,66 @@
 
           <!-- 4x4 Matrisen (Konsekvens Y 4->1, Sannolikhet X 1->4) -->
           <div class="matrix-board-wrapper" id="activeMatrixWrapper">
-            <div class="matrix-y-axis-title">KONSEKVENS &uarr;</div>
-            <div class="matrix-main-area">
-              <div class="matrix-grid-4x4" id="activeMatrixGrid">
-                <!-- Genereras dynamiskt av app.js -->
+            <div class="matrix-board">
+              <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
+              <div class="matrix-main-area">
+                <div class="matrix-grid-4x4" id="activeMatrixGrid">
+                  <!-- Genereras dynamiskt av app.js -->
+                </div>
+                <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
               </div>
-              <div class="matrix-x-axis-title">SANNOLIKHET &rarr;</div>
             </div>
           </div>
 
           <!-- Färgförklaring -->
           <div class="matrix-legend">
-            <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg risk</span>
-            <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medelrisk</span>
-            <span class="legend-item"><span class="legend-swatch swatch-orange"></span> 8–9 Hög risk</span>
-            <span class="legend-item"><span class="legend-swatch swatch-red"></span> 12–16 Mycket hög risk</span>
+            <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg</span>
+            <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medel</span>
+            <span class="legend-item"><span class="legend-swatch swatch-orange"></span> 8–9 Hög</span>
+            <span class="legend-item"><span class="legend-swatch swatch-red"></span> 12–16 Mycket hög</span>
             <span class="legend-hint" id="adminClickMatrixHint"></span>
           </div>
         </div>
       </div>
 
-      <!-- FLIK 2: SAMMANSTÄLLNINGSMATRIS (Alla risker #1, #2, #3...) -->
+      <!-- FLIK 2: SAMMANSTÄLLNINGSMATRIS -->
       <div id="summaryMatrixTab" class="tab-content hidden">
         <div class="card matrix-section-card">
           <div class="matrix-card-top">
             <div>
-              <h3>Sammanställningsmatris – Alla bedömda risker</h3>
+              <h3>Sammanställningsmatris</h3>
               <p class="matrix-subtitle">
-                Här visas samtliga risker (#1, #2, #3...) i samma 4&times;4-matris. Klicka på en riskbricka för att visa dess röstdetaljer.
+                Alla bedömda risker (#1, #2, #3...) i samma 4&times;4-matris. Klicka på en riskbricka för att visa dess röstdetaljer.
               </p>
             </div>
             <div class="export-buttons-row">
               <button type="button" class="btn btn-primary btn-sm" id="btnExportPng">
-                Ladda ner PNG-bild (PowerPoint)
+                PNG-bild (PowerPoint)
               </button>
               <button type="button" class="btn btn-secondary btn-sm" id="btnExportCsv">
-                Exportera till Excel (CSV)
+                Excel (CSV)
               </button>
             </div>
           </div>
 
           <!-- 4x4 Sammanställningsmatris -->
           <div class="matrix-board-wrapper">
-            <div class="matrix-y-axis-title">KONSEKVENS &uarr;</div>
-            <div class="matrix-main-area">
-              <div class="matrix-grid-4x4" id="summaryMatrixGrid">
-                <!-- Genereras dynamiskt av app.js -->
+            <div class="matrix-board">
+              <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
+              <div class="matrix-main-area">
+                <div class="matrix-grid-4x4" id="summaryMatrixGrid">
+                  <!-- Genereras dynamiskt av app.js -->
+                </div>
+                <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
               </div>
-              <div class="matrix-x-axis-title">SANNOLIKHET &rarr;</div>
             </div>
           </div>
 
           <div class="matrix-legend">
-            <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg risk</span>
-            <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medelrisk</span>
-            <span class="legend-item"><span class="legend-swatch swatch-orange"></span> 8–9 Hög risk</span>
-            <span class="legend-item"><span class="legend-swatch swatch-red"></span> 12–16 Mycket hög risk</span>
+            <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg</span>
+            <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medel</span>
+            <span class="legend-item"><span class="legend-swatch swatch-orange"></span> 8–9 Hög</span>
+            <span class="legend-item"><span class="legend-swatch swatch-red"></span> 12–16 Mycket hög</span>
           </div>
         </div>
 
@@ -446,15 +393,15 @@
           </div>
         </div>
       </div>
-    </section>
+    </div>
   </main>
 
   <!-- MODAL: FÖRSTORAD QR-KOD FÖR PROJEKTOR -->
   <div id="qrModal" class="modal-backdrop hidden">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h2>Skanna QR-koden för att delta</h2>
-        <button type="button" class="btn-close-modal" id="btnCloseQrModal">&times;</button>
+        <h2>Skanna för att delta</h2>
+        <button type="button" class="btn-close-modal" id="btnCloseQrModal" title="Stäng">&times;</button>
       </div>
       <div class="modal-body qr-modal-body">
         <div id="modalQrContainer" class="qr-box-large"></div>
@@ -481,4 +428,3 @@
   <script src="/static/app.js"></script>
 </body>
 </html>
-
