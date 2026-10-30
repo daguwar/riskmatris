@@ -93,7 +93,7 @@
   const btnNextRiskSidebar = document.getElementById("btnNextRiskSidebar");
   const adminSettingsCard = document.getElementById("adminSettingsCard");
   const adminThresholdInput = document.getElementById("adminThresholdInput");
-  const effectiveThresholdInfo = document.getElementById("effectiveThresholdInfo");
+  const thresholdInfo = document.getElementById("thresholdInfo");
 
   const tabBtnVote = document.getElementById("tabBtnVote");
   const tabBtnPresent = document.getElementById("tabBtnPresent");
@@ -460,7 +460,7 @@
       if (document.activeElement !== adminThresholdInput) {
         adminThresholdInput.value = state.threshold;
       }
-      effectiveThresholdInfo.textContent = `Effektiv tröskel just nu: ${state.effective_threshold} svar (${pCount} anslutna deltagare)`;
+      thresholdInfo.textContent = `Automatisk visning när ${state.threshold} röster kommit in (${pCount} anslutna deltagare)`;
       if (document.activeElement !== adminRiskLabelInput) {
         adminRiskLabelInput.value = activeRisk.label || "";
         adminRiskLabelInput.placeholder = `Valfri etikett för Risk #${activeRisk.number} (t.ex. från PowerPoint)...`;
@@ -495,11 +495,11 @@
     renderSidebarRiskList(state.risks, activeRisk.number, isAdmin);
 
     // Render the active risk card & voting buttons
-    renderActiveRiskHeader(activeRisk, state.effective_threshold, isAdmin);
+    renderActiveRiskHeader(activeRisk, state.threshold, isAdmin);
     renderVotingControls(activeRisk, Boolean(state.my_vote));
 
     // Render the 4x4 matrix for the active risk
-    renderActiveRiskMatrix(activeRisk, state.effective_threshold, isAdmin);
+    renderActiveRiskMatrix(activeRisk, state.threshold, isAdmin);
 
     // Render the summary matrix & table
     renderSummaryMatrix(state.risks, isAdmin);
@@ -558,7 +558,7 @@
     });
   }
 
-  function renderActiveRiskHeader(risk, effectiveThreshold, isAdmin) {
+  function renderActiveRiskHeader(risk, threshold, isAdmin) {
     activeRiskBadge.textContent = `Risk #${risk.number}`;
     votingCardRiskNum.textContent = `Risk #${risk.number}`;
 
@@ -574,11 +574,11 @@
     }
 
     const vCount = risk.vote_count || 0;
-    currentVoteCountText.textContent = String(Math.min(vCount, effectiveThreshold));
-    currentThresholdText.textContent = String(effectiveThreshold);
+    currentVoteCountText.textContent = String(Math.min(vCount, threshold));
+    currentThresholdText.textContent = String(threshold);
     totalVotesSubtext.textContent = `(Totalt ${vCount} ${vCount === 1 ? "röst" : "röster"} inkomna)`;
 
-    const pct = effectiveThreshold > 0 ? Math.min(100, Math.round((vCount / effectiveThreshold) * 100)) : 100;
+    const pct = threshold > 0 ? Math.min(100, Math.round((vCount / threshold) * 100)) : 100;
     voteProgressBar.style.width = `${pct}%`;
 
     if (isAdmin) {
@@ -648,7 +648,7 @@
   // -------------------------------------------------------------------------
   // Render the 4x4 Matrix for the Active Risk
   // -------------------------------------------------------------------------
-  function renderActiveRiskMatrix(risk, effectiveThreshold, isAdmin) {
+  function renderActiveRiskMatrix(risk, threshold, isAdmin) {
     const titleSuffix = risk.label ? ` – ${risk.label}` : "";
     activeMatrixHeading.textContent = `Resultatmatris för Risk #${risk.number}${titleSuffix}`;
 
@@ -656,7 +656,7 @@
       matrixMaskedBanner.classList.remove("hidden");
       activeMatrixWrapper.classList.add("hidden");
       activeStatsSummaryBox.classList.add("hidden");
-      activeMatrixSubtitle.textContent = `Matrisen visas automatiskt när ${effectiveThreshold} svar har kommit in.`;
+      activeMatrixSubtitle.textContent = `Matrisen visas automatiskt när ${threshold} svar har kommit in.`;
       return;
     }
 

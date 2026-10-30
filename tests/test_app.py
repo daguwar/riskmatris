@@ -190,7 +190,7 @@ class TestComputeRiskStats:
 
     def test_no_votes(self):
         risk = self._make_risk()
-        stats = compute_risk_stats(risk, effective_threshold=4)
+        stats = compute_risk_stats(risk, threshold=4)
         assert stats["vote_count"] == 0
         assert stats["revealed"] is False
         assert stats["avg_probability"] is None
@@ -203,7 +203,7 @@ class TestComputeRiskStats:
             "b": {"probability": 3, "consequence": 2, "updated_at": 0},
         }
         risk = self._make_risk(votes=votes)
-        stats = compute_risk_stats(risk, effective_threshold=4)
+        stats = compute_risk_stats(risk, threshold=4)
         assert stats["vote_count"] == 2
         assert stats["revealed"] is False
         # Averages must be hidden while not revealed
@@ -219,7 +219,7 @@ class TestComputeRiskStats:
             "d": {"probability": 1, "consequence": 1, "updated_at": 0},
         }
         risk = self._make_risk(votes=votes)
-        stats = compute_risk_stats(risk, effective_threshold=4)
+        stats = compute_risk_stats(risk, threshold=4)
         assert stats["vote_count"] == 4
         assert stats["threshold_reached"] is True
         # Before the caller updates revealed: revealed is still False in stats
@@ -227,7 +227,7 @@ class TestComputeRiskStats:
 
         # Simulate what build_client_payload does: set revealed=True on threshold_reached
         risk["revealed"] = True
-        stats = compute_risk_stats(risk, effective_threshold=4)
+        stats = compute_risk_stats(risk, threshold=4)
         assert stats["revealed"] is True
         assert stats["threshold_reached"] is False  # already revealed
         assert stats["avg_probability"] == 2.5
@@ -243,7 +243,7 @@ class TestComputeRiskStats:
             "d": {"probability": 4, "consequence": 4, "updated_at": 0},
         }
         risk = self._make_risk(votes=votes, revealed=True)
-        stats = compute_risk_stats(risk, effective_threshold=4)
+        stats = compute_risk_stats(risk, threshold=4)
         assert stats["cell_counts"]["2_2"] == 2
         assert stats["cell_counts"]["3_1"] == 1
         assert stats["cell_counts"]["4_4"] == 1
@@ -259,7 +259,7 @@ class TestComputeRiskStats:
             final_prob=4,
             final_cons=3,
         )
-        stats = compute_risk_stats(risk, effective_threshold=4)
+        stats = compute_risk_stats(risk, threshold=4)
         assert stats["locked"] is True
         assert stats["revealed"] is True
         assert stats["final_probability"] == 4
@@ -282,7 +282,7 @@ class TestComputeRiskStats:
             final_prob=4,
             final_cons=4,
         )
-        stats = compute_risk_stats(risk, effective_threshold=4)
+        stats = compute_risk_stats(risk, threshold=4)
         # Averages become 1.5/1.5 -> suggestion 2/2, but final is 4/4
         assert stats["suggested_probability"] == 2
         assert stats["suggested_consequence"] == 2
@@ -295,7 +295,7 @@ class TestComputeRiskStats:
             "a": {"probability": 3, "consequence": 2, "updated_at": 0},
         }
         risk = self._make_risk(votes=votes, revealed=True)
-        stats = compute_risk_stats(risk, effective_threshold=1)
+        stats = compute_risk_stats(risk, threshold=1)
         assert stats["score"] == 6
         assert stats["level"] == "Medel"
         assert stats["color"] == "yellow"
@@ -312,7 +312,7 @@ class TestComputeRiskStats:
         }
         risk = self._make_risk(votes=votes)
         assert risk["revealed"] is False
-        stats = compute_risk_stats(risk, effective_threshold=2)
+        stats = compute_risk_stats(risk, threshold=2)
         # threshold_reached must be True, but risk['revealed'] must NOT have changed
         assert stats["threshold_reached"] is True
         assert risk["revealed"] is False  # pure function – no side effect
@@ -326,7 +326,7 @@ class TestComputeRiskStats:
         risk = self._make_risk(votes=votes, revealed=False, locked=False)
         original = {k: v for k, v in risk.items() if k != "votes"}
         original_votes = dict(risk["votes"])
-        compute_risk_stats(risk, effective_threshold=1)
+        compute_risk_stats(risk, threshold=1)
         # No change to risk after the call
         for k, v in original.items():
             assert risk[k] == v, f"risk['{k}'] changed: {risk[k]!r} != {v!r}"
@@ -338,7 +338,7 @@ class TestComputeRiskStats:
             "a": {"probability": 2, "consequence": 2, "updated_at": 0},
         }
         risk = self._make_risk(votes=votes, revealed=True)
-        stats = compute_risk_stats(risk, effective_threshold=1)
+        stats = compute_risk_stats(risk, threshold=1)
         assert stats["threshold_reached"] is False
 
     def test_threshold_not_reached_below_threshold(self):
@@ -347,13 +347,13 @@ class TestComputeRiskStats:
             "a": {"probability": 2, "consequence": 2, "updated_at": 0},
         }
         risk = self._make_risk(votes=votes)
-        stats = compute_risk_stats(risk, effective_threshold=4)
+        stats = compute_risk_stats(risk, threshold=4)
         assert stats["threshold_reached"] is False
 
     def test_threshold_not_reached_no_votes(self):
         """threshold_reached must be False when there are no votes."""
         risk = self._make_risk()
-        stats = compute_risk_stats(risk, effective_threshold=1)
+        stats = compute_risk_stats(risk, threshold=1)
         assert stats["threshold_reached"] is False
 
 
@@ -750,3 +750,78 @@ class TestCreateSessionHardening:
         client = self._client(monkeypatch, tmp_path)
         assert client.post("/api/sessions", json={"title": "First"}).status_code == 200
         assert client.post("/api/sessions", json={"title": "Second"}).status_code == 429
+
+
+# ---------------------------------------------------------------------------
+# Threshold semantics (auto-reveal at exactly N votes)
+# ---------------------------------------------------------------------------
+
+
+class TestThresholdSemantics:
+    """The vote threshold is the exact auto-reveal count and is never lowered
+    to match the number of connected participants.
+
+    Regression: get_effective_threshold() used to compute
+    min(threshold, connected participants), so the first participant to connect
+    and vote revealed the result immediately – before the rest of the room
+    had even joined.
+    """
+
+    def _make_session(self, threshold=4, votes=None):
+        from app import create_new_risk
+
+        risk = create_new_risk(1, "")
+        if votes:
+            risk["votes"] = {
+                f"c{i}": {"probability": p, "consequence": c, "updated_at": 0}
+                for i, (p, c) in enumerate(votes)
+            }
+        return {
+            "session_id": "THRESH1",
+            "admin_token": "x",
+            "title": "Test",
+            "threshold": threshold,
+            "created_at": 0.0,
+            "updated_at": 0.0,
+            "active_risk_number": 1,
+            "risks": [risk],
+        }
+
+    def test_get_session_threshold_ignores_connected_participants(self):
+        from app import get_session_threshold
+
+        assert get_session_threshold(self._make_session(threshold=4)) == 4
+        assert get_session_threshold(self._make_session(threshold=1)) == 1
+
+    def test_two_votes_do_not_reveal_at_threshold_four(self):
+        from app import compute_risk_stats
+
+        session = self._make_session(threshold=4, votes=[(2, 2), (3, 3)])
+        stats = compute_risk_stats(session["risks"][0], threshold=4)
+        assert stats["threshold_reached"] is False
+        assert stats["revealed"] is False
+
+    def test_build_client_payload_does_not_lower_threshold(self):
+        from app import ConnectionInfo, manager
+
+        session = self._make_session(threshold=4, votes=[(2, 2), (3, 3)])
+        sid = session["session_id"]
+        manager.connections[sid] = [
+            ConnectionInfo(websocket=None, role="participant", client_id="p1", is_admin=False),  # type: ignore
+            ConnectionInfo(websocket=None, role="participant", client_id="p2", is_admin=False),  # type: ignore
+        ]
+        try:
+            payload = manager.build_client_payload(session)
+            assert payload["threshold"] == 4
+            assert payload["risks"][0]["revealed"] is False
+            assert session["risks"][0]["revealed"] is False
+        finally:
+            manager.connections.pop(sid, None)
+
+    def test_reveal_still_happens_at_exact_threshold(self):
+        from app import compute_risk_stats
+
+        votes = [(2, 2), (3, 3), (1, 4), (4, 1)]
+        session = self._make_session(threshold=4, votes=votes)
+        stats = compute_risk_stats(session["risks"][0], threshold=4)
+        assert stats["threshold_reached"] is True

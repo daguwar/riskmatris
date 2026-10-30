@@ -10,7 +10,7 @@ An open, interactive real-time web application for running group risk assessment
 - **Step-by-step voting per risk (`#1`, `#2`, `#3`...):**
   - **Probability (X axis, 1–4):** `1 – Osannolik` (unlikely), `2 – Möjlig` (possible), `3 – Sannolik` (likely), `4 – Mycket sannolik` (very likely).
   - **Consequence (Y axis, 1–4):** `1 – Försumbar` (negligible), `2 – Måttlig` (moderate), `3 – Allvarlig` (serious), `4 – Mycket allvarlig` (very serious).
-- **Automatic reveal at the vote threshold:** Results stay hidden until enough responses have arrived (default: `min(4, number of connected participants)`), or until the meeting leader clicks **"Visa resultat nu"** (reveal results now). If more responses arrive afterwards, the matrix updates in real time.
+- **Automatic reveal at the vote threshold:** Results stay hidden until the configured number of responses has arrived (default: `4`), or until the meeting leader clicks **"Visa resultat nu"** (reveal results now). If more responses arrive afterwards, the matrix updates in real time. The threshold is never adjusted to the number of currently connected participants – if fewer participants show up, the leader reveals manually.
 - **4×4 risk matrix (Probability × Consequence = 1–16):**
   - **Green (1–2):** Low risk
   - **Yellow (3–6):** Medium risk

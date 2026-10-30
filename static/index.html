@@ -95,7 +95,8 @@
             max="50"
           />
           <p class="input-hint">
-            Matrisen visas när minst detta antal svar (eller alla anslutna om färre) har kommit in.
+            Matrisen visas automatiskt när detta antal röster har kommit in. Kommer färre
+            deltagare än så använder mötesledaren &rdquo;Visa resultat nu&rdquo;.
           </p>
           <button type="submit" class="btn btn-secondary btn-large btn-block">Starta session &amp; skapa QR-kod</button>
         </form>
@@ -335,7 +336,7 @@
               <span class="small-caps">Tröskel</span>
               <div class="threshold-control-row">
                 <input type="number" id="adminThresholdInput" class="form-input form-input-sm" min="1" max="50" value="4" />
-                <span class="small-muted" id="effectiveThresholdInfo"></span>
+                <span class="small-muted" id="thresholdInfo"></span>
               </div>
             </div>
           </div>

@@ -251,7 +251,19 @@ def create_new_risk(number: int, label: str = "") -> dict[str, Any]:
     }
 
 
-def compute_risk_stats(risk: dict[str, Any], effective_threshold: int) -> dict[str, Any]:
+def get_session_threshold(session: dict[str, Any]) -> int:
+    """Returns the session's configured vote threshold.
+
+    The threshold is the exact number of votes needed to auto-reveal a risk's
+    result. It is deliberately never adjusted to the number of currently
+    connected participants: the system cannot know how many participants are
+    expected, only the meeting leader can. Revealing early would leak partial
+    results to the room before everyone has voted.
+    """
+    return max(1, int(session.get("threshold", 4)))
+
+
+def compute_risk_stats(risk: dict[str, Any], threshold: int) -> dict[str, Any]:
     """Computes statistics for a risk without side effects (pure function).
 
     Also returns ``threshold_reached`` so the caller can update
@@ -263,7 +275,7 @@ def compute_risk_stats(risk: dict[str, Any], effective_threshold: int) -> dict[s
     # Threshold is reached if votes exist and the count >= threshold (and the risk is not already revealed)
     threshold_reached = (
         vote_count > 0
-        and vote_count >= effective_threshold
+        and vote_count >= threshold
         and not risk["revealed"]
     )
 
@@ -379,17 +391,10 @@ class SessionConnectionManager:
         participant_ids: set[str] = {c.client_id for c in conns if c.role == "participant" and c.client_id}
         return len(participant_ids)
 
-    def get_effective_threshold(self, session: dict[str, Any]) -> int:
-        configured = max(1, int(session.get("threshold", 4)))
-        participant_count = self.get_participant_count(session["session_id"])
-        if participant_count > 0:
-            return min(configured, participant_count)
-        return configured
-
     def build_client_payload(self, session: dict[str, Any], conn: ConnectionInfo | None = None) -> dict[str, Any]:
         sid = session["session_id"]
         participant_count = self.get_participant_count(sid)
-        effective_threshold = self.get_effective_threshold(session)
+        threshold = get_session_threshold(session)
 
         # Compute stats for all risks (and update revealed at threshold)
         risks_summary: list[dict[str, Any]] = []
@@ -397,7 +402,7 @@ class SessionConnectionManager:
         state_changed = False
 
         for r in session["risks"]:
-            r_stats = compute_risk_stats(r, effective_threshold)
+            r_stats = compute_risk_stats(r, threshold)
             # Update revealed explicitly based on threshold_reached (no side effect in compute_risk_stats)
             if r_stats["threshold_reached"]:
                 r["revealed"] = True
@@ -420,7 +425,6 @@ class SessionConnectionManager:
             "session_id": sid,
             "title": session.get("title", "Riskanalys"),
             "threshold": session.get("threshold", 4),
-            "effective_threshold": effective_threshold,
             "participant_count": participant_count,
             "active_risk_number": active_num,
             "risks": risks_summary,
@@ -615,7 +619,7 @@ async def export_session_csv(session_id: str):
     if not session:
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
 
-    effective_threshold = manager.get_effective_threshold(session)
+    threshold = get_session_threshold(session)
     output = io.StringIO()
     # Write a UTF-8 BOM so Microsoft Excel on Windows renders å, ä, ö correctly when opening the file directly
     output.write("\ufeff")
@@ -640,7 +644,7 @@ async def export_session_csv(session_id: str):
     )
 
     for r in session["risks"]:
-        stats = compute_risk_stats(r, effective_threshold)
+        stats = compute_risk_stats(r, threshold)
         prob = stats["effective_probability"]
         cons = stats["effective_consequence"]
         score = stats["score"]
@@ -805,7 +809,7 @@ async def websocket_endpoint(
                     "consequence": cons,
                     "updated_at": time.time(),
                 }
-                eff_thresh = manager.get_effective_threshold(session)
+                eff_thresh = get_session_threshold(session)
                 if len(active_risk["votes"]) >= eff_thresh:
                     active_risk["revealed"] = True
                 save_session_to_db(session)
@@ -857,7 +861,7 @@ async def websocket_endpoint(
                         await _send_ws_error(websocket, "Tröskelvärdet måste vara ett heltal 1–50.")
                         continue
                     session["threshold"] = new_t
-                    eff_thresh = manager.get_effective_threshold(session)
+                    eff_thresh = get_session_threshold(session)
                     if len(active_risk["votes"]) > 0 and len(active_risk["votes"]) >= eff_thresh:
                         active_risk["revealed"] = True
                     save_session_to_db(session)
@@ -865,7 +869,7 @@ async def websocket_endpoint(
 
                 elif action == "lock_risk":
                     # Lock the final placement in the summary matrix
-                    eff_thresh = manager.get_effective_threshold(session)
+                    eff_thresh = get_session_threshold(session)
                     stats = compute_risk_stats(active_risk, eff_thresh)
                     prob_raw = msg.get("probability")
                     cons_raw = msg.get("consequence")
@@ -920,7 +924,7 @@ async def websocket_endpoint(
                 elif action == "next_risk":
                     # If the current risk has votes and auto_lock is sent, lock it at its suggestion/selection
                     if msg.get("auto_lock", True) and len(active_risk["votes"]) > 0 and not active_risk["locked"]:
-                        eff_thresh = manager.get_effective_threshold(session)
+                        eff_thresh = get_session_threshold(session)
                         stats = compute_risk_stats(active_risk, eff_thresh)
                         active_risk["final_probability"] = stats["effective_probability"]
                         active_risk["final_consequence"] = stats["effective_consequence"]
