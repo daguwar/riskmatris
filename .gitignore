@@ -21,7 +21,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 
-# Virtuella miljöer
+# Virtual environments
 .venv/
 venv/
 ENV/
@@ -33,7 +33,7 @@ env/
 *.sqlite3
 data/
 
-# OS / Editor filer
+# OS / Editor files
 .DS_Store
 Thumbs.db
 .vscode/
@@ -42,6 +42,6 @@ Thumbs.db
 # Test
 .pytest_cache/
 
-# Miljö / deployment (lokala värden – commita inte)
+# Environment / deployment (local values – do not commit)
 .env
 

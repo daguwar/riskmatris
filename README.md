@@ -51,6 +51,12 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
 Port 8000 is forwarded automatically. Run the tests with `pytest`.
 
+Check the pinned runtime dependencies for known vulnerabilities (see `TODO_SECURITY.md` for the security decisions):
+
+```bash
+pip-audit -r requirements.txt
+```
+
 ### 2. Running with Docker
 
 ```bash

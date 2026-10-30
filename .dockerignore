@@ -8,18 +8,23 @@ build/
 dist/
 *.egg-info/
 
-# Virtuella miljöer
+# Virtual environments
 .venv/
 venv/
 ENV/
 env/
 
-# Test & utveckling
+# Environment & secrets
+.env
+.env.*
+
+# Tests & development
 tests/
 .pytest_cache/
+.ruff_cache/
 requirements-dev.txt
 
-# SQLite & lokal data
+# SQLite & local data
 *.db
 *.sqlite
 *.sqlite3
@@ -32,6 +37,7 @@ data/
 # Docker
 Dockerfile
 docker-compose.yml
+docker-compose.traefik.yml
 .dockerignore
 
 # OS / Editor

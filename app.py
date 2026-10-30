@@ -9,6 +9,7 @@ import secrets
 import socket
 import sqlite3
 import time
+import unicodedata
 from contextlib import asynccontextmanager
 from functools import cache
 from typing import Any
@@ -39,6 +40,15 @@ os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
 SESSION_TTL_SECONDS = int(os.environ.get("RISKMATRIS_TTL_HOURS", "48")) * 3600
 SESSION_CLEANUP_INTERVAL = int(os.environ.get("RISKMATRIS_CLEANUP_INTERVAL", "3600"))  # 1 hour default
 
+# Abuse/availability limits (single-process, in-memory – fits the deployment model)
+SESSION_CREATE_LIMIT = int(os.environ.get("RISKMATRIS_SESSION_CREATE_LIMIT", "10"))  # per IP per window
+SESSION_CREATE_WINDOW_SECONDS = 3600
+WS_MAX_CONNECTIONS_PER_SESSION = int(os.environ.get("RISKMATRIS_WS_MAX_CONNECTIONS", "200"))
+WS_MAX_MESSAGE_BYTES = int(os.environ.get("RISKMATRIS_WS_MAX_MESSAGE_BYTES", "8192"))
+WS_TICKET_TTL_SECONDS = 30  # one-time admin WebSocket tickets
+MAX_TITLE_LENGTH = 100
+MAX_LABEL_LENGTH = 120
+
 PROBABILITY_LABELS = {
     1: "Osannolik",
     2: "Möjlig",
@@ -52,6 +62,38 @@ CONSEQUENCE_LABELS = {
     3: "Allvarlig",
     4: "Mycket allvarlig",
 }
+
+
+def sanitize_user_text(value: str, max_length: int) -> str:
+    """Strips control/format characters (e.g. newlines, RTL overrides) from
+    user-supplied text and clamps its length. Keeps titles and labels safe to
+    store, render and log."""
+    return "".join(ch for ch in value if unicodedata.category(ch) not in ("Cc", "Cf")).strip()[:max_length]
+
+
+# In-memory rate limiter for public session creation (single-process deployment)
+SESSION_CREATE_LOG: dict[str, list[float]] = {}
+
+
+def check_session_create_rate(client_ip: str) -> bool:
+    """Returns True if the client IP is still within the session-creation rate limit."""
+    now = time.time()
+    cutoff = now - SESSION_CREATE_WINDOW_SECONDS
+    recent = [t for t in SESSION_CREATE_LOG.get(client_ip, []) if t > cutoff]
+    if len(recent) >= SESSION_CREATE_LIMIT:
+        SESSION_CREATE_LOG[client_ip] = recent
+        return False
+    recent.append(now)
+    SESSION_CREATE_LOG[client_ip] = recent
+    return True
+
+
+def cleanup_rate_limit_log() -> None:
+    """Drops rate-limit entries that are entirely outside the current window."""
+    cutoff = time.time() - SESSION_CREATE_WINDOW_SECONDS
+    for ip in list(SESSION_CREATE_LOG):
+        if not any(t > cutoff for t in SESSION_CREATE_LOG[ip]):
+            SESSION_CREATE_LOG.pop(ip, None)
 
 
 def round_half_up(value: float) -> int:
@@ -140,6 +182,8 @@ async def _periodic_cleanup() -> None:
         await asyncio.sleep(SESSION_CLEANUP_INTERVAL)
         try:
             cleanup_expired_sessions()
+            cleanup_expired_ws_tickets()
+            cleanup_rate_limit_log()
         except Exception:
             logger.exception("Error during periodic session cleanup")
 
@@ -268,6 +312,32 @@ def compute_risk_stats(risk: dict[str, Any], effective_threshold: int) -> dict[s
     }
 
 
+# One-time, short-lived tickets that let an admin authenticate the WebSocket
+# without putting the long-lived admin token in the URL (query strings end up
+# in proxy/access logs and browser history).
+WS_TICKETS: dict[str, dict[str, Any]] = {}
+
+
+def create_ws_ticket(session_id: str) -> str:
+    """Issues a single-use connection ticket for the given session."""
+    ticket = secrets.token_urlsafe(24)
+    WS_TICKETS[ticket] = {"session_id": session_id, "expires_at": time.time() + WS_TICKET_TTL_SECONDS}
+    return ticket
+
+
+def consume_ws_ticket(ticket: str, session_id: str) -> bool:
+    """Burns a connection ticket and returns True if it was valid for the session."""
+    data = WS_TICKETS.pop(ticket, None)
+    return bool(data and data["session_id"] == session_id and data["expires_at"] >= time.time())
+
+
+def cleanup_expired_ws_tickets() -> None:
+    """Drops connection tickets that are past their TTL without having been used."""
+    now = time.time()
+    for ticket in [t for t, d in WS_TICKETS.items() if d["expires_at"] < now]:
+        WS_TICKETS.pop(ticket, None)
+
+
 # ---------------------------------------------------------------------------
 # WebSocket Connection Manager
 # ---------------------------------------------------------------------------
@@ -298,6 +368,10 @@ class SessionConnectionManager:
             self.connections[session_id] = [c for c in self.connections[session_id] if c.websocket != websocket]
             if not self.connections[session_id]:
                 del self.connections[session_id]
+
+    def get_connection_count(self, session_id: str) -> int:
+        """Number of open WebSocket connections for the session."""
+        return len(self.connections.get(session_id, []))
 
     def get_participant_count(self, session_id: str) -> int:
         """Number of unique connected participants (excluding the admin)."""
@@ -434,13 +508,17 @@ async def health_check():
 
 
 @app.post("/api/sessions")
-async def create_session(req: CreateSessionRequest):
+async def create_session(req: CreateSessionRequest, request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_session_create_rate(client_ip):
+        logger.warning("Session creation rate limit hit for client %s", client_ip)
+        raise HTTPException(status_code=429, detail="För många sessioner skapade. Försök igen om en stund.")
     cleanup_expired_sessions()
     session_id = generate_session_id()
     admin_token = secrets.token_urlsafe(24)
     now = time.time()
     threshold = max(1, min(50, req.threshold or 4))
-    title = (req.title or "Riskanalys").strip() or "Riskanalys"
+    title = sanitize_user_text(req.title or "", MAX_TITLE_LENGTH) or "Riskanalys"
 
     session = {
         "session_id": session_id,
@@ -486,6 +564,21 @@ async def get_session_info(
         is_admin=is_admin,
     )
     return manager.build_client_payload(session, dummy_conn)
+
+
+@app.get("/api/sessions/{session_id}/ws-ticket")
+async def get_ws_ticket(session_id: str, x_admin_token: str | None = Header(default=None, alias="X-Admin-Token")):
+    """Issues a one-time, short-lived ticket for admin WebSocket authentication.
+
+    This keeps the long-lived admin token out of the WebSocket query string.
+    """
+    sid = session_id.strip().upper()
+    session = SESSIONS.get(sid)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+    if not x_admin_token or not secrets.compare_digest(x_admin_token, session["admin_token"]):
+        raise HTTPException(status_code=401, detail="Ogiltig administratörs-token.")
+    return {"ticket": create_ws_ticket(sid), "expires_in": WS_TICKET_TTL_SECONDS}
 
 
 @app.get("/api/sessions/{session_id}/qr.svg")
@@ -617,7 +710,7 @@ async def websocket_endpoint(
     session_id: str,
     role: str = Query(default="participant"),
     client_id: str = Query(default=""),
-    admin_token: str = Query(default=""),
+    ticket: str = Query(default=""),
 ):
     sid = session_id.strip().upper()
     session = SESSIONS.get(sid)
@@ -626,7 +719,19 @@ async def websocket_endpoint(
         await websocket.close(code=4004, reason="Sessionen finns inte")
         return
 
-    is_admin = bool(admin_token and secrets.compare_digest(admin_token, session["admin_token"]))
+    if manager.get_connection_count(sid) >= WS_MAX_CONNECTIONS_PER_SESSION:
+        logger.warning(
+            "WebSocket: session %s connection limit reached (%d) – rejecting client %s",
+            sid,
+            WS_MAX_CONNECTIONS_PER_SESSION,
+            client_id,
+        )
+        await websocket.close(code=1013, reason="Sessionsgränsen för anslutningar är nådd")
+        return
+
+    # Admins authenticate with a one-time ticket instead of the long-lived
+    # admin token, so no secret ever travels in the query string.
+    is_admin = consume_ws_ticket(ticket, sid) if ticket else False
     effective_role = "admin" if (role == "admin" and is_admin) else "participant"
     if not client_id:
         client_id = f"anon_{secrets.token_hex(6)}"
@@ -651,13 +756,21 @@ async def websocket_endpoint(
         while True:
             # --- Receive & basic validation ---
             try:
-                msg = await websocket.receive_json()
+                raw = await websocket.receive_text()
             except WebSocketDisconnect:
                 # The client has disconnected – let the outer exception handler clean
                 # up and return. Must NOT be caught by the "except Exception" below:
-                # receive_json would re-raise on every iteration, spinning the loop
+                # receive_text would re-raise on every iteration, spinning the loop
                 # forever without yielding to the event loop, deadlocking the server.
                 raise
+            except Exception:
+                await _send_ws_error(websocket, "Ogiltigt meddelande.")
+                continue
+            if len(raw.encode("utf-8")) > WS_MAX_MESSAGE_BYTES:
+                await _send_ws_error(websocket, "Meddelandet är för stort.")
+                continue
+            try:
+                msg = json.loads(raw)
             except Exception:
                 await _send_ws_error(websocket, "Ogiltigt JSON-meddelande.")
                 continue
@@ -721,7 +834,7 @@ async def websocket_endpoint(
                     if risk_num is None:
                         await _send_ws_error(websocket, "Ogiltigt risknummer.")
                         continue
-                    label = str(msg.get("label", "")).strip()[:120]
+                    label = sanitize_user_text(str(msg.get("label", "")), MAX_LABEL_LENGTH)
                     for r in session["risks"]:
                         if r["number"] == risk_num:
                             r["label"] = label
@@ -730,7 +843,7 @@ async def websocket_endpoint(
                     await manager.broadcast(session)
 
                 elif action == "set_title":
-                    title = str(msg.get("title", "")).strip()[:100]
+                    title = sanitize_user_text(str(msg.get("title", "")), MAX_TITLE_LENGTH)
                     if title:
                         session["title"] = title
                         save_session_to_db(session)
@@ -816,7 +929,7 @@ async def websocket_endpoint(
 
                     max_num = max(r["number"] for r in session["risks"])
                     next_num = max_num + 1
-                    next_label = str(msg.get("label", "")).strip()[:120]
+                    next_label = sanitize_user_text(str(msg.get("label", "")), MAX_LABEL_LENGTH)
                     new_r = create_new_risk(next_num, next_label)
                     session["risks"].append(new_r)
                     session["active_risk_number"] = next_num

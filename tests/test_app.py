@@ -10,14 +10,20 @@ import pytest
 
 from app import (
     CONSEQUENCE_LABELS,
+    MAX_TITLE_LENGTH,
     PROBABILITY_LABELS,
     _safe_int,
+    check_session_create_rate,
+    cleanup_rate_limit_log,
     compute_risk_stats,
+    consume_ws_ticket,
     create_new_risk,
+    create_ws_ticket,
     generate_session_id,
     get_local_lan_ip,
     get_risk_level,
     round_half_up,
+    sanitize_user_text,
 )
 
 # ---------------------------------------------------------------------------
@@ -514,7 +520,7 @@ class TestWebSocketDisconnect:
             ws.accept = AsyncMock()
             ws.send_json = AsyncMock()
             # Simulate the client disconnecting immediately
-            ws.receive_json = AsyncMock(side_effect=WebSocketDisconnect(1000))
+            ws.receive_text = AsyncMock(side_effect=WebSocketDisconnect(1000))
 
             result = {}
 
@@ -522,7 +528,7 @@ class TestWebSocketDisconnect:
                 try:
                     asyncio.run(
                         asyncio.wait_for(
-                            websocket_endpoint(ws, sid, role="participant", client_id="test-klient", admin_token=""),
+                            websocket_endpoint(ws, sid, role="participant", client_id="test-klient", ticket=""),
                             timeout=5,
                         )
                     )
@@ -543,3 +549,204 @@ class TestWebSocketDisconnect:
         finally:
             SESSIONS.pop(sid, None)
             manager.connections.pop(sid, None)
+
+
+# ---------------------------------------------------------------------------
+# sanitize_user_text (input hardening)
+# ---------------------------------------------------------------------------
+
+
+class TestSanitizeUserText:
+    def test_removes_control_characters(self):
+        assert sanitize_user_text("Foo\x00Bar\nBaz", 50) == "FooBarBaz"
+
+    def test_removes_format_characters(self):
+        # U+202E RIGHT-TO-LEFT OVERRIDE – a classic text-spoofing character
+        assert sanitize_user_text("Evil\u202epayload", 50) == "Evilpayload"
+
+    def test_clamps_length(self):
+        assert len(sanitize_user_text("x" * 300, MAX_TITLE_LENGTH)) == MAX_TITLE_LENGTH
+
+    def test_strips_outer_whitespace(self):
+        assert sanitize_user_text("  Hello  ", 50) == "Hello"
+
+    def test_empty_result_for_whitespace_only(self):
+        assert sanitize_user_text("   \n\t ", 50) == ""
+
+
+# ---------------------------------------------------------------------------
+# Session-creation rate limiting
+# ---------------------------------------------------------------------------
+
+
+class TestSessionCreateRateLimit:
+    def test_allows_within_limit(self, monkeypatch):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_CREATE_LOG", {})
+        monkeypatch.setattr(app_module, "SESSION_CREATE_LIMIT", 3)
+        for _ in range(3):
+            assert check_session_create_rate("1.2.3.4") is True
+
+    def test_blocks_over_limit(self, monkeypatch):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_CREATE_LOG", {})
+        monkeypatch.setattr(app_module, "SESSION_CREATE_LIMIT", 2)
+        assert check_session_create_rate("1.2.3.4") is True
+        assert check_session_create_rate("1.2.3.4") is True
+        assert check_session_create_rate("1.2.3.4") is False
+
+    def test_limit_is_per_ip(self, monkeypatch):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_CREATE_LOG", {})
+        monkeypatch.setattr(app_module, "SESSION_CREATE_LIMIT", 1)
+        assert check_session_create_rate("1.2.3.4") is True
+        assert check_session_create_rate("1.2.3.4") is False
+        assert check_session_create_rate("5.6.7.8") is True
+
+    def test_cleanup_drops_stale_entries(self, monkeypatch):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_CREATE_LOG", {"1.2.3.4": [0.0]})
+        cleanup_rate_limit_log()
+        assert app_module.SESSION_CREATE_LOG == {}
+
+    def test_cleanup_keeps_fresh_entries(self, monkeypatch):
+        import time as time_module
+
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_CREATE_LOG", {"1.2.3.4": [time_module.time()]})
+        cleanup_rate_limit_log()
+        assert "1.2.3.4" in app_module.SESSION_CREATE_LOG
+
+
+# ---------------------------------------------------------------------------
+# Admin WebSocket connection tickets
+# ---------------------------------------------------------------------------
+
+
+class TestWsTickets:
+    def test_valid_ticket(self):
+        ticket = create_ws_ticket("ABC123")
+        assert consume_ws_ticket(ticket, "ABC123") is True
+
+    def test_ticket_is_single_use(self):
+        ticket = create_ws_ticket("ABC123")
+        assert consume_ws_ticket(ticket, "ABC123") is True
+        assert consume_ws_ticket(ticket, "ABC123") is False
+
+    def test_ticket_for_wrong_session_is_burned(self):
+        ticket = create_ws_ticket("ABC123")
+        assert consume_ws_ticket(ticket, "OTHER1") is False
+        # A failed attempt burns the ticket, so it cannot be replayed
+        assert consume_ws_ticket(ticket, "ABC123") is False
+
+    def test_expired_ticket_rejected(self):
+        import time as time_module
+
+        import app as app_module
+
+        ticket = create_ws_ticket("ABC123")
+        app_module.WS_TICKETS[ticket]["expires_at"] = time_module.time() - 1
+        assert consume_ws_ticket(ticket, "ABC123") is False
+
+    def test_unknown_ticket_rejected(self):
+        assert consume_ws_ticket("does-not-exist", "ABC123") is False
+
+    def test_no_ticket_is_not_admin(self):
+        # An empty ticket must never authenticate as admin
+        assert consume_ws_ticket("", "ABC123") is False
+
+
+class TestWsTicketEndpoint:
+    def _add_session(self, sid, admin_token):
+        from app import SESSIONS, create_new_risk
+
+        SESSIONS[sid] = {
+            "session_id": sid,
+            "admin_token": admin_token,
+            "title": "Test",
+            "threshold": 4,
+            "created_at": 0.0,
+            "updated_at": 0.0,
+            "active_risk_number": 1,
+            "risks": [create_new_risk(1, "")],
+        }
+        return SESSIONS[sid]
+
+    def test_requires_valid_admin_token(self):
+        from fastapi.testclient import TestClient
+
+        from app import SESSIONS, app, consume_ws_ticket
+
+        sid = "TICKET1"
+        self._add_session(sid, "secret-token")
+        try:
+            client = TestClient(app)
+            assert client.get(f"/api/sessions/{sid}/ws-ticket").status_code == 401
+            assert (
+                client.get(f"/api/sessions/{sid}/ws-ticket", headers={"X-Admin-Token": "wrong"}).status_code == 401
+            )
+            resp = client.get(f"/api/sessions/{sid}/ws-ticket", headers={"X-Admin-Token": "secret-token"})
+            assert resp.status_code == 200
+            ticket = resp.json()["ticket"]
+            assert ticket
+            assert consume_ws_ticket(ticket, sid) is True
+        finally:
+            SESSIONS.pop(sid, None)
+
+    def test_unknown_session_returns_404(self):
+        from fastapi.testclient import TestClient
+
+        from app import app
+
+        client = TestClient(app)
+        assert client.get("/api/sessions/NOPE00/ws-ticket").status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# POST /api/sessions (title sanitization + rate limit, integration)
+# ---------------------------------------------------------------------------
+
+
+class TestCreateSessionHardening:
+    def _client(self, monkeypatch, tmp_path):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "DB_PATH", str(tmp_path / "test.db"))
+        app_module.init_db()
+        monkeypatch.setattr(app_module, "SESSIONS", {})
+        monkeypatch.setattr(app_module, "SESSION_CREATE_LOG", {})
+
+        from fastapi.testclient import TestClient
+
+        return TestClient(app_module.app)
+
+    def test_title_sanitized_before_storing(self, monkeypatch, tmp_path):
+        client = self._client(monkeypatch, tmp_path)
+        resp = client.post("/api/sessions", json={"title": "Foo\x00Bar\nBaz\u202eRTL"})
+        assert resp.status_code == 200
+        assert resp.json()["title"] == "FooBarBazRTL"
+
+    def test_whitespace_only_title_falls_back_to_default(self, monkeypatch, tmp_path):
+        client = self._client(monkeypatch, tmp_path)
+        resp = client.post("/api/sessions", json={"title": "  \n\x00 "})
+        assert resp.status_code == 200
+        assert resp.json()["title"] == "Riskanalys"
+
+    def test_overlong_title_clamped(self, monkeypatch, tmp_path):
+        client = self._client(monkeypatch, tmp_path)
+        resp = client.post("/api/sessions", json={"title": "x" * 500})
+        assert resp.status_code == 200
+        assert len(resp.json()["title"]) == MAX_TITLE_LENGTH
+
+    def test_rate_limit_returns_429(self, monkeypatch, tmp_path):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_CREATE_LIMIT", 1)
+        client = self._client(monkeypatch, tmp_path)
+        assert client.post("/api/sessions", json={"title": "First"}).status_code == 200
+        assert client.post("/api/sessions", json={"title": "Second"}).status_code == 429

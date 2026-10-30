@@ -1,3 +1,6 @@
+# Local use only: publishes port 8000 without TLS.
+# For server deployments behind an existing Traefik, use docker-compose.traefik.yml.
+
 services:
   riskmatris:
     build: .
@@ -18,4 +21,3 @@ services:
 
 volumes:
   riskmatris_data:
-

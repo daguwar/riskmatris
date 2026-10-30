@@ -296,7 +296,23 @@
   // -------------------------------------------------------------------------
   // WebSocket
   // -------------------------------------------------------------------------
-  function connectWebSocket() {
+  // Request a one-time admin connection ticket via an authenticated HTTP call,
+  // so the long-lived admin token never appears in the WebSocket query string.
+  async function fetchWsTicket(sessionId, adminToken) {
+    if (!adminToken) return "";
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/ws-ticket`, {
+        headers: { "X-Admin-Token": adminToken },
+      });
+      if (!res.ok) return "";
+      const data = await res.json();
+      return data.ticket || "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  async function connectWebSocket() {
     if (ws) {
       try {
         ws.close();
@@ -310,9 +326,11 @@
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
     const adminToken = getAdminToken(currentSessionId);
     const clientId = getClientId();
-    const role = adminToken ? "admin" : "participant";
+    // Without a valid ticket we connect as a regular participant.
+    const ticket = await fetchWsTicket(currentSessionId, adminToken);
+    const role = adminToken && ticket ? "admin" : "participant";
 
-    const wsUrl = `${proto}//${window.location.host}/ws/${currentSessionId}?role=${role}&client_id=${encodeURIComponent(clientId)}&admin_token=${encodeURIComponent(adminToken)}`;
+    const wsUrl = `${proto}//${window.location.host}/ws/${currentSessionId}?role=${role}&client_id=${encodeURIComponent(clientId)}${ticket ? `&ticket=${encodeURIComponent(ticket)}` : ""}`;
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
