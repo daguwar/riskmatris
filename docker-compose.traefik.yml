@@ -19,7 +19,7 @@ services:
       - riskmatris_data:/app/data
     environment:
       - RISKMATRIS_DB_PATH=/app/data/riskmatris.db
-      - RISKMATRIS_TTL_HOURS=48
+      - RISKMATRIS_TTL_HOURS=${RISKMATRIS_TTL_HOURS:-48}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]

@@ -63,7 +63,7 @@ pip-audit -r requirements.txt
 docker compose up --build -d
 ```
 
-The application is then available at **http://localhost:8000** and stores ongoing sessions in a Docker volume (`riskmatris_data`) so they survive a restart. Sessions are cleaned up automatically after 48 hours.
+The application is then available at **http://localhost:8000** and stores ongoing sessions in a Docker volume (`riskmatris_data`) so they survive a restart. Sessions are cleaned up automatically after 48 hours (configurable via the `RISKMATRIS_TTL_HOURS` environment variable).
 
 ### 3. Running in the cloud (Render, Fly.io, Google Cloud Run, Azure App Service)
 
@@ -81,6 +81,7 @@ docker compose -f docker-compose.traefik.yml up -d --build
 Fill in `.env`:
 
 - `RISKMATRIS_DOMAIN` – the domain Traefik should respond on (required), e.g. `riskmatris.example.com`
+- `RISKMATRIS_TTL_HOURS` – session retention in hours (default: `48`)
 - `TRAEFIK_NETWORK` – the name of the Docker network your Traefik runs on (usually `traefik-public`; the network must already exist)
 - `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERT_RESOLVER` – names of the entrypoint and certificate resolver (defaults: `websecure` / `letsencrypt`)
 
