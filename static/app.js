@@ -930,6 +930,9 @@
   let currentPresentSub = "presentActive";
 
   function switchView(viewId) {
+    // Track the active view so incoming session_state broadcasts do not
+    // switch the admin away from a view they opened explicitly.
+    currentView = viewId;
     VIEW_IDS.forEach((id) => {
       viewContainers[id].classList.toggle("hidden", id !== viewId);
       viewButtons[id].classList.toggle("active", id === viewId);
