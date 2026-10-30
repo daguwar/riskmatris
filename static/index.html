@@ -9,7 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
 </head>
 <body>
-  <!-- Toppnavigering -->
+  <!-- Top navigation -->
   <header class="topbar">
     <div class="topbar-inner">
       <a href="/" class="brand" id="brandLink" title="Till startsidan">
@@ -34,7 +34,7 @@
     </div>
   </header>
 
-  <!-- VY 1: STARTSIDA (Anslut med kod i fokus, skapa session sekundärt) -->
+  <!-- VIEW 1: LANDING (join by code in focus, create session secondary) -->
   <main id="landingView" class="landing">
     <div class="landing-inner">
       <div class="landing-hero">
@@ -42,7 +42,7 @@
         <p>Skriv in koden du fått av mötesledaren och rösta anonymt – direkt i mobilen.</p>
       </div>
 
-      <!-- Anslut till session (primär åtgärd) -->
+      <!-- Join session (primary action) -->
       <section class="card landing-card">
         <h2>Anslut till en session</h2>
         <form id="joinSessionForm" class="form-stack">
@@ -68,7 +68,7 @@
 
       <div class="landing-divider"><span>eller</span></div>
 
-      <!-- Starta ny session (sekundär åtgärd) -->
+      <!-- Start a new session (secondary action) -->
       <section class="card landing-card landing-card-muted">
         <h2>Starta ny session <span class="card-tag">för mötesledare</span></h2>
         <form id="createSessionForm" class="form-stack">
@@ -101,10 +101,10 @@
     </div>
   </main>
 
-  <!-- VY 2: AKTIV SESSION – tre vyer: Rösta / Presentation / Admin -->
+  <!-- VIEW 2: ACTIVE SESSION – three views: Vote / Presentation / Admin -->
   <main id="sessionView" class="session-layout hidden">
     <div class="session-main">
-      <!-- Vyväljare (deltagare ser bara "Rösta") -->
+      <!-- View switcher (participants only see "Rösta") -->
       <div class="view-tabs-bar">
         <div class="view-tabs" id="viewSwitcher">
           <button type="button" class="tab-btn active" data-view="voteView" id="tabBtnVote">
@@ -117,14 +117,14 @@
         </div>
       </div>
 
-      <!-- VY: RÖSTA (huvudvy för deltagare i telefonen) -->
+      <!-- VIEW: VOTE (main view for participants on phones) -->
       <div id="voteView" class="tab-content vote-view">
-        <!-- Rubrikkort för aktuell risk -->
+        <!-- Header card for the current risk -->
         <div class="card active-risk-header-card">
           <div class="active-risk-title-row">
             <div class="risk-number-pill" id="activeRiskBadge">Risk #1</div>
             <div class="active-risk-label-area">
-              <!-- För deltagare: läsbar etikett -->
+              <!-- For participants: readable label -->
               <h2 id="participantRiskLabelDisplay" class="participant-risk-title">
                 Bedöm Sannolikhet och Konsekvens
               </h2>
@@ -132,7 +132,7 @@
             <div id="activeRiskStatusTag" class="risk-status-tag">Öppen för röstning</div>
           </div>
 
-          <!-- Förloppsindikator -->
+          <!-- Progress indicator -->
           <div class="vote-progress-row">
             <div class="vote-progress-info">
               <div class="vote-count-headline">
@@ -151,7 +151,7 @@
           Du är mötesledare – öppna <strong>Admin</strong>-vyn och klicka ”Rösta själv” för att avge egen röst.
         </p>
 
-        <!-- DELTAGARENS RÖSTNINGSPANEL -->
+        <!-- PARTICIPANT VOTING PANEL -->
         <div class="card voting-card" id="votingPanelCard">
           <div class="voting-card-header">
             <h3>Din bedömning av <span id="votingCardRiskNum">Risk #1</span></h3>
@@ -159,7 +159,7 @@
           </div>
 
           <div class="voting-axes-grid">
-            <!-- Sannolikhet (1-4) -->
+            <!-- Probability (1-4) -->
             <div class="voting-axis-box">
               <div class="axis-title-row">
                 <h4>Sannolikhet</h4>
@@ -181,7 +181,7 @@
               </div>
             </div>
 
-            <!-- Konsekvens (1-4) -->
+            <!-- Consequence (1-4) -->
             <div class="voting-axis-box">
               <div class="axis-title-row">
                 <h4>Konsekvens</h4>
@@ -212,7 +212,7 @@
         </div>
       </div>
 
-      <!-- VY: PRESENTATION (stor matris för projektorn; admin) -->
+      <!-- VIEW: PRESENTATION (large matrix for the projector; admin) -->
       <div id="presentView" class="tab-content present-view hidden">
         <div class="view-tabs-bar present-subtabs">
           <div class="view-tabs" id="presentSubTabs">
@@ -221,7 +221,7 @@
           </div>
         </div>
 
-        <!-- Aktuell risks resultatmatris -->
+        <!-- Result matrix for the current risk -->
         <div id="presentActive">
           <div class="card matrix-section-card">
             <div class="matrix-card-top">
@@ -232,7 +232,7 @@
                 </p>
               </div>
 
-              <!-- Sammanfattningsbox för snitt & föreslagen placering -->
+              <!-- Summary box for averages & suggested placement -->
               <div class="stats-summary-pills hidden" id="activeStatsSummaryBox">
                 <div class="stat-chip">
                   <span class="stat-label">Snitt Sannolikhet</span>
@@ -249,7 +249,7 @@
               </div>
             </div>
 
-            <!-- Tomt läge innan tröskeln nåtts -->
+            <!-- Empty state before the threshold is reached -->
             <div class="matrix-masked-banner" id="matrixMaskedBanner">
               <div class="masked-spinner"></div>
               <h4>Inväntar svar från deltagarna</h4>
@@ -259,20 +259,20 @@
               </p>
             </div>
 
-            <!-- 4x4 Matrisen (Konsekvens Y 4->1, Sannolikhet X 1->4) -->
+            <!-- The 4x4 matrix (Consequence Y 4->1, Probability X 1->4) -->
             <div class="matrix-board-wrapper" id="activeMatrixWrapper">
               <div class="matrix-board">
                 <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
                 <div class="matrix-main-area">
                   <div class="matrix-grid-4x4" id="activeMatrixGrid">
-                    <!-- Genereras dynamiskt av app.js -->
+                    <!-- Generated dynamically by app.js -->
                   </div>
                   <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
                 </div>
               </div>
             </div>
 
-            <!-- Färgförklaring -->
+            <!-- Color legend -->
             <div class="matrix-legend">
               <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg</span>
               <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medel</span>
@@ -283,7 +283,7 @@
           </div>
         </div>
 
-        <!-- Sammanställningsmatris (alla låsta risker) -->
+        <!-- Summary matrix (all locked risks) -->
         <div id="presentSummary" class="hidden">
           <div class="card matrix-section-card">
             <div class="matrix-card-top">
@@ -300,7 +300,7 @@
                 <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
                 <div class="matrix-main-area">
                   <div class="matrix-grid-4x4" id="summaryMatrixGrid">
-                    <!-- Genereras dynamiskt av app.js -->
+                    <!-- Generated dynamically by app.js -->
                   </div>
                   <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
                 </div>
@@ -317,9 +317,9 @@
         </div>
       </div>
 
-      <!-- VY: ADMIN (verktyg, delning, export; enbart mötesledare) -->
+      <!-- VIEW: ADMIN (tools, sharing, export; meeting leader only) -->
       <div id="adminView" class="tab-content admin-view hidden">
-        <!-- Adminverktygsrad -->
+        <!-- Admin toolbar -->
         <div class="card admin-toolbar" id="adminToolbar">
           <div class="admin-toolbar-row">
             <div class="admin-toolbar-group admin-toolbar-risks">
@@ -365,7 +365,7 @@
           </div>
         </div>
 
-        <!-- Röstningskort för admin (fälls ut när "Rösta själv" klickas) -->
+        <!-- Admin voting card (expands when "Rösta själv" is clicked) -->
         <div id="adminVotePanel" class="admin-vote-panel hidden">
           <div class="card voting-card">
             <div class="voting-card-header">
@@ -374,7 +374,7 @@
             </div>
 
             <div class="voting-axes-grid">
-              <!-- Sannolikhet (1-4) -->
+              <!-- Probability (1-4) -->
               <div class="voting-axis-box">
                 <div class="axis-title-row">
                   <h4>Sannolikhet</h4>
@@ -396,7 +396,7 @@
                 </div>
               </div>
 
-              <!-- Konsekvens (1-4) -->
+              <!-- Consequence (1-4) -->
               <div class="voting-axis-box">
                 <div class="axis-title-row">
                   <h4>Konsekvens</h4>
@@ -427,7 +427,7 @@
           </div>
         </div>
 
-        <!-- Delningskort -->
+        <!-- Share card -->
         <div class="card share-card" id="shareCard">
           <div class="share-card-head">
             <div>
@@ -446,7 +446,7 @@
           <p class="qr-lan-hint hidden" id="lanIpHint"></p>
         </div>
 
-        <!-- Tabellöversikt över alla risker + export -->
+        <!-- Table overview of all risks + export -->
         <div class="card summary-table-card">
           <div class="summary-table-head">
             <h3>Tabellöversikt över risker</h3>
@@ -482,7 +482,7 @@
     </div>
   </main>
 
-  <!-- MODAL: FÖRSTORAD QR-KOD FÖR PROJEKTOR -->
+  <!-- MODAL: ENLARGED QR CODE FOR PROJECTOR -->
   <div id="qrModal" class="modal-backdrop hidden">
     <div class="modal-dialog">
       <div class="modal-header">

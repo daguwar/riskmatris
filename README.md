@@ -1,33 +1,35 @@
 # Riskmatris Live
 
-En öppen, interaktiv webbapplikation i realtid för att genomföra riskbedömningar i grupp (t.ex. tillsammans med en PowerPoint-presentation).
+An open, interactive real-time web application for running group risk assessments (e.g. together with a PowerPoint presentation).
 
-## Funktioner
+> Note: all code, comments and log messages are in English. The user interface is in Swedish. Translations of the UI may be added in the future.
 
-- **Öppen för alla (ingen inloggning):** Mötesledaren startar en session och får ett unikt 6-teckens sessions-ID, en **QR-kod** och en delningslänk. Deltagare skannar QR-koden med mobilen och kommer direkt in i röstningsvyn helt anonymt.
-- **Stegvis röstning per risk (`#1`, `#2`, `#3`...):**
-  - **Sannolikhet (X-axeln, 1–4):** `1 – Osannolik`, `2 – Möjlig`, `3 – Sannolik`, `4 – Mycket sannolik`.
-  - **Konsekvens (Y-axeln, 1–4):** `1 – Försumbar`, `2 – Måttlig`, `3 – Allvarlig`, `4 – Mycket allvarlig`.
-- **Automatisk visning vid rösttröskel:** Resultatet hålls dolt tills tillräckligt många svar kommit in (standard: `min(4, antal anslutna deltagare)`), eller när mötesledaren klickar på **"Visa resultat nu"**. Kommer fler svar in efteråt uppdateras matrisen i realtid.
-- **4×4 Riskmatris (Sannolikhet × Konsekvens = 1–16):**
-  - **Grön (1–2):** Låg risk
-  - **Gul (3–6):** Medelrisk
-  - **Orange (8–9):** Hög risk
-  - **Röd (12–16):** Mycket hög risk
-- **Beräknat förslag & Sammanställningsmatris:**
-  - Visar både röstspridningen (antal röster per ruta) och beräknat medelvärde (avrundat uppåt vid `.5` enligt försiktighetsprincipen).
-  - Mötesledaren kan godkänna förslaget eller klicka på valfri ruta i matrisen efter diskussion för att låsa placeringen av `#1`, `#2` osv. till **Sammanställningsmatrisen**.
-- **Export till PowerPoint & Excel:**
-  - **PNG-bild:** Ladda ner en högupplöst bild av sammanställningsmatrisen med alla inplacerade risker (`#1`, `#2`...) redo att klistras in i PowerPoint.
-  - **CSV (Excel):** Exportera en tabell med alla risker, röstantal, medelvärden, beslutad Sannolikhet/Konsekvens, Riskvärde och Risknivå.
+## Features
+
+- **Open to everyone (no login):** The meeting leader starts a session and receives a unique 6-character session ID, a **QR code** and a share link. Participants scan the QR code with their phone and go straight into the voting view, fully anonymously.
+- **Step-by-step voting per risk (`#1`, `#2`, `#3`...):**
+  - **Probability (X axis, 1–4):** `1 – Osannolik` (unlikely), `2 – Möjlig` (possible), `3 – Sannolik` (likely), `4 – Mycket sannolik` (very likely).
+  - **Consequence (Y axis, 1–4):** `1 – Försumbar` (negligible), `2 – Måttlig` (moderate), `3 – Allvarlig` (serious), `4 – Mycket allvarlig` (very serious).
+- **Automatic reveal at the vote threshold:** Results stay hidden until enough responses have arrived (default: `min(4, number of connected participants)`), or until the meeting leader clicks **"Visa resultat nu"** (reveal results now). If more responses arrive afterwards, the matrix updates in real time.
+- **4×4 risk matrix (Probability × Consequence = 1–16):**
+  - **Green (1–2):** Low risk
+  - **Yellow (3–6):** Medium risk
+  - **Orange (8–9):** High risk
+  - **Red (12–16):** Very high risk
+- **Calculated suggestion & summary matrix:**
+  - Shows both the vote distribution (number of votes per cell) and the calculated average (rounded up at `.5` per the precautionary principle).
+  - The meeting leader can accept the suggestion or click any cell in the matrix after discussion to lock the placement of `#1`, `#2` etc. into the **summary matrix**.
+- **Export to PowerPoint & Excel:**
+  - **PNG image:** Download a high-resolution image of the summary matrix with all placed risks (`#1`, `#2`...) ready to paste into PowerPoint.
+  - **CSV (Excel):** Export a table with all risks, vote counts, averages, decided Probability/Consequence, risk score and risk level.
 
 ---
 
-## Köra applikationen
+## Running the application
 
-### 1. Köra lokalt (manuellt, utan Docker)
+### 1. Running locally (manually, without Docker)
 
-Skapa en virtuell Python-miljö, installera beroenden och starta servern i terminalen:
+Create a Python virtual environment, install the dependencies and start the server in your terminal:
 
 ```powershell
 python -m venv .venv
@@ -36,35 +38,44 @@ pip install -r requirements.txt
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-Öppna sedan **http://localhost:8000** i webbläsaren.
-*(Om du öppnar via `localhost` pekar QR-koden automatiskt på datorns lokala nätverks-IP så att deltagare på samma Wi-Fi kan skanna koden med sina mobiler.)*
+Then open **http://localhost:8000** in your browser.
+*(If you open it via `localhost`, the QR code automatically points to the computer's local network IP so that participants on the same Wi-Fi can scan it with their phones.)*
 
-### 2. Köra med Docker
+### Development in VS Code with Dev Containers
+
+Open the project in VS Code and choose **Dev Containers: Reopen in Container** from the command palette. Once the container has been created, the dependencies from `requirements-dev.txt` are installed automatically. Then start the app in the container's terminal:
+
+```bash
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Port 8000 is forwarded automatically. Run the tests with `pytest`.
+
+### 2. Running with Docker
 
 ```bash
 docker compose up --build -d
 ```
 
-Applikationen nås då på **http://localhost:8000** och sparar pågående sessioner i en Docker-volym (`riskmatris_data`) så att de överlever en omstart. Sessioner rensas automatiskt efter 48 timmar.
+The application is then available at **http://localhost:8000** and stores ongoing sessions in a Docker volume (`riskmatris_data`) so they survive a restart. Sessions are cleaned up automatically after 48 hours.
 
-### 3. Köra i molnet (Render, Fly.io, Google Cloud Run, Azure App Service)
+### 3. Running in the cloud (Render, Fly.io, Google Cloud Run, Azure App Service)
 
-Eftersom projektet har både `Dockerfile` och `requirements.txt` samt lyssnar på miljövariabeln `PORT` kan du ladda upp projektet direkt till valfri molntjänst utan ändringar.
+Since the project has both a `Dockerfile` and `requirements.txt`, and listens to the `PORT` environment variable, you can upload the project directly to any cloud service without changes.
 
-### 4. Köra på egen server bakom befintlig Traefik (HTTPS)
+### 4. Running on your own server behind an existing Traefik (HTTPS)
 
-Har du en server där Traefik redan sköter HTTPS och certifikat kör du appen **utan publicerade portar** – Traefik routar trafiken till containern via ett gemensamt Docker-nätverk (labels på containern, se `docker-compose.traefik.yml`):
+If you have a server where Traefik already handles HTTPS and certificates, run the app **without published ports** – Traefik routes traffic to the container via a shared Docker network (labels on the container, see `docker-compose.traefik.yml`):
 
 ```bash
-cp .env.example .env    # fyll i dina värden
+cp .env.example .env    # fill in your values
 docker compose -f docker-compose.traefik.yml up -d --build
 ```
 
-Fyll i i `.env`:
+Fill in `.env`:
 
-- `RISKMATRIS_DOMAIN` – domänen Traefik ska svara på (obligatorisk), t.ex. `riskmatris.example.com`
-- `TRAEFIK_NETWORK` – namnet på Docker-nätverket din Traefik kör på (ofta `traefik-public`; nätverket måste redan finnas)
-- `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERT_RESOLVER` – namn på entrypoint och cert-resolver (standard: `websecure` / `letsencrypt`)
+- `RISKMATRIS_DOMAIN` – the domain Traefik should respond on (required), e.g. `riskmatris.example.com`
+- `TRAEFIK_NETWORK` – the name of the Docker network your Traefik runs on (usually `traefik-public`; the network must already exist)
+- `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERT_RESOLVER` – names of the entrypoint and certificate resolver (defaults: `websecure` / `letsencrypt`)
 
-Öppna appen via din domän (`https://riskmatris.example.com`). Delningslänk och QR-kod pekar då automatiskt på rätt adress, och WebSockets (`wss://`) fungerar genom Traefik utan extra konfiguration. Vill du felsöka lokalt på servern kan du lägga till `ports: - "127.0.0.1:8000:8000"` i compose-filen (bind då endast till localhost).
-
+Open the app via your domain (`https://riskmatris.example.com`). The share link and QR code then point to the right address automatically, and WebSockets (`wss://`) work through Traefik without extra configuration. For local debugging on the server you can add `ports: - "127.0.0.1:8000:8000"` to the compose file (binding to localhost only).

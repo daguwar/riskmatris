@@ -1,14 +1,14 @@
 #!/bin/sh
 set -e
 
-# Katalog där SQLite-databasen ligger (monteras som volym i Docker)
+# Directory where the SQLite database lives (mounted as a volume in Docker)
 DB_DIR="$(dirname "${RISKMATRIS_DB_PATH:-/app/data/riskmatris.db}")"
 
-# Säkerställ att katalogen finns och ägs av appuser (uid 1000).
-# Detta reparerar även äldre volymer där katalogen eller db-filen ägs av root,
-# vilket annars ger felmeddelandet "attempt to write a readonly database".
+# Ensure the directory exists and is owned by appuser (uid 1000).
+# This also repairs older volumes where the directory or db file is owned by
+# root, which otherwise causes the error "attempt to write a readonly database".
 mkdir -p "$DB_DIR"
 chown -R appuser:appuser "$DB_DIR"
 
-# Växla till icke-root-användaren och kör huvudkommandot (t.ex. uvicorn)
+# Switch to the non-root user and run the main command (e.g. uvicorn)
 exec setpriv --reuid=1000 --regid=1000 --clear-groups "$@"

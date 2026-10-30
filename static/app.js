@@ -28,7 +28,7 @@
     }
   }
 
-  // Hämta eller skapa anonymt klient-ID i webbläsaren
+  // Get or create an anonymous client ID in the browser
   function getClientId() {
     let cid = localStorage.getItem("riskmatris_client_id");
     if (!cid) {
@@ -39,8 +39,8 @@
   }
 
   function getAdminToken(sessionId) {
-    // Läser admin-token enbart från localStorage – aldrig från URL:en
-    // (undviker läckage via webbläsarhistorik, serverloggar och Referer-headern)
+    // Reads the admin token from localStorage only – never from the URL
+    // (avoids leakage via browser history, server logs and the Referer header)
     return localStorage.getItem(`riskmatris_admin_${sessionId}`) || "";
   }
 
@@ -54,7 +54,7 @@
     } catch (_) {}
   }
 
-  // Applikationstillstånd
+  // Application state
   let currentSessionId = null;
   let sessionState = null;
   let ws = null;
@@ -69,7 +69,7 @@
   let customShareBaseUrl = "";
   let currentView = "voteView";
 
-  // DOM-element
+  // DOM elements
   const landingView = document.getElementById("landingView");
   const sessionView = document.getElementById("sessionView");
   const sessionHeaderControls = document.getElementById("sessionHeaderControls");
@@ -160,7 +160,7 @@
   const qrModal = document.getElementById("qrModal");
 
   // -------------------------------------------------------------------------
-  // Initiering & Routing
+  // Initialization & Routing
   // -------------------------------------------------------------------------
   function init() {
     bindLandingEvents();
@@ -264,7 +264,7 @@
   }
 
   // -------------------------------------------------------------------------
-  // QR-kod & Delningslänk
+  // QR Code & Share Link
   // -------------------------------------------------------------------------
   function computeShareUrl(lanIp) {
     let origin = customShareBaseUrl.trim() || window.location.origin;
@@ -317,7 +317,7 @@
 
     ws.onopen = () => {
       wsStatusDot.classList.remove("disconnected");
-      reconnectAttempts = 0; // Nollställ backoff vid lyckad anslutning
+      reconnectAttempts = 0; // Reset backoff after a successful connection
     };
 
     ws.onmessage = (event) => {
@@ -348,7 +348,7 @@
     }
   }
 
-  // Visa ett tillfälligt felmeddelande från servern (WebSocket-validering)
+  // Show a temporary error message from the server (WebSocket validation)
   let wsErrorTimer = null;
   function showWsError(message) {
     let banner = document.getElementById("wsErrorBanner");
@@ -367,13 +367,13 @@
   }
 
   // -------------------------------------------------------------------------
-  // Hantera & Rendera Session State
+  // Handle & Render Session State
   // -------------------------------------------------------------------------
   function handleSessionState(state) {
     sessionState = state;
     const isAdmin = Boolean(state.is_admin);
 
-    // Header & Kod
+    // Header & code
     sessionTitleDisplay.textContent = state.title;
     headerSessionCode.textContent = state.session_id;
     sidebarSessionCode.textContent = state.session_id;
@@ -382,12 +382,12 @@
     const pCount = state.participant_count || 0;
     participantCountText.textContent = `${pCount} ${pCount === 1 ? "deltagare" : "deltagare"}`;
 
-    // Hitta aktiv risk
+    // Find the active risk
     const activeRisk =
       state.risks.find((r) => r.number === state.active_risk_number) ||
       state.risks[state.risks.length - 1];
 
-    // Om vi bytt aktiv risk: synka deltagarens valda knappar med ev. sparad röst
+    // If the active risk changed: sync the participant's selected buttons with any saved vote
     if (lastActiveRiskNum !== activeRisk.number) {
       lastActiveRiskNum = activeRisk.number;
       if (state.my_vote) {
@@ -397,7 +397,7 @@
         selectedProb = null;
         selectedCons = null;
       }
-      // Nollställ även admin's valda knappar vid ny risk
+      // Also reset the admin's selected buttons on a new risk
       adminSelectedProb = null;
       adminSelectedCons = null;
     } else if (state.my_vote) {
@@ -408,31 +408,31 @@
       selectedCons = null;
     }
 
-    // Flikräknare
+    // Tab counters
     tabActiveRiskNum.textContent = `#${activeRisk.number}`;
     const lockedCount = state.risks.filter((r) => r.locked).length;
     tabLockedCount.textContent = String(lockedCount);
 
-    // Admin-synlighet
+    // Admin visibility
     adminNextRiskBox.classList.toggle("hidden", !isAdmin);
     adminSettingsCard.classList.toggle("hidden", !isAdmin);
     adminRiskActions.classList.toggle("hidden", !isAdmin);
     adminSelfVoteToggleBox.classList.toggle("hidden", !isAdmin);
     participantRiskLabelDisplay.classList.toggle("hidden", isAdmin);
 
-    // Vyväljaren: deltagare ser bara "Rösta", admin ser "Presentation" och "Admin"
+    // View switcher: participants only see "Rösta" (Vote), admin sees "Presentation" and "Admin"
     tabBtnVote.classList.toggle("hidden", isAdmin);
     tabBtnPresent.classList.toggle("hidden", !isAdmin);
     tabBtnAdmin.classList.toggle("hidden", !isAdmin);
     if (!isAdmin) {
       switchView("voteView");
     } else {
-      // Admin ska starta på adminView som default
+      // Admin should start on adminView by default
       if (currentView !== "adminView" && currentView !== "presentView") {
         switchView("adminView");
       }
     }
-    adminVoteHint.classList.toggle("hidden", true); // Alltid dölja nu
+    adminVoteHint.classList.toggle("hidden", true); // Always hidden now
 
     const maxNum = Math.max(...state.risks.map((r) => r.number));
     btnNextRiskSidebar.textContent = `+ Nästa risk (#${maxNum + 1})`;
@@ -447,7 +447,7 @@
         adminRiskLabelInput.value = activeRisk.label || "";
         adminRiskLabelInput.placeholder = `Valfri etikett för Risk #${activeRisk.number} (t.ex. från PowerPoint)...`;
       }
-      // Uppdatera risknumret i etikettfältets label
+      // Update the risk number in the label field's label
       if (adminLabelRiskNum) {
         adminLabelRiskNum.textContent = activeRisk.number;
       }
@@ -460,11 +460,11 @@
       adminClickMatrixHint.textContent = "";
     }
 
-    // Visa röstningskortet alltid för deltagare
+    // Always show the voting card to participants
     votingPanelCard.classList.toggle("hidden", isAdmin);
     btnToggleAdminVote.textContent = adminWantsToVote ? "Dölj egen röstning" : "Rösta själv på denna risk";
     
-    // Visa admin's röstningspanel när admin vill rösta
+    // Show the admin voting panel when the admin wants to vote
     if (adminVotePanel) {
       adminVotePanel.classList.toggle("hidden", !adminWantsToVote);
       if (adminWantsToVote && adminVotingCardRiskNum) {
@@ -473,17 +473,17 @@
       }
     }
 
-    // Renderera sidopanelens risklista
+    // Render the sidebar risk list
     renderSidebarRiskList(state.risks, activeRisk.number, isAdmin);
 
-    // Renderera aktiv risk-kort & röstningsknappar
+    // Render the active risk card & voting buttons
     renderActiveRiskHeader(activeRisk, state.effective_threshold, isAdmin);
     renderVotingControls(activeRisk, Boolean(state.my_vote));
 
-    // Renderera 4x4-matrisen för aktiv risk
+    // Render the 4x4 matrix for the active risk
     renderActiveRiskMatrix(activeRisk, state.effective_threshold, isAdmin);
 
-    // Renderera Sammanställningsmatris & Tabell
+    // Render the summary matrix & table
     renderSummaryMatrix(state.risks, isAdmin);
     renderSummaryTable(state.risks);
   }
@@ -628,7 +628,7 @@
   }
 
   // -------------------------------------------------------------------------
-  // Rendera 4x4 Matris för Aktiv Risk
+  // Render the 4x4 Matrix for the Active Risk
   // -------------------------------------------------------------------------
   function renderActiveRiskMatrix(risk, effectiveThreshold, isAdmin) {
     const titleSuffix = risk.label ? ` – ${risk.label}` : "";
@@ -678,15 +678,15 @@
 
     activeMatrixGrid.innerHTML = "";
 
-    // Rader: Konsekvens (Y-axeln) uppifrån 4 -> 1
+    // Rows: Consequence (Y axis), top to bottom 4 -> 1
     for (let cons = 4; cons >= 1; cons--) {
-      // Y-axel etikett till vänster
+      // Y-axis label on the left
       const yHeader = document.createElement("div");
       yHeader.className = "matrix-axis-header";
       yHeader.innerHTML = `<span class="axis-num">${cons}</span><span class="axis-name">${CONS_LABELS[cons]}</span>`;
       activeMatrixGrid.appendChild(yHeader);
 
-      // Kolumner: Sannolikhet (X-axeln) vänster till höger 1 -> 4
+      // Columns: Probability (X axis), left to right 1 -> 4
       for (let prob = 1; prob <= 4; prob++) {
         const meta = getCellMeta(prob, cons);
         const key = `${prob}_${cons}`;
@@ -702,7 +702,7 @@
           cell.classList.add(risk.locked ? "locked-cell" : "suggested-cell");
         }
 
-        // Topprad: Riskvärde (1-16) + ev. markör för Förslag / Låst
+        // Top row: risk score (1-16) + marker for Suggested / Locked
         const topRow = document.createElement("div");
         topRow.className = "cell-top-row";
 
@@ -723,7 +723,7 @@
           topRow.appendChild(badge);
         }
 
-        // Mittdel: Röstprickar och antal röster
+        // Middle: vote dots and vote count
         const votesArea = document.createElement("div");
         votesArea.className = "cell-votes-area";
         if (cellVotes > 0) {
@@ -743,7 +743,7 @@
           votesArea.appendChild(countPill);
         }
 
-        // Bottenrad: Nivå (Låg, Medel, Hög, Mycket Hög)
+        // Bottom row: level text
         const bottomRow = document.createElement("div");
         bottomRow.className = "cell-bottom-row";
         bottomRow.textContent = meta.level;
@@ -768,7 +768,7 @@
       }
     }
 
-    // Nedersta raden: X-axelns rubriker (Sannolikhet 1 -> 4)
+    // Bottom row: X-axis headers (Probability 1 -> 4)
     const corner = document.createElement("div");
     corner.className = "matrix-axis-header corner-cell";
     corner.innerHTML = `<span>Konsekvens &uarr;</span><span>Sannolikhet &rarr;</span>`;
@@ -783,12 +783,12 @@
   }
 
   // -------------------------------------------------------------------------
-  // Rendera Sammanställningsmatris (Alla risker #1, #2, #3...)
+  // Render the Summary Matrix (all risks #1, #2, #3...)
   // -------------------------------------------------------------------------
   function renderSummaryMatrix(risks, isAdmin) {
     summaryMatrixGrid.innerHTML = "";
 
-    // Gruppera risker per ruta (vi tar med alla låsta risker, samt avslöjade risker som har ett förslag)
+    // Group risks per cell (include all locked risks, plus revealed risks that have a suggestion)
     const cellRisksMap = {};
     risks.forEach((r) => {
       if ((r.locked || r.revealed) && r.effective_probability && r.effective_consequence) {
@@ -904,7 +904,7 @@
   }
 
   // -------------------------------------------------------------------------
-  // Event-bindningar i Sessionsvyn
+  // Event Bindings in the Session View
   // -------------------------------------------------------------------------
   const VIEW_IDS = ["voteView", "presentView", "adminView"];
   const viewButtons = { voteView: tabBtnVote, presentView: tabBtnPresent, adminView: tabBtnAdmin };
@@ -927,16 +927,17 @@
     tabBtnPresentSummary.classList.toggle("active", subId === "presentSummary");
   }
 
-  // Kopiera text till urklipp. navigator.clipboard finns bara i säker kontext
-  // (HTTPS eller localhost) – vid åtkomst över LAN-IP med vanlig HTTP saknas
-  // API:et helt, så då faller vi tillbaka på execCommand som fungerar överallt.
+  // Copy text to the clipboard. navigator.clipboard is only available in a
+  // secure context (HTTPS or localhost) – when accessed over a LAN IP with
+  // plain HTTP the API is missing entirely, so we fall back to execCommand,
+  // which works everywhere.
   async function copyTextToClipboard(text) {
     if (navigator.clipboard && window.isSecureContext) {
       try {
         await navigator.clipboard.writeText(text);
         return true;
       } catch (err) {
-        // Fortsätt till execCommand-fallbacken nedan.
+        // Fall through to the execCommand fallback below.
       }
     }
     try {
@@ -963,7 +964,7 @@
       btn.addEventListener("click", () => switchPresentSub(btn.getAttribute("data-subview")));
     });
 
-    // Röstningsknappar Sannolikhet (1-4)
+    // Probability voting buttons (1-4)
     probOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         selectedProb = parseInt(btn.getAttribute("data-prob"), 10);
@@ -971,7 +972,7 @@
       });
     });
 
-    // Röstningsknappar Konsekvens (1-4)
+    // Consequence voting buttons (1-4)
     consOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         selectedCons = parseInt(btn.getAttribute("data-cons"), 10);
@@ -979,10 +980,10 @@
       });
     });
 
-    // Admin: växla egen röstning
+    // Admin: toggle own voting
     btnToggleAdminVote.addEventListener("click", () => {
       adminWantsToVote = !adminWantsToVote;
-      // Visa/dölj röstningspanelen direkt utan att växla vy
+      // Show/hide the voting panel immediately without switching views
       if (adminVotePanel) {
         adminVotePanel.classList.toggle("hidden", !adminWantsToVote);
       }
@@ -996,7 +997,7 @@
       }
     });
 
-    // Admin's röstningsknappar Sannolikhet (1-4)
+    // Admin's probability voting buttons (1-4)
     if (adminProbOptionsGroup) {
       adminProbOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -1006,7 +1007,7 @@
       });
     }
 
-    // Admin's röstningsknappar Konsekvens (1-4)
+    // Admin's consequence voting buttons (1-4)
     if (adminConsOptionsGroup) {
       adminConsOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -1016,7 +1017,7 @@
       });
     }
 
-    // Admin: ändra etikett på risk
+    // Admin: change risk label
     let labelDebounce = null;
     adminRiskLabelInput.addEventListener("input", () => {
       clearTimeout(labelDebounce);
@@ -1030,30 +1031,30 @@
       }, 300);
     });
 
-    // Admin: ändra tröskelvärde
+    // Admin: change the threshold
     adminThresholdInput.addEventListener("change", () => {
       const val = parseInt(adminThresholdInput.value, 10) || 4;
       sendWsAction({ action: "set_threshold", threshold: val });
     });
 
-    // Admin: Visa resultat nu
+    // Admin: reveal results now
     btnRevealNow.addEventListener("click", () => {
       sendWsAction({ action: "reveal_now" });
     });
 
-    // Admin: Nollställ röster
+    // Admin: reset votes
     btnResetVotes.addEventListener("click", () => {
       if (confirm("Vill du nollställa alla röster på denna risk?")) {
         sendWsAction({ action: "reset_votes" });
       }
     });
 
-    // Admin: Lås placering
+    // Admin: lock placement
     btnLockRisk.addEventListener("click", () => {
       sendWsAction({ action: "lock_risk" });
     });
 
-    // Admin: Spara & Nästa risk
+    // Admin: save & next risk
     btnSaveAndNext.addEventListener("click", () => {
       sendWsAction({ action: "next_risk", auto_lock: true });
     });
@@ -1063,7 +1064,7 @@
       switchView("voteView");
     });
 
-    // Kopiera delningslänk
+    // Copy share link
     const btnCopyShareUrl = document.getElementById("btnCopyShareUrl");
     btnCopyShareUrl.addEventListener("click", async () => {
       const ok = await copyTextToClipboard(shareUrlInput.value);
@@ -1071,8 +1072,8 @@
       if (ok) {
         btnCopyShareUrl.textContent = "Kopierad!";
       } else {
-        // Automatisk kopiering nekades – markera länken så användaren kan
-        // kopiera manuellt med Ctrl+C.
+        // Automatic copy was denied – select the link so the user can
+        // copy it manually with Ctrl+C.
         shareUrlInput.focus();
         shareUrlInput.select();
         btnCopyShareUrl.textContent = "Kunde inte kopiera";
@@ -1080,7 +1081,7 @@
       setTimeout(() => (btnCopyShareUrl.textContent = old), 1500);
     });
 
-    // QR-modal
+    // QR modal
     const openQrModal = () => qrModal.classList.remove("hidden");
     const closeQrModal = () => qrModal.classList.add("hidden");
     document.getElementById("btnExpandQr").addEventListener("click", openQrModal);
@@ -1102,7 +1103,7 @@
       window.location.href = `/api/sessions/${currentSessionId}/export.csv`;
     });
 
-    // Export PNG (PowerPoint-redo bild av 4x4-sammanställningsmatrisen)
+    // Export PNG (PowerPoint-ready image of the 4x4 summary matrix)
     document.getElementById("btnExportPng").addEventListener("click", () => {
       if (!sessionState) return;
       exportSummaryMatrixAsPng(sessionState);
@@ -1142,7 +1143,7 @@
   }
 
   // -------------------------------------------------------------------------
-  // Högupplöst PNG-export av Sammanställningsmatrisen (för PowerPoint)
+  // High-resolution PNG Export of the Summary Matrix (for PowerPoint)
   // -------------------------------------------------------------------------
   function exportSummaryMatrixAsPng(state) {
     const canvas = document.createElement("canvas");
@@ -1150,11 +1151,11 @@
     canvas.height = 1040;
     const ctx = canvas.getContext("2d");
 
-    // Bakgrund
+    // Background
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Rubrik
+    // Title
     ctx.fillStyle = "#0f172a";
     ctx.font = "bold 34px Segoe UI, Arial, sans-serif";
     ctx.fillText(`Riskmatris – ${state.title} (Session ${state.session_id})`, 70, 58);
@@ -1164,14 +1165,14 @@
     const dateStr = new Date().toLocaleDateString("sv-SE");
     ctx.fillText(`Sammanställning av bedömda risker • ${dateStr}`, 70, 92);
 
-    // Matrisens geometri
+    // Matrix geometry
     const startX = 290;
     const startY = 125;
     const cellW = 295;
     const cellH = 165;
     const gap = 10;
 
-    // Gruppera risker per ruta
+    // Group risks per cell
     const cellRisksMap = {};
     state.risks.forEach((r) => {
       if ((r.locked || r.revealed) && r.effective_probability && r.effective_consequence) {
@@ -1181,7 +1182,7 @@
       }
     });
 
-    // Y-axel titel (KONSEKVENS)
+    // Y-axis title (CONSEQUENCE)
     ctx.save();
     ctx.translate(45, startY + (cellH * 4 + gap * 3) / 2);
     ctx.rotate(-Math.PI / 2);
@@ -1191,12 +1192,12 @@
     ctx.fillText("KONSEKVENS ↑", 0, 0);
     ctx.restore();
 
-    // Rader: Konsekvens 4 -> 1
+    // Rows: Consequence 4 -> 1
     for (let rowIdx = 0; rowIdx < 4; rowIdx++) {
       const cons = 4 - rowIdx;
       const y = startY + rowIdx * (cellH + gap);
 
-      // Y-axel etikettruta
+      // Y-axis label box
       drawRoundedRect(ctx, 75, y, 200, cellH, 12, "#1e293b", "#1e293b");
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 28px Segoe UI, Arial, sans-serif";
@@ -1206,7 +1207,7 @@
       ctx.fillStyle = "#e2e8f0";
       ctx.fillText(CONS_LABELS[cons], 175, y + 105);
 
-      // Kolumner: Sannolikhet 1 -> 4
+      // Columns: Probability 1 -> 4
       for (let colIdx = 0; colIdx < 4; colIdx++) {
         const prob = colIdx + 1;
         const x = startX + colIdx * (cellW + gap);
@@ -1215,18 +1216,18 @@
 
         drawRoundedRect(ctx, x, y, cellW, cellH, 12, meta.hexBg, meta.hexBorder, 3);
 
-        // Riskvärde (1-16) i övre vänstra hörnet
+        // Risk score (1-16) in the top-left corner
         ctx.fillStyle = meta.hexText;
         ctx.font = "bold 28px Segoe UI, Arial, sans-serif";
         ctx.textAlign = "left";
         ctx.fillText(String(meta.score), x + 16, y + 36);
 
-        // Nivå i nedre högra hörnet
+        // Level in the bottom-right corner
         ctx.font = "bold 16px Segoe UI, Arial, sans-serif";
         ctx.textAlign = "right";
         ctx.fillText(meta.level, x + cellW - 14, y + cellH - 14);
 
-        // Rita ut riskbrickor (#1, #2, #3...)
+        // Draw risk chips (#1, #2, #3...)
         let chipX = x + 16;
         let chipY = y + 54;
         placed.forEach((r) => {
@@ -1246,7 +1247,7 @@
       }
     }
 
-    // X-axel etiketter (Sannolikhet 1 -> 4)
+    // X-axis labels (Probability 1 -> 4)
     const xHeaderY = startY + 4 * (cellH + gap);
     drawRoundedRect(ctx, 75, xHeaderY, 200, 80, 12, "#334155", "#334155");
     ctx.fillStyle = "#cbd5e1";
@@ -1268,13 +1269,13 @@
       ctx.fillText(PROB_LABELS[prob], x + cellW / 2, xHeaderY + 62);
     }
 
-    // X-axel titel
+    // X-axis title
     ctx.fillStyle = "#1e293b";
     ctx.font = "bold 22px Segoe UI, Arial, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("SANNOLIKHET →", startX + (cellW * 4 + gap * 3) / 2, xHeaderY + 118);
 
-    // Färgförklaring längst ner
+    // Color legend at the bottom
     const legendItems = [
       { label: "1–2 Låg risk", color: "#86efac", border: "#16a34a" },
       { label: "3–6 Medelrisk", color: "#fde047", border: "#ca8a04" },

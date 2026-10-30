@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # ---------------------------------------------------------------------------
-# Loggning
+# Logging
 # ---------------------------------------------------------------------------
 
 logging.basicConfig(
@@ -30,14 +30,14 @@ logging.basicConfig(
 logger = logging.getLogger("riskmatris")
 
 # ---------------------------------------------------------------------------
-# Konfiguration & Konstanter
+# Configuration & Constants
 # ---------------------------------------------------------------------------
 
 DB_PATH = os.environ.get("RISKMATRIS_DB_PATH", os.path.join("data", "riskmatris.db"))
-# Skapa data-katalogen om den inte finns (för lokal körning utan Docker)
+# Create the data directory if it does not exist (for local runs without Docker)
 os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
 SESSION_TTL_SECONDS = int(os.environ.get("RISKMATRIS_TTL_HOURS", "48")) * 3600
-SESSION_CLEANUP_INTERVAL = int(os.environ.get("RISKMATRIS_CLEANUP_INTERVAL", "3600"))  # 1 timme default
+SESSION_CLEANUP_INTERVAL = int(os.environ.get("RISKMATRIS_CLEANUP_INTERVAL", "3600"))  # 1 hour default
 
 PROBABILITY_LABELS = {
     1: "Osannolik",
@@ -55,15 +55,15 @@ CONSEQUENCE_LABELS = {
 
 
 def round_half_up(value: float) -> int:
-    """Avrundar enligt försiktighetsprincipen (.5 avrundas uppåt) till heltal 1..4."""
+    """Rounds half up (cautious rounding: .5 rounds up) to an integer in 1..4."""
     rounded = int(math.floor(value + 0.5))
     return max(1, min(4, rounded))
 
 
 def get_risk_level(score: int) -> dict[str, str]:
     """
-    Riskvärde = Sannolikhet (1-4) x Konsekvens (1-4) -> 1..16
-    Grön (1-2 Låg), Gul (3-6 Medel), Orange (8-9 Hög), Röd (12-16 Mycket Hög)
+    Risk score = Probability (1-4) x Consequence (1-4) -> 1..16
+    Green (1-2 Low), Yellow (3-6 Medium), Orange (8-9 High), Red (12-16 Very High)
     """
     if score <= 2:
         return {"level": "Låg", "color": "green"}
@@ -77,13 +77,13 @@ def get_risk_level(score: int) -> dict[str, str]:
 
 @cache
 def get_local_lan_ip() -> str:
-    """Hämtar datorns lokala nätverks-IP (cachad – beräknas bara en gång per process)."""
+    """Returns the machine's local network IP (cached – computed only once per process)."""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))
             ip = s.getsockname()[0]
             if ip and not ip.startswith("127."):
-                logger.info("Lokal LAN-IP: %s", ip)
+                logger.info("Local LAN IP: %s", ip)
                 return ip
     except Exception:
         pass
@@ -91,16 +91,16 @@ def get_local_lan_ip() -> str:
         hostname = socket.gethostname()
         ip = socket.gethostbyname(hostname)
         if ip and not ip.startswith("127."):
-            logger.info("Lokal LAN-IP (via hostname %s): %s", hostname, ip)
+            logger.info("Local LAN IP (via hostname %s): %s", hostname, ip)
             return ip
     except Exception:
         pass
-    logger.info("Kunde inte hitta LAN-IP – använder 127.0.0.1")
+    logger.info("Could not determine LAN IP – falling back to 127.0.0.1")
     return "127.0.0.1"
 
 
 # ---------------------------------------------------------------------------
-# Databas & Sessionslagring (SQLite + RAM-cache)
+# Database & Session Storage (SQLite + RAM cache)
 # ---------------------------------------------------------------------------
 
 
@@ -131,17 +131,17 @@ def cleanup_expired_sessions() -> None:
     for sid in expired_ids:
         SESSIONS.pop(sid, None)
     if expired_ids:
-        logger.info("Rensade %d utgångna sessioner: %s", len(expired_ids), expired_ids)
+        logger.info("Removed %d expired sessions: %s", len(expired_ids), expired_ids)
 
 
 async def _periodic_cleanup() -> None:
-    """Bakgrundsloop som rensar utgångna sessioner med jämna intervall."""
+    """Background loop that removes expired sessions at regular intervals."""
     while True:
         await asyncio.sleep(SESSION_CLEANUP_INTERVAL)
         try:
             cleanup_expired_sessions()
         except Exception:
-            logger.exception("Fel vid periodisk städning av sessioner")
+            logger.exception("Error during periodic session cleanup")
 
 
 def save_session_to_db(session: dict[str, Any]) -> None:
@@ -177,9 +177,9 @@ def load_sessions_from_db() -> dict[str, dict[str, Any]]:
             try:
                 loaded[sid] = json.loads(data_json)
             except Exception:
-                logger.warning("Kunde inte ladda session %s från DB – hoppar över", sid)
+                logger.warning("Could not load session %s from DB – skipping", sid)
                 continue
-    logger.info("Laddade %d sessioner från DB vid uppstart", len(loaded))
+    logger.info("Loaded %d sessions from DB at startup", len(loaded))
     return loaded
 
 
@@ -187,7 +187,7 @@ SESSIONS: dict[str, dict[str, Any]] = {}
 
 
 def generate_session_id() -> str:
-    """Genererar en lättläst 6-teckens kod (utan förväxlingsbara tecken som 0/O, 1/I)."""
+    """Generates a readable 6-character code (without confusable characters like 0/O, 1/I)."""
     alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
     while True:
         code = "".join(secrets.choice(alphabet) for _ in range(6))
@@ -208,15 +208,15 @@ def create_new_risk(number: int, label: str = "") -> dict[str, Any]:
 
 
 def compute_risk_stats(risk: dict[str, Any], effective_threshold: int) -> dict[str, Any]:
-    """Beräknar statistik för en risk utan sidoeffekter (ren funktion).
+    """Computes statistics for a risk without side effects (pure function).
 
-    Returnerar även ``threshold_reached`` så att anroparen kan uppdatera
-    ``risk['revealed']`` explicit vid behov.
+    Also returns ``threshold_reached`` so the caller can update
+    ``risk['revealed']`` explicitly when needed.
     """
     votes_list = list(risk["votes"].values())
     vote_count = len(votes_list)
 
-    # Tröskeln är nådd om röster finns och antalet >= tröskeln (och risken inte redan är revealed)
+    # Threshold is reached if votes exist and the count >= threshold (and the risk is not already revealed)
     threshold_reached = (
         vote_count > 0
         and vote_count >= effective_threshold
@@ -276,7 +276,7 @@ def compute_risk_stats(risk: dict[str, Any], effective_threshold: int) -> dict[s
 class ConnectionInfo:
     def __init__(self, websocket: WebSocket, role: str, client_id: str, is_admin: bool):
         self.websocket = websocket
-        self.role = role  # "admin" eller "participant"
+        self.role = role  # "admin" or "participant"
         self.client_id = client_id
         self.is_admin = is_admin
 
@@ -289,7 +289,7 @@ class SessionConnectionManager:
         await conn.websocket.accept()
         if session_id not in self.connections:
             self.connections[session_id] = []
-        # Ta bort ev. tidigare anslutning med samma websocket
+        # Remove any previous connection with the same websocket
         self.connections[session_id] = [c for c in self.connections[session_id] if c.websocket != conn.websocket]
         self.connections[session_id].append(conn)
 
@@ -300,7 +300,7 @@ class SessionConnectionManager:
                 del self.connections[session_id]
 
     def get_participant_count(self, session_id: str) -> int:
-        """Antal unika anslutna deltagare (exklusive administratören)."""
+        """Number of unique connected participants (excluding the admin)."""
         conns = self.connections.get(session_id, [])
         participant_ids: set[str] = {c.client_id for c in conns if c.role == "participant" and c.client_id}
         return len(participant_ids)
@@ -317,14 +317,14 @@ class SessionConnectionManager:
         participant_count = self.get_participant_count(sid)
         effective_threshold = self.get_effective_threshold(session)
 
-        # Beräkna statistik för alla risker (och uppdatera revealed vid tröskel)
+        # Compute stats for all risks (and update revealed at threshold)
         risks_summary: list[dict[str, Any]] = []
         active_num = session["active_risk_number"]
         state_changed = False
 
         for r in session["risks"]:
             r_stats = compute_risk_stats(r, effective_threshold)
-            # Uppdatera revealed explicit baserat på threshold_reached (ingen sidoeffekt i compute_risk_stats)
+            # Update revealed explicitly based on threshold_reached (no side effect in compute_risk_stats)
             if r_stats["threshold_reached"]:
                 r["revealed"] = True
                 state_changed = True
@@ -380,13 +380,13 @@ manager = SessionConnectionManager()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global SESSIONS
-    logger.info("Startar Riskmatris Live – laddar sessioner från DB (%s)", DB_PATH)
+    logger.info("Starting Riskmatris Live – loading sessions from DB (%s)", DB_PATH)
     SESSIONS = load_sessions_from_db()
-    logger.info("Servern är redo. %d aktiva sessioner.", len(SESSIONS))
+    logger.info("Server ready. %d active sessions.", len(SESSIONS))
 
-    # Starta bakgrundsrensning av utgångna sessioner (varje timme)
+    # Start background cleanup of expired sessions (hourly)
     cleanup_task = asyncio.create_task(_periodic_cleanup())
-    logger.info("Periodisk städning schemalagd (intervall: %d sekunder).", SESSION_CLEANUP_INTERVAL)
+    logger.info("Periodic cleanup scheduled (interval: %d seconds).", SESSION_CLEANUP_INTERVAL)
 
     yield
 
@@ -395,7 +395,7 @@ async def lifespan(app: FastAPI):
         await cleanup_task
     except asyncio.CancelledError:
         pass
-    logger.info("Stänger ner – sessioner sparade i DB.")
+    logger.info("Shutting down – sessions saved to DB.")
 
 
 app = FastAPI(title="Riskmatris Live", lifespan=lifespan)
@@ -403,11 +403,11 @@ app = FastAPI(title="Riskmatris Live", lifespan=lifespan)
 
 @app.middleware("http")
 async def add_cache_headers(request: Request, call_next):
-    """Sätter Cache-Control beroende på sökväg.
+    """Sets Cache-Control depending on the request path.
 
-    Statiska filer (CSS/JS): 1 dag (innehållsbaserad versionering via ombyggnad).
-    SPA-rutter (HTML): no-cache (måste alltid hämta senaste index.html).
-    API-rutter: no-store (standard, känslig data).
+    Static files (CSS/JS): 1 day (content-based versioning via rebuild).
+    SPA routes (HTML): no-cache (index.html must always be fetched fresh).
+    API routes: no-store (default, sensitive data).
     """
     response = await call_next(request)
     path = request.url.path
@@ -425,7 +425,7 @@ class CreateSessionRequest(BaseModel):
 
 @app.get("/health")
 async def health_check():
-    """Hälsokontroll för Docker HEALTHCHECK, Kubernetes och molnplattformar."""
+    """Health check for Docker HEALTHCHECK, Kubernetes and cloud platforms."""
     return {
         "status": "ok",
         "active_sessions": len(SESSIONS),
@@ -454,7 +454,7 @@ async def create_session(req: CreateSessionRequest):
     }
     SESSIONS[session_id] = session
     save_session_to_db(session)
-    logger.info("Ny session skapad: %s – '%s' (tröskel: %d)", session_id, title, threshold)
+    logger.info("New session created: %s – '%s' (threshold: %d)", session_id, title, threshold)
     return {
         "session_id": session_id,
         "admin_token": admin_token,
@@ -476,7 +476,7 @@ async def get_session_info(
     session = SESSIONS.get(sid)
     if not session:
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
-    # Prioritera header över query-param (undviker token i URL/loggar/historik)
+    # Prefer the header over the query param (avoids token in URLs/logs/history)
     token = x_admin_token or admin_token
     is_admin = bool(token and secrets.compare_digest(token, session["admin_token"]))
     dummy_conn = ConnectionInfo(
@@ -511,7 +511,7 @@ async def get_session_qr_svg(session_id: str, url: str = Query(...)):
         svg_bytes = buf.getvalue()
         return Response(content=svg_bytes, media_type="image/svg+xml")
     except Exception as exc:
-        logger.exception("QR-SVG: kunde inte generera QR-kod för session %s", sid)
+        logger.exception("QR-SVG: could not generate QR code for session %s", sid)
         raise HTTPException(status_code=500, detail=str(exc))
 
 
@@ -524,7 +524,7 @@ async def export_session_csv(session_id: str):
 
     effective_threshold = manager.get_effective_threshold(session)
     output = io.StringIO()
-    # Skriv UTF-8 BOM så att Microsoft Excel i Windows visar å, ä, ö korrekt direkt vid dubbelklick
+    # Write a UTF-8 BOM so Microsoft Excel on Windows renders å, ä, ö correctly when opening the file directly
     output.write("\ufeff")
     writer = csv.writer(output, delimiter=";")
 
@@ -587,12 +587,12 @@ async def export_session_csv(session_id: str):
 
 
 # ---------------------------------------------------------------------------
-# WebSocket-kommunikation i realtid
+# Real-time WebSocket Communication
 # ---------------------------------------------------------------------------
 
 
 def _safe_int(msg: dict[str, Any], key: str, default: int, min_val: int = 0, max_val: int = 999) -> int | None:
-    """Hämtar ett heltal från ett WS-meddelande med felhantering och gränskontroll."""
+    """Fetches an integer from a WS message with error handling and bounds checking."""
     raw = msg.get(key, default)
     try:
         val = int(raw)
@@ -604,7 +604,7 @@ def _safe_int(msg: dict[str, Any], key: str, default: int, min_val: int = 0, max
 
 
 async def _send_ws_error(websocket: WebSocket, message: str) -> None:
-    """Skickar ett felmeddelande tillbaka till klienten över WebSocket."""
+    """Sends an error message back to the client over WebSocket."""
     try:
         await websocket.send_json({"type": "error", "message": message})
     except Exception:
@@ -622,7 +622,7 @@ async def websocket_endpoint(
     sid = session_id.strip().upper()
     session = SESSIONS.get(sid)
     if not session:
-        logger.warning("WebSocket: session %s hittades inte – nekad anslutning", sid)
+        logger.warning("WebSocket: session %s not found – connection denied", sid)
         await websocket.close(code=4004, reason="Sessionen finns inte")
         return
 
@@ -639,8 +639,8 @@ async def websocket_endpoint(
     )
     await manager.connect(sid, conn)
     logger.info(
-        "WebSocket: %s ansluten till session %s (roll: %s, klient: %s)",
-        "admin" if is_admin else "deltagare",
+        "WebSocket: %s connected to session %s (role: %s, client: %s)",
+        "admin" if is_admin else "participant",
         sid,
         effective_role,
         client_id,
@@ -649,14 +649,14 @@ async def websocket_endpoint(
 
     try:
         while True:
-            # --- Mottagning & grundvalidering ---
+            # --- Receive & basic validation ---
             try:
                 msg = await websocket.receive_json()
             except WebSocketDisconnect:
-                # Klienten har kopplat från – låt den yttre except-handlern städa upp
-                # och avsluta. Får INTE fångas av "except Exception" nedan: då kastar
-                # receive_json direkt igen på varje varv och loopen snurrar för evigt
-                # utan att släppa event-loopen, vilket låser hela servern.
+                # The client has disconnected – let the outer exception handler clean
+                # up and return. Must NOT be caught by the "except Exception" below:
+                # receive_json would re-raise on every iteration, spinning the loop
+                # forever without yielding to the event loop, deadlocking the server.
                 raise
             except Exception:
                 await _send_ws_error(websocket, "Ogiltigt JSON-meddelande.")
@@ -677,7 +677,7 @@ async def websocket_endpoint(
                 session["risks"][-1],
             )
 
-            # 1. Deltagare (eller admin) röstar på aktiv risk
+            # 1. Participant (or admin) votes on the active risk
             if action == "vote":
                 prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4)
                 cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=4)
@@ -697,7 +697,7 @@ async def websocket_endpoint(
                     active_risk["revealed"] = True
                 save_session_to_db(session)
                 logger.info(
-                    "Röst mottagen: session %s, risk #%d, klient %s -> S=%d, K=%d (%d röster, tröskel %d)",
+                    "Vote received: session %s, risk #%d, client %s -> P=%d, C=%d (%d votes, threshold %d)",
                     sid,
                     active_num,
                     client_id,
@@ -708,12 +708,12 @@ async def websocket_endpoint(
                 )
                 await manager.broadcast(session)
 
-            # Nedanstående åtgärder kräver admin-behörighet
+            # The actions below require admin privileges
             elif is_admin:
                 if action == "reveal_now":
                     active_risk["revealed"] = True
                     save_session_to_db(session)
-                    logger.info("Admin: resultat visat nu – session %s, risk #%d", sid, active_num)
+                    logger.info("Admin: results revealed – session %s, risk #%d", sid, active_num)
                     await manager.broadcast(session)
 
                 elif action == "set_label":
@@ -751,7 +751,7 @@ async def websocket_endpoint(
                     await manager.broadcast(session)
 
                 elif action == "lock_risk":
-                    # Lås fast slutgiltig placering i sammanställningsmatrisen
+                    # Lock the final placement in the summary matrix
                     eff_thresh = manager.get_effective_threshold(session)
                     stats = compute_risk_stats(active_risk, eff_thresh)
                     prob_raw = msg.get("probability")
@@ -775,7 +775,7 @@ async def websocket_endpoint(
                     active_risk["locked"] = True
                     save_session_to_db(session)
                     logger.info(
-                        "Admin: risk #%d låst i session %s -> S=%d, K=%d (riskvärde %d)",
+                        "Admin: risk #%d locked in session %s -> P=%d, C=%d (risk score %d)",
                         active_num,
                         sid,
                         prob,
@@ -790,7 +790,7 @@ async def websocket_endpoint(
                     await manager.broadcast(session)
 
                 elif action == "set_final_cell":
-                    # Administratören klickar i matrisen för att justera föreslagen/låst ruta
+                    # Admin clicks a cell in the matrix to adjust the suggested/locked placement
                     prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4)
                     cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=4)
                     if prob is None or cons is None:
@@ -805,7 +805,7 @@ async def websocket_endpoint(
                     await manager.broadcast(session)
 
                 elif action == "next_risk":
-                    # Om nuvarande risk har röster och auto_lock skickas med, lås den på sitt förslag/val
+                    # If the current risk has votes and auto_lock is sent, lock it at its suggestion/selection
                     if msg.get("auto_lock", True) and len(active_risk["votes"]) > 0 and not active_risk["locked"]:
                         eff_thresh = manager.get_effective_threshold(session)
                         stats = compute_risk_stats(active_risk, eff_thresh)
@@ -822,7 +822,7 @@ async def websocket_endpoint(
                     session["active_risk_number"] = next_num
                     save_session_to_db(session)
                     logger.info(
-                        "Admin: ny risk #%d skapad i session %s (totalt %d risker)",
+                        "Admin: new risk #%d created in session %s (%d risks total)",
                         next_num,
                         sid,
                         len(session["risks"]),
@@ -868,22 +868,22 @@ async def websocket_endpoint(
                     await _send_ws_error(websocket, f"Okänd admin-action: {action}")
 
             else:
-                # Icke-admin som försöker admin-action, eller okänd action
+                # Non-admin attempting an admin action, or an unknown action
                 if action != "vote":
                     await _send_ws_error(websocket, "Du saknar behörighet för denna åtgärd.")
 
     except WebSocketDisconnect:
         manager.disconnect(sid, websocket)
-        logger.info("WebSocket: klient %s frånkopplad från session %s", client_id, sid)
+        logger.info("WebSocket: client %s disconnected from session %s", client_id, sid)
         await manager.broadcast(session)
     except Exception:
-        logger.exception("WebSocket: oväntat fel för klient %s i session %s", client_id, sid)
+        logger.exception("WebSocket: unexpected error for client %s in session %s", client_id, sid)
         manager.disconnect(sid, websocket)
         await manager.broadcast(session)
 
 
 # ---------------------------------------------------------------------------
-# Frontend-rutter (SPA / Direktlänkar för QR-kod & Sessioner)
+# Frontend Routes (SPA / Direct Links for QR Codes & Sessions)
 # ---------------------------------------------------------------------------
 
 os.makedirs("static", exist_ok=True)

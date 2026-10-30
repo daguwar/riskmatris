@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Skapa en katalog för SQLite-databasen så den kan monteras som en volym
+# Create a directory for the SQLite database so it can be mounted as a volume
 RUN mkdir -p /app/data
 ENV RISKMATRIS_DB_PATH=/app/data/riskmatris.db
 ENV PORT=8000
@@ -15,8 +15,8 @@ COPY static/ ./static/
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Skapa en icke-root-användare för säkerhet. Entrypoint kör som root,
-# rättar ägarskap på data-katalogen och växlar sedan till appuser.
+# Create a non-root user for security. The entrypoint runs as root,
+# fixes ownership of the data directory and then switches to appuser.
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 
 EXPOSE 8000

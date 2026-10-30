@@ -1,6 +1,6 @@
 /* ==========================================================================
-   Riskmatris Live – Designsystem
-   Enkel, modern och mobilvänlig. Deltagarvyn ska kännas självklar.
+   Riskmatris Live – Design System
+   Simple, modern and mobile-friendly. The participant view should feel obvious.
    ========================================================================== */
 
 :root {
@@ -40,7 +40,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Grund & hjälpklasser
+   Base & Utility Classes
    -------------------------------------------------------------------------- */
 
 *,
@@ -272,7 +272,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Kort, knappar & formulär
+   Cards, Buttons & Forms
    -------------------------------------------------------------------------- */
 
 .card {
@@ -423,7 +423,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Startsida
+   Landing Page
    -------------------------------------------------------------------------- */
 
 .landing {
@@ -536,7 +536,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Sessionslayout
+   Session Layout
    -------------------------------------------------------------------------- */
 
 .session-layout {
@@ -557,7 +557,7 @@ button {
   gap: 16px;
 }
 
-/* Tre vyer: Rösta (smal, centrerad – telefon), Presentation (bred – projektor), Admin */
+/* Three views: Vote (narrow, centered – phone), Presentation (wide – projector), Admin */
 .vote-view {
   width: 100%;
   max-width: 560px;
@@ -606,7 +606,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Adminvy - Röstningspanel
+   Admin View – Voting Panel
    -------------------------------------------------------------------------- */
 
 .admin-vote-panel {
@@ -616,7 +616,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Adminvy - Röstningspanel
+   Admin View – Voting Panel
    -------------------------------------------------------------------------- */
 
 .admin-vote-panel {
@@ -626,7 +626,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Adminverktygsrad
+   Admin Toolbar
    -------------------------------------------------------------------------- */
 
 .admin-toolbar {
@@ -780,7 +780,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Delningskort & QR
+   Share Card & QR
    -------------------------------------------------------------------------- */
 
 .share-card {
@@ -855,7 +855,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Flikar (segmenterad kontroll)
+   Tabs (Segmented Control)
    -------------------------------------------------------------------------- */
 
 .view-tabs-bar {
@@ -918,7 +918,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Rubrikkort för aktuell risk
+   Header Card for the Current Risk
    -------------------------------------------------------------------------- */
 
 .active-risk-header-card {
@@ -1039,7 +1039,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Röstningskort
+   Voting Card
    -------------------------------------------------------------------------- */
 
 .voting-card {
@@ -1130,7 +1130,7 @@ button {
   box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
 }
 
-/* Statiska färger på röstningsknappar (1=grön, 2=gul, 3=orange, 4=röd) */
+/* Static colors on voting buttons (1=green, 2=yellow, 3=orange, 4=red) */
 .vote-option-btn[data-prob="1"],
 .vote-option-btn[data-cons="1"] {
   background: var(--green-bg);
@@ -1155,7 +1155,7 @@ button {
   border-color: var(--red-border);
 }
 
-/* Lika storlek på alla röstningsknappar */
+/* Equal size for all voting buttons */
 .vote-option-btn {
   min-height: 76px;
   height: 76px;
@@ -1175,7 +1175,7 @@ button {
   color: #fff;
 }
 
-/* Fix för att centrera siffrorna i knapparna */
+/* Fix to center the numbers inside the buttons */
 .vote-option-btn {
   min-width: 0;
 }
@@ -1198,7 +1198,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Matris
+   Matrix
    -------------------------------------------------------------------------- */
 
 .matrix-section-card {
@@ -1259,7 +1259,7 @@ button {
   color: var(--accent);
 }
 
-/* Tomt läge innan tröskeln nåtts */
+/* Empty state before the threshold is reached */
 .matrix-masked-banner {
   display: flex;
   flex-direction: column;
@@ -1299,7 +1299,7 @@ button {
   }
 }
 
-/* Själva 4x4-brädet */
+/* The 4x4 board itself */
 .matrix-board {
   display: flex;
   gap: 10px;
@@ -1530,7 +1530,7 @@ button {
   border: 1px dashed var(--border-strong);
 }
 
-/* Färgförklaring */
+/* Color legend */
 .matrix-legend {
   display: flex;
   flex-wrap: wrap;
@@ -1582,7 +1582,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Sammanställning: tabell & export
+   Summary: Table & Export
    -------------------------------------------------------------------------- */
 
 .export-buttons-row {
@@ -1736,7 +1736,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   WebSocket-fel (toast)
+   WebSocket Error (Toast)
    -------------------------------------------------------------------------- */
 
 .ws-error-banner {
@@ -1757,7 +1757,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Responsivt
+   Responsive
    -------------------------------------------------------------------------- */
 
 @media (max-width: 720px) {

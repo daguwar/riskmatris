@@ -1,20 +1,20 @@
-# Kör Riskmatris bakom en befintlig Traefik (som sköter HTTPS/certifikat).
+# Run Riskmatris behind an existing Traefik (which handles HTTPS/certificates).
 #
-# Användning:
-#   1. cp .env.example .env   och fyll i dina värden
+# Usage:
+#   1. cp .env.example .env   and fill in your values
 #   2. docker compose -f docker-compose.traefik.yml up -d --build
 #
-# Containern publicerar INGA portar – Traefik når den via ett gemensamt
-# Docker-nätverk och routar trafik baserat på labels nedan. WebSockets
-# (ws/wss) fungerar automatiskt genom Traefik, ingen extra konfig behövs.
-# (Förutsätter Traefik v2/v3 med Docker-providern aktiv.)
+# The container publishes NO ports – Traefik reaches it via a shared
+# Docker network and routes traffic based on the labels below. WebSockets
+# (ws/wss) work automatically through Traefik, no extra config needed.
+# (Assumes Traefik v2/v3 with the Docker provider enabled.)
 
 services:
   riskmatris:
     build: .
     container_name: riskmatris
-    # Ingen "ports" här – all trafik går via Traefik.
-    # För lokal felsökning på servern, lägg till: "127.0.0.1:8000:8000"
+    # No "ports" here – all traffic goes through Traefik.
+    # For local debugging on the server, add: "127.0.0.1:8000:8000"
     volumes:
       - riskmatris_data:/app/data
     environment:
@@ -31,17 +31,17 @@ services:
       - traefik
     labels:
       - "traefik.enable=true"
-      # Router: svara på din domän via HTTPS-entrypointen
-      - "traefik.http.routers.riskmatris.rule=Host(`${RISKMATRIS_DOMAIN:?Sätt RISKMATRIS_DOMAIN i .env}`)"
+      # Router: respond on your domain via the HTTPS entrypoint
+      - "traefik.http.routers.riskmatris.rule=Host(`${RISKMATRIS_DOMAIN:?Set RISKMATRIS_DOMAIN in .env}`)"
       - "traefik.http.routers.riskmatris.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.riskmatris.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
-      # Service: intern port i containern (uvicorn lyssnar på 8000)
+      # Service: internal container port (uvicorn listens on 8000)
       - "traefik.http.services.riskmatris.loadbalancer.server.port=8000"
 
 networks:
-  # Samma Docker-nätverk som din Traefik-container är ansluten till.
-  # Vanliga namn: traefik-public, traefik_traefik – ändra i .env vid behov.
-  # Nätverket måste redan finnas (skapas normalt av Traefiks compose-projekt).
+  # The same Docker network your Traefik container is attached to.
+  # Common names: traefik-public, traefik_traefik – change in .env if needed.
+  # The network must already exist (normally created by Traefik's compose project).
   traefik:
     external: true
     name: ${TRAEFIK_NETWORK:-traefik-public}

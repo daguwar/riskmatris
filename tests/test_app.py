@@ -1,9 +1,9 @@
-"""Enhetstester för kärnfunktioner i app.py."""
+"""Unit tests for the core functions in app.py."""
 
 import os
 import sys
 
-# Lägg till projektroten i sys.path så vi kan importera app
+# Add the project root to sys.path so we can import app
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
@@ -26,7 +26,7 @@ from app import (
 
 
 class TestRoundHalfUp:
-    """Avrundning enligt försiktighetsprincipen (.5 uppåt), begränsad till 1..4."""
+    """Rounding per the cautious principle (.5 up), clamped to 1..4."""
 
     @pytest.mark.parametrize(
         "value, expected",
@@ -41,7 +41,7 @@ class TestRoundHalfUp:
             (3.5, 4),
             (4.0, 4),
             (4.4, 4),
-            # Utom gränserna – ska begränsas
+            # Out of bounds – must be clamped
             (0.0, 1),
             (0.4, 1),
             (0.5, 1),
@@ -54,7 +54,7 @@ class TestRoundHalfUp:
         assert round_half_up(value) == expected
 
     def test_exact_half_rounds_up(self):
-        """.5 ska alltid avrundas uppåt."""
+        ".5 must always round up."
         assert round_half_up(2.5) == 3
         assert round_half_up(3.5) == 4
 
@@ -69,7 +69,7 @@ class TestRoundHalfUp:
 
 
 class TestGetRiskLevel:
-    """Riskvärde 1–16 mappas till nivå och färg."""
+    """Risk scores 1–16 map to a level and a color."""
 
     @pytest.mark.parametrize(
         "score, expected_level, expected_color",
@@ -109,7 +109,7 @@ class TestGetRiskLevel:
 
 
 class TestGenerateSessionId:
-    """Sessions-ID ska vara 6 tecken, utan förväxlingsbara tecken."""
+    """Session IDs must be 6 characters, without confusable characters."""
 
     ALLOWED_CHARS = set("23456789ABCDEFGHJKLMNPQRSTUVWXYZ")
 
@@ -121,22 +121,22 @@ class TestGenerateSessionId:
         for _ in range(100):
             sid = generate_session_id()
             for ch in sid:
-                assert ch in self.ALLOWED_CHARS, f"Otillåtet tecken '{ch}' i {sid}"
+                assert ch in self.ALLOWED_CHARS, f"Disallowed character '{ch}' in {sid}"
 
     def test_no_ambiguous_chars(self):
-        """0, O, 1, I, L ska aldrig förekomma."""
+        """0, O, 1, I, L must never occur."""
         forbidden = set("01OIL")
         for _ in range(200):
             sid = generate_session_id()
             for ch in sid:
-                assert ch not in forbidden, f"Förväxlingsbart tecken '{ch}' i {sid}"
+                assert ch not in forbidden, f"Confusable character '{ch}' in {sid}"
 
     def test_uniqueness(self):
-        """Genererade ID:n ska vara unika (åtminstone bland 1000 försök)."""
+        """Generated IDs must be unique (at least among 1000 attempts)."""
         seen = set()
         for _ in range(1000):
             sid = generate_session_id()
-            assert sid not in seen, f"Dubblett: {sid}"
+            assert sid not in seen, f"Duplicate: {sid}"
             seen.add(sid)
 
 
@@ -159,7 +159,7 @@ class TestCreateNewRisk:
     def test_with_label(self):
         risk = create_new_risk(3, "  Brandrisk  ")
         assert risk["number"] == 3
-        assert risk["label"] == "Brandrisk"  # whitespace strippad
+        assert risk["label"] == "Brandrisk"  # whitespace stripped
 
     def test_empty_label_stripped(self):
         risk = create_new_risk(2, "   ")
@@ -200,12 +200,12 @@ class TestComputeRiskStats:
         stats = compute_risk_stats(risk, effective_threshold=4)
         assert stats["vote_count"] == 2
         assert stats["revealed"] is False
-        # Snitt ska vara dolt när inte revealed
+        # Averages must be hidden while not revealed
         assert stats["avg_probability"] is None
         assert stats["cell_counts"] == {}
 
     def test_votes_revealed_at_threshold(self):
-        """När röster >= tröskel: threshold_reached=True, caller sätter revealed=True."""
+        """When votes >= threshold: threshold_reached=True, the caller sets revealed=True."""
         votes = {
             "a": {"probability": 2, "consequence": 3, "updated_at": 0},
             "b": {"probability": 3, "consequence": 2, "updated_at": 0},
@@ -216,17 +216,17 @@ class TestComputeRiskStats:
         stats = compute_risk_stats(risk, effective_threshold=4)
         assert stats["vote_count"] == 4
         assert stats["threshold_reached"] is True
-        # Innan caller uppdaterar revealed: revealed är fortfarande False i stats
+        # Before the caller updates revealed: revealed is still False in stats
         assert stats["revealed"] is False
 
-        # Simulera vad build_client_payload gör: sätt revealed=True vid threshold_reached
+        # Simulate what build_client_payload does: set revealed=True on threshold_reached
         risk["revealed"] = True
         stats = compute_risk_stats(risk, effective_threshold=4)
         assert stats["revealed"] is True
-        assert stats["threshold_reached"] is False  # redan revealed
+        assert stats["threshold_reached"] is False  # already revealed
         assert stats["avg_probability"] == 2.5
         assert stats["avg_consequence"] == 2.5
-        assert stats["suggested_probability"] == 3  # .5 avrundas uppåt
+        assert stats["suggested_probability"] == 3  # .5 rounds up
         assert stats["suggested_consequence"] == 3
 
     def test_cell_counts(self):
@@ -265,7 +265,7 @@ class TestComputeRiskStats:
         assert stats["color"] == "red"
 
     def test_final_overrides_suggested(self):
-        """Om final_probability är satt ska den användas före förslaget."""
+        """If final_probability is set, it must take precedence over the suggestion."""
         votes = {
             "a": {"probability": 1, "consequence": 1, "updated_at": 0},
             "b": {"probability": 2, "consequence": 2, "updated_at": 0},
@@ -277,7 +277,7 @@ class TestComputeRiskStats:
             final_cons=4,
         )
         stats = compute_risk_stats(risk, effective_threshold=4)
-        # Snitt blir 1.5/1.5 -> förslag 2/2, men final är 4/4
+        # Averages become 1.5/1.5 -> suggestion 2/2, but final is 4/4
         assert stats["suggested_probability"] == 2
         assert stats["suggested_consequence"] == 2
         assert stats["effective_probability"] == 4
@@ -295,10 +295,10 @@ class TestComputeRiskStats:
         assert stats["color"] == "yellow"
 
     def test_threshold_auto_reveals(self):
-        """När antal röster >= tröskel ska threshold_reached vara True.
+        """When the vote count >= threshold, threshold_reached must be True.
 
-        compute_risk_stats är nu en ren funktion – ingen sidoeffekt på risk['revealed'].
-        Anroparen (build_client_payload) ansvarar för att uppdatera revealed.
+        compute_risk_stats is now a pure function – no side effect on risk['revealed'].
+        The caller (build_client_payload) is responsible for updating revealed.
         """
         votes = {
             "a": {"probability": 2, "consequence": 2, "updated_at": 0},
@@ -307,13 +307,13 @@ class TestComputeRiskStats:
         risk = self._make_risk(votes=votes)
         assert risk["revealed"] is False
         stats = compute_risk_stats(risk, effective_threshold=2)
-        # threshold_reached ska vara True, men risk['revealed'] ska INTE ha ändrats
+        # threshold_reached must be True, but risk['revealed'] must NOT have changed
         assert stats["threshold_reached"] is True
-        assert risk["revealed"] is False  # ren funktion – ingen sidoeffekt
-        assert stats["revealed"] is False  # is_revealed baseras på risk['revealed']
+        assert risk["revealed"] is False  # pure function – no side effect
+        assert stats["revealed"] is False  # is_revealed is based on risk['revealed']
 
     def test_no_side_effect_on_risk(self):
-        """compute_risk_stats ska inte mutera risk-dikten överhuvudtaget."""
+        """compute_risk_stats must not mutate the risk dict at all."""
         votes = {
             "a": {"probability": 2, "consequence": 2, "updated_at": 0},
         }
@@ -321,13 +321,13 @@ class TestComputeRiskStats:
         original = {k: v for k, v in risk.items() if k != "votes"}
         original_votes = dict(risk["votes"])
         compute_risk_stats(risk, effective_threshold=1)
-        # Ingen förändring av risk efter anrop
+        # No change to risk after the call
         for k, v in original.items():
-            assert risk[k] == v, f"risk['{k}'] ändrades: {risk[k]!r} != {v!r}"
+            assert risk[k] == v, f"risk['{k}'] changed: {risk[k]!r} != {v!r}"
         assert risk["votes"] == original_votes
 
     def test_threshold_not_reached_when_already_revealed(self):
-        """threshold_reached ska vara False om risken redan är revealed."""
+        """threshold_reached must be False if the risk is already revealed."""
         votes = {
             "a": {"probability": 2, "consequence": 2, "updated_at": 0},
         }
@@ -336,7 +336,7 @@ class TestComputeRiskStats:
         assert stats["threshold_reached"] is False
 
     def test_threshold_not_reached_below_threshold(self):
-        """threshold_reached ska vara False när röster < tröskel."""
+        """threshold_reached must be False when votes < threshold."""
         votes = {
             "a": {"probability": 2, "consequence": 2, "updated_at": 0},
         }
@@ -345,14 +345,14 @@ class TestComputeRiskStats:
         assert stats["threshold_reached"] is False
 
     def test_threshold_not_reached_no_votes(self):
-        """threshold_reached ska vara False när inga röster finns."""
+        """threshold_reached must be False when there are no votes."""
         risk = self._make_risk()
         stats = compute_risk_stats(risk, effective_threshold=1)
         assert stats["threshold_reached"] is False
 
 
 # ---------------------------------------------------------------------------
-# Konstanter
+# Constants
 # ---------------------------------------------------------------------------
 
 
@@ -369,7 +369,7 @@ class TestLabels:
 
 
 # ---------------------------------------------------------------------------
-# get_local_lan_ip (cachad)
+# get_local_lan_ip (cached)
 # ---------------------------------------------------------------------------
 
 
@@ -377,32 +377,32 @@ class TestGetLocalLanIp:
     def test_returns_valid_ip_string(self):
         ip = get_local_lan_ip()
         assert isinstance(ip, str)
-        # Ska vara en IPv4-adress eller 127.0.0.1
+        # Must be an IPv4 address or 127.0.0.1
         parts = ip.split(".")
         assert len(parts) == 4
         for part in parts:
             assert 0 <= int(part) <= 255
 
     def test_is_cached(self):
-        """Anrop två gånger ska returnera samma värde (cachat)."""
+        """Two calls must return the same value (cached)."""
         ip1 = get_local_lan_ip()
         ip2 = get_local_lan_ip()
         assert ip1 == ip2
 
     def test_cache_info_hit(self):
-        """Efter första anropet ska cache-info visa minst 1 hit eller miss."""
-        get_local_lan_ip()  # säkerställ första anropet
+        """After the first call, cache info must show at least 1 hit or miss."""
+        get_local_lan_ip()  # ensure the first call
         info = get_local_lan_ip.cache_info()
         assert info.hits + info.misses >= 1
 
 
 # ---------------------------------------------------------------------------
-# _safe_int (WebSocket-validering)
+# _safe_int (WebSocket validation)
 # ---------------------------------------------------------------------------
 
 
 class TestSafeInt:
-    """Testar hjälpfunktionen för säker heltalskonvertering från WS-meddelanden."""
+    """Tests the helper for safe integer conversion from WS messages."""
 
     def test_valid_int(self):
         assert _safe_int({"probability": 3}, "probability", 0, 1, 4) == 3
@@ -426,15 +426,15 @@ class TestSafeInt:
         assert _safe_int({"probability": None}, "probability", 0, 1, 4) is None
 
     def test_float_string_returns_none(self):
-        """int('3.5') kastar ValueError – ska returnera None."""
+        """int('3.5') raises ValueError – must return None."""
         assert _safe_int({"probability": "3.5"}, "probability", 0, 1, 4) is None
 
     def test_bool_returns_none(self):
-        """True/False ska inte accepteras som giltiga heltal."""
-        # bool är en subklass av int i Python, men vi vill inte acceptera det
-        # int(True) == 1, så detta är faktiskt giltigt – testa att det hanteras
+        """bool values: documented behavior check (see comments below)."""
+        # bool is a subclass of int in Python. int(True) == 1, so this is
+        # actually a valid value – test that it is handled
         result = _safe_int({"probability": True}, "probability", 0, 1, 4)
-        # True -> int(True) = 1, vilket är inom 1-4
+        # True -> int(True) = 1, which is within 1-4
         assert result == 1
 
     def test_boundary_min(self):
@@ -447,18 +447,18 @@ class TestSafeInt:
         assert _safe_int({"v": -1}, "v", 0, 1, 4) is None
 
     def test_large_default_bounds(self):
-        """Testar med större gränser (för risknummer etc.)."""
+        """Tests with larger bounds (for risk numbers etc.)."""
         assert _safe_int({"number": 9999}, "number", 1, 1, 9999) == 9999
         assert _safe_int({"number": 10000}, "number", 1, 1, 9999) is None
 
 
 # ---------------------------------------------------------------------------
-# /health-endpoint (integrationstest med httpx)
+# /health endpoint (integration test with httpx)
 # ---------------------------------------------------------------------------
 
 
 class TestHealthEndpoint:
-    """Testar att /health svarar korrekt via FastAPI TestClient."""
+    """Tests that /health responds correctly via the FastAPI TestClient."""
 
     def test_health_returns_ok(self):
         from fastapi.testclient import TestClient
@@ -476,16 +476,17 @@ class TestHealthEndpoint:
 
 
 # ---------------------------------------------------------------------------
-# WebSocket-frånkoppling (regression: frånkoppling låste tidigare event-loopen)
+# WebSocket disconnect (regression: a disconnect used to deadlock the event loop)
 # ---------------------------------------------------------------------------
 
 
 class TestWebSocketDisconnect:
-    """En frånkopplad klient ska städas bort och endpointen ska avslutas.
+    """A disconnected client must be cleaned up and the endpoint must return.
 
-    Regressionstest: WebSocketDisconnect fångades tidigare av "except Exception"
-    runt receive_json(), så handlern snurrade i en oändlig loop utan att släppa
-    event-loopen – hela servern låste sig vid första frånkoppling (stängd flik/F5).
+    Regression test: WebSocketDisconnect used to be caught by the "except Exception"
+    around receive_json(), so the handler spun in an infinite loop without yielding
+    to the event loop – the whole server deadlocked on the first disconnect
+    (closed tab/F5).
     """
 
     def test_disconnect_cleans_up_and_returns(self):
@@ -512,7 +513,7 @@ class TestWebSocketDisconnect:
             ws = MagicMock()
             ws.accept = AsyncMock()
             ws.send_json = AsyncMock()
-            # Simulera att klienten kopplar från direkt
+            # Simulate the client disconnecting immediately
             ws.receive_json = AsyncMock(side_effect=WebSocketDisconnect(1000))
 
             result = {}
@@ -530,14 +531,14 @@ class TestWebSocketDisconnect:
                     result["ok"] = False
                     result["error"] = exc
 
-            # Kör i daemon-tråd: om endpointen hänger (regression) ska testet
-            # fallera via timeout istället för att hänga hela testsviten.
+            # Run in a daemon thread: if the endpoint hangs (regression), the
+            # test should fail via timeout instead of hanging the whole suite.
             thread = threading.Thread(target=runner, daemon=True)
             thread.start()
             thread.join(timeout=15)
 
-            assert result.get("ok") is True, f"Endpointen avslutades inte som den ska: {result.get('error')}"
-            # Anslutningen ska vara borttagen efter frånkopplingen
+            assert result.get("ok") is True, f"Endpoint did not return as expected: {result.get('error')}"
+            # The connection must be removed after the disconnect
             assert sid not in manager.connections
         finally:
             SESSIONS.pop(sid, None)
