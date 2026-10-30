@@ -38,7 +38,8 @@ logger = logging.getLogger("riskmatris")
 DB_PATH = os.environ.get("RISKMATRIS_DB_PATH", os.path.join("data", "riskmatris.db"))
 # Create the data directory if it does not exist (for local runs without Docker)
 os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
-SESSION_TTL_SECONDS = int(os.environ.get("RISKMATRIS_TTL_HOURS", "48")) * 3600
+SESSION_TTL_HOURS = int(os.environ.get("RISKMATRIS_TTL_HOURS", "48"))
+SESSION_TTL_SECONDS = SESSION_TTL_HOURS * 3600
 SESSION_CLEANUP_INTERVAL = int(os.environ.get("RISKMATRIS_CLEANUP_INTERVAL", "3600"))  # 1 hour default
 
 # Abuse/availability limits (single-process, in-memory – fits the deployment model)
@@ -1032,4 +1033,7 @@ async def serve_spa(request: Request, session_id: str | None = None):
     version = get_static_version()
     html = html.replace('"/static/styles.css"', f'"/static/styles.css?v={version}"')
     html = html.replace('"/static/app.js"', f'"/static/app.js?v={version}"')
+    # Inject the configured session retention into the info text so it always
+    # matches what the server actually enforces
+    html = html.replace("__TTL_HOURS__", str(SESSION_TTL_HOURS))
     return HTMLResponse(content=html)

@@ -858,3 +858,16 @@ class TestStaticCacheBusting:
 
         assert get_static_version() == get_static_version()
         assert len(get_static_version()) == 12
+
+    def test_ttl_hours_injected_into_info_text(self, monkeypatch):
+        from fastapi.testclient import TestClient
+
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_TTL_HOURS", 6)
+        client = TestClient(app_module.app)
+        resp = client.get("/")
+        assert resp.status_code == 200
+        assert "högst <strong>6 timmar</strong>" in resp.text
+        # The placeholder must never leak to users
+        assert "__TTL_HOURS__" not in resp.text
