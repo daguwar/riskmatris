@@ -825,3 +825,36 @@ class TestThresholdSemantics:
         session = self._make_session(threshold=4, votes=votes)
         stats = compute_risk_stats(session["risks"][0], threshold=4)
         assert stats["threshold_reached"] is True
+
+
+# ---------------------------------------------------------------------------
+# Static asset cache busting
+# ---------------------------------------------------------------------------
+
+
+class TestStaticCacheBusting:
+    """index.html must always be served fresh, while JS/CSS are referenced
+    with a content-based version so a stale cached script can never run
+    against newer markup (regression: an old cached app.js crashed with
+    'effectiveThresholdInfo is null' after a deploy)."""
+
+    def test_index_html_references_versioned_assets(self):
+        from fastapi.testclient import TestClient
+
+        from app import app, get_static_version
+
+        client = TestClient(app)
+        version = get_static_version()
+        for path in ("/", "/s/ABC123"):
+            resp = client.get(path)
+            assert resp.status_code == 200
+            assert f"/static/app.js?v={version}" in resp.text
+            assert f"/static/styles.css?v={version}" in resp.text
+            # The SPA shell itself must always be revalidated
+            assert resp.headers["cache-control"] == "no-cache"
+
+    def test_version_is_stable_and_short(self):
+        from app import get_static_version
+
+        assert get_static_version() == get_static_version()
+        assert len(get_static_version()) == 12
