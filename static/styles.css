@@ -499,6 +499,23 @@ button {
   background: var(--border);
 }
 
+.about-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.about-list p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.about-list strong {
+  color: var(--text);
+}
+
 .recent-sessions {
   margin-top: 16px;
   padding-top: 14px;
