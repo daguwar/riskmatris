@@ -38,7 +38,27 @@ logger = logging.getLogger("riskmatris")
 DB_PATH = os.environ.get("RISKMATRIS_DB_PATH", os.path.join("data", "riskmatris.db"))
 # Create the data directory if it does not exist (for local runs without Docker)
 os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
-SESSION_TTL_HOURS = int(os.environ.get("RISKMATRIS_TTL_HOURS", "48"))
+
+
+def _parse_ttl_hours(raw: str) -> int:
+    """Parses RISKMATRIS_TTL_HOURS with a safe fallback.
+
+    Invalid or non-positive values fall back to 48 hours with a warning in the
+    logs: a TTL of 0 or less would make every session count as expired and wipe
+    the database at the next cleanup, and a non-numeric value would crash the
+    app at startup.
+    """
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        value = -1
+    if value < 1:
+        logger.warning("Invalid RISKMATRIS_TTL_HOURS value %r – falling back to 48 hours", raw)
+        return 48
+    return value
+
+
+SESSION_TTL_HOURS = _parse_ttl_hours(os.environ.get("RISKMATRIS_TTL_HOURS", "48"))
 SESSION_TTL_SECONDS = SESSION_TTL_HOURS * 3600
 SESSION_CLEANUP_INTERVAL = int(os.environ.get("RISKMATRIS_CLEANUP_INTERVAL", "3600"))  # 1 hour default
 

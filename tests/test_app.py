@@ -871,3 +871,48 @@ class TestStaticCacheBusting:
         assert "högst <strong>6 timmar</strong>" in resp.text
         # The placeholder must never leak to users
         assert "__TTL_HOURS__" not in resp.text
+
+
+# ---------------------------------------------------------------------------
+# RISKMATRIS_TTL_HOURS parsing (safe fallback)
+# ---------------------------------------------------------------------------
+
+
+class TestTtlHoursParsing:
+    """A TTL of 0 or less would wipe every session at the next cleanup, and a
+    non-numeric value would crash the app at startup – both must fall back to
+    48 hours with a warning instead."""
+
+    def test_valid_values(self):
+        from app import _parse_ttl_hours
+
+        assert _parse_ttl_hours("48") == 48
+        assert _parse_ttl_hours("6") == 6
+        assert _parse_ttl_hours("1") == 1
+
+    def test_zero_and_negative_fall_back_to_48(self, caplog):
+        import logging
+
+        from app import _parse_ttl_hours
+
+        with caplog.at_level(logging.WARNING, logger="riskmatris"):
+            assert _parse_ttl_hours("0") == 48
+            assert _parse_ttl_hours("-5") == 48
+        assert any("RISKMATRIS_TTL_HOURS" in rec.message for rec in caplog.records)
+
+    def test_non_numeric_falls_back_to_48(self, caplog):
+        import logging
+
+        from app import _parse_ttl_hours
+
+        with caplog.at_level(logging.WARNING, logger="riskmatris"):
+            assert _parse_ttl_hours("abc") == 48
+            assert _parse_ttl_hours("") == 48
+            assert _parse_ttl_hours("3.5") == 48
+        assert any("RISKMATRIS_TTL_HOURS" in rec.message for rec in caplog.records)
+
+    def test_default_session_ttl_is_valid(self):
+        import app as app_module
+
+        assert app_module.SESSION_TTL_HOURS >= 1
+        assert app_module.SESSION_TTL_SECONDS == app_module.SESSION_TTL_HOURS * 3600
