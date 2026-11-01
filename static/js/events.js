@@ -1,0 +1,296 @@
+import { dom } from "./dom.js";
+import { exportSummaryMatrixAsPng } from "./export-png.js";
+import { renderAdminVotingControls, renderVotingControls } from "./render/voting.js";
+import { state } from "./state.js";
+import {
+  copyTextToClipboard,
+  getAdminToken,
+  getClientId,
+  saveRecentSession,
+} from "./utils.js";
+import {
+  handleSessionState,
+  switchPresentSub,
+  switchView,
+  updateShareUrlAndQr,
+} from "./views.js";
+import { connectWebSocket, sendWsAction } from "./ws.js";
+
+export function renderRecentSessions() {
+  try {
+    const list = JSON.parse(localStorage.getItem("riskmatris_recent") || "[]");
+    const box = document.getElementById("recentSessionsBox");
+    const container = document.getElementById("recentSessionsList");
+    if (!list.length) {
+      box.classList.add("hidden");
+      return;
+    }
+    box.classList.remove("hidden");
+    container.innerHTML = "";
+    list.forEach((item) => {
+      const a = document.createElement("a");
+      a.href = `/s/${item.session_id}`;
+      a.className = "recent-chip";
+      a.textContent = `${item.session_id} – ${item.title}${item.is_admin ? " (Admin)" : ""}`;
+      container.appendChild(a);
+    });
+  } catch (_) {}
+}
+
+export async function enterSession(sessionId) {
+  state.currentSessionId = sessionId.toUpperCase();
+  const adminToken = getAdminToken(state.currentSessionId);
+  const clientId = getClientId();
+
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (adminToken) {
+      headers["X-Admin-Token"] = adminToken;
+    }
+    const res = await fetch(
+      `/api/sessions/${state.currentSessionId}?client_id=${encodeURIComponent(clientId)}`,
+      { headers }
+    );
+    if (!res.ok) {
+      alert(`Sessionen "${state.currentSessionId}" hittades inte. Kontrollera koden.`);
+      window.history.pushState({}, "", "/");
+      return;
+    }
+    const initialData = await res.json();
+    dom.landingView.classList.add("hidden");
+    dom.sessionView.classList.remove("hidden");
+    dom.sessionHeaderControls.classList.remove("hidden");
+    dom.sessionTitleDisplay.classList.remove("hidden");
+
+    saveRecentSession(state.currentSessionId, initialData.title, initialData.is_admin);
+    handleSessionState(initialData);
+    updateShareUrlAndQr(initialData.lan_ip);
+    connectWebSocket(handleSessionState);
+  } catch (err) {
+    alert("Kunde inte ansluta till sessionen: " + err.message);
+  }
+}
+
+export function bindLandingEvents() {
+  const createForm = document.getElementById("createSessionForm");
+  createForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = document.getElementById("inputSessionTitle").value.trim() || "Riskanalys";
+    const threshold = parseInt(document.getElementById("inputDefaultThreshold").value, 10) || 4;
+
+    try {
+      const res = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, threshold }),
+      });
+      if (!res.ok) throw new Error("Kunde inte skapa session");
+      const data = await res.json();
+      localStorage.setItem(`riskmatris_admin_${data.session_id}`, data.admin_token);
+      saveRecentSession(data.session_id, data.title, true);
+      window.history.pushState({}, "", `/s/${data.session_id}`);
+      enterSession(data.session_id);
+    } catch (err) {
+      alert("Ett fel uppstod när sessionen skulle skapas: " + err.message);
+    }
+  });
+
+  const joinForm = document.getElementById("joinSessionForm");
+  joinForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const code = document.getElementById("inputJoinCode").value.trim().toUpperCase();
+    if (!code) return;
+    window.history.pushState({}, "", `/s/${code}`);
+    enterSession(code);
+  });
+}
+
+export function submitVoteIfComplete() {
+  if (state.sessionState) {
+    const activeRisk =
+      state.sessionState.risks.find((r) => r.number === state.sessionState.active_risk_number) ||
+      state.sessionState.risks[state.sessionState.risks.length - 1];
+    renderVotingControls(activeRisk, Boolean(state.sessionState.my_vote));
+  }
+  if (state.selectedProb && state.selectedCons) {
+    sendWsAction({
+      action: "vote",
+      probability: state.selectedProb,
+      consequence: state.selectedCons,
+    });
+  }
+}
+
+export function submitAdminVoteIfComplete() {
+  if (state.sessionState) {
+    const activeRisk =
+      state.sessionState.risks.find((r) => r.number === state.sessionState.active_risk_number) ||
+      state.sessionState.risks[state.sessionState.risks.length - 1];
+    renderAdminVotingControls(activeRisk, Boolean(state.sessionState.my_vote));
+  }
+  if (state.adminSelectedProb && state.adminSelectedCons) {
+    sendWsAction({
+      action: "vote",
+      probability: state.adminSelectedProb,
+      consequence: state.adminSelectedCons,
+    });
+  }
+}
+
+export function bindSessionEvents() {
+  document.querySelectorAll("#viewSwitcher .tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => switchView(btn.getAttribute("data-view")));
+  });
+  document.querySelectorAll("#presentSubTabs .tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => switchPresentSub(btn.getAttribute("data-subview")));
+  });
+
+  // Probability voting buttons (1-4)
+  dom.probOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.selectedProb = parseInt(btn.getAttribute("data-prob"), 10);
+      submitVoteIfComplete();
+    });
+  });
+
+  // Consequence voting buttons (1-4)
+  dom.consOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.selectedCons = parseInt(btn.getAttribute("data-cons"), 10);
+      submitVoteIfComplete();
+    });
+  });
+
+  // Admin: toggle own voting
+  dom.btnToggleAdminVote.addEventListener("click", () => {
+    state.adminWantsToVote = !state.adminWantsToVote;
+    if (dom.adminVotePanel) {
+      dom.adminVotePanel.classList.toggle("hidden", !state.adminWantsToVote);
+    }
+    if (state.adminWantsToVote && state.sessionState) {
+      const activeRisk =
+        state.sessionState.risks.find((r) => r.number === state.sessionState.active_risk_number) ||
+        state.sessionState.risks[state.sessionState.risks.length - 1];
+      if (dom.adminVotingCardRiskNum) {
+        dom.adminVotingCardRiskNum.textContent = `Risk #${activeRisk.number}`;
+      }
+      renderAdminVotingControls(activeRisk, Boolean(state.sessionState.my_vote));
+    }
+  });
+
+  // Admin's probability voting buttons (1-4)
+  if (dom.adminProbOptionsGroup) {
+    dom.adminProbOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.adminSelectedProb = parseInt(btn.getAttribute("data-prob"), 10);
+        submitAdminVoteIfComplete();
+      });
+    });
+  }
+
+  // Admin's consequence voting buttons (1-4)
+  if (dom.adminConsOptionsGroup) {
+    dom.adminConsOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.adminSelectedCons = parseInt(btn.getAttribute("data-cons"), 10);
+        submitAdminVoteIfComplete();
+      });
+    });
+  }
+
+  // Admin: change risk label
+  let labelDebounce = null;
+  dom.adminRiskLabelInput.addEventListener("input", () => {
+    clearTimeout(labelDebounce);
+    labelDebounce = setTimeout(() => {
+      if (!state.sessionState) return;
+      sendWsAction({
+        action: "set_label",
+        number: state.sessionState.active_risk_number,
+        label: dom.adminRiskLabelInput.value,
+      });
+    }, 300);
+  });
+
+  // Admin: change threshold
+  dom.adminThresholdInput.addEventListener("change", () => {
+    const val = parseInt(dom.adminThresholdInput.value, 10) || 4;
+    sendWsAction({ action: "set_threshold", threshold: val });
+  });
+
+  // Admin: reveal results now
+  dom.btnRevealNow.addEventListener("click", () => {
+    sendWsAction({ action: "reveal_now" });
+  });
+
+  // Admin: reset votes
+  dom.btnResetVotes.addEventListener("click", () => {
+    if (confirm("Vill du nollställa alla röster på denna risk?")) {
+      sendWsAction({ action: "reset_votes" });
+    }
+  });
+
+  // Admin: lock placement
+  dom.btnLockRisk.addEventListener("click", () => {
+    sendWsAction({ action: "lock_risk" });
+  });
+
+  // Admin: save & next risk
+  dom.btnSaveAndNext.addEventListener("click", () => {
+    sendWsAction({ action: "next_risk", auto_lock: true });
+  });
+
+  dom.btnNextRiskSidebar.addEventListener("click", () => {
+    sendWsAction({ action: "next_risk", auto_lock: true });
+    switchView("voteView");
+  });
+
+  // Copy share link
+  const btnCopyShareUrl = document.getElementById("btnCopyShareUrl");
+  btnCopyShareUrl.addEventListener("click", async () => {
+    const ok = await copyTextToClipboard(dom.shareUrlInput.value);
+    const old = btnCopyShareUrl.textContent;
+    if (ok) {
+      btnCopyShareUrl.textContent = "Kopierad!";
+    } else {
+      dom.shareUrlInput.focus();
+      dom.shareUrlInput.select();
+      btnCopyShareUrl.textContent = "Kunde inte kopiera";
+    }
+    setTimeout(() => (btnCopyShareUrl.textContent = old), 1500);
+  });
+
+  // QR modal
+  const openQrModal = () => dom.qrModal.classList.remove("hidden");
+  const closeQrModal = () => dom.qrModal.classList.add("hidden");
+  document.getElementById("btnExpandQr").addEventListener("click", openQrModal);
+  document.getElementById("qrPreviewWrapper").addEventListener("click", openQrModal);
+  document.getElementById("topSessionCodeBox").addEventListener("click", openQrModal);
+  document.getElementById("btnCloseQrModal").addEventListener("click", closeQrModal);
+  dom.qrModal.addEventListener("click", (e) => {
+    if (e.target === dom.qrModal) closeQrModal();
+  });
+
+  // Presentation view: QR modal and separate projector window
+  document.getElementById("btnPresentQr").addEventListener("click", openQrModal);
+  document.getElementById("btnPresentWindow").addEventListener("click", () => {
+    window.open(`${window.location.pathname}?view=present`, "_blank", "width=1280,height=860");
+  });
+
+  document.getElementById("btnApplyCustomUrl").addEventListener("click", () => {
+    state.customShareBaseUrl = dom.customBaseUrlInput.value.trim();
+    updateShareUrlAndQr(state.sessionState ? state.sessionState.lan_ip : "");
+  });
+
+  // Export CSV
+  document.getElementById("btnExportCsv").addEventListener("click", () => {
+    if (!state.currentSessionId) return;
+    window.location.href = `/api/sessions/${state.currentSessionId}/export.csv`;
+  });
+
+  // Export PNG
+  document.getElementById("btnExportPng").addEventListener("click", () => {
+    if (!state.sessionState) return;
+    exportSummaryMatrixAsPng(state.sessionState);
+  });
+}

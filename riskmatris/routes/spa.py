@@ -14,7 +14,7 @@ router = APIRouter()
 
 @cache
 def get_static_version() -> str:
-    """Returns a content hash of the frontend assets, used for cache busting.
+    """Returns a content hash of all frontend assets (JS/CSS), used for cache busting.
 
     index.html is always served fresh (no-cache), while app.js/styles.css are
     cached for a day. Referencing them with a content-based version parameter
@@ -22,9 +22,12 @@ def get_static_version() -> str:
     instead of mixing a stale script with fresh markup.
     """
     hasher = hashlib.sha256()
-    for name in ("app.js", "styles.css"):
-        with open(os.path.join("static", name), "rb") as f:
-            hasher.update(f.read())
+    for root, _, files in sorted(os.walk("static")):
+        for name in sorted(files):
+            if name.endswith((".js", ".css")):
+                file_path = os.path.join(root, name)
+                with open(file_path, "rb") as f:
+                    hasher.update(f.read())
     return hasher.hexdigest()[:12]
 
 
