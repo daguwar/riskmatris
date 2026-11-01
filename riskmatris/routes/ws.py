@@ -3,23 +3,22 @@
 import json
 import secrets
 
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
 
-import riskmatris.db as db
 from riskmatris.config import (
     MAX_CLIENT_ID_LENGTH,
     WS_MAX_CONNECTIONS_PER_SESSION,
     WS_MAX_MESSAGE_BYTES,
     logger,
 )
+from riskmatris.state import AppState, get_ws_app_state
 from riskmatris.utils import sanitize_user_text
 from riskmatris.ws_actions import (
     ADMIN_ACTIONS,
     PARTICIPANT_ACTIONS,
     send_ws_error,
 )
-from riskmatris.ws_manager import ConnectionInfo, manager
-from riskmatris.ws_tickets import consume_ws_ticket
+from riskmatris.ws_manager import ConnectionInfo
 
 router = APIRouter()
 
@@ -31,15 +30,20 @@ async def websocket_endpoint(
     role: str = Query(default="participant"),
     client_id: str = Query(default=""),
     ticket: str = Query(default=""),
+    state: AppState = Depends(get_ws_app_state),
 ):
+    # Fallback if invoked directly in unit tests without FastAPI dependency runner
+    if state is None or not isinstance(state, AppState):
+        state = get_ws_app_state(websocket)
+
     sid = session_id.strip().upper()
-    session = db.SESSIONS.get(sid)
+    session = state.sessions.get(sid)
     if not session:
         logger.warning("WebSocket: session %s not found – connection denied", sid)
         await websocket.close(code=4004, reason="Sessionen finns inte")
         return
 
-    if manager.get_connection_count(sid) >= WS_MAX_CONNECTIONS_PER_SESSION:
+    if state.manager.get_connection_count(sid) >= WS_MAX_CONNECTIONS_PER_SESSION:
         logger.warning(
             "WebSocket: session %s connection limit reached (%d) – rejecting client %s",
             sid,
@@ -51,7 +55,7 @@ async def websocket_endpoint(
 
     # Admins authenticate with a one-time ticket instead of the long-lived
     # admin token, so no secret ever travels in the query string.
-    is_admin = consume_ws_ticket(ticket, sid) if ticket else False
+    is_admin = state.consume_ws_ticket(ticket, sid) if ticket else False
     effective_role = "admin" if (role == "admin" and is_admin) else "participant"
     # Clamp/sanitize the client id – it is unbounded query input otherwise
     client_id = sanitize_user_text(client_id, MAX_CLIENT_ID_LENGTH)
@@ -64,7 +68,7 @@ async def websocket_endpoint(
         client_id=client_id,
         is_admin=is_admin,
     )
-    await manager.connect(sid, conn)
+    await state.manager.connect(sid, conn)
     logger.info(
         "WebSocket: %s connected to session %s (role: %s, client: %s)",
         "admin" if is_admin else "participant",
@@ -72,7 +76,7 @@ async def websocket_endpoint(
         effective_role,
         client_id,
     )
-    await manager.broadcast(session)
+    await state.manager.broadcast(session)
 
     try:
         while True:
@@ -117,11 +121,11 @@ async def websocket_endpoint(
             # Action dispatching
             handler = PARTICIPANT_ACTIONS.get(action)
             if handler:
-                should_broadcast = await handler(session, active_risk, msg, conn)
+                should_broadcast = await handler(session, active_risk, msg, conn, state)
             elif is_admin:
                 admin_handler = ADMIN_ACTIONS.get(action)
                 if admin_handler:
-                    should_broadcast = await admin_handler(session, active_risk, msg, conn)
+                    should_broadcast = await admin_handler(session, active_risk, msg, conn, state)
                 else:
                     await send_ws_error(websocket, f"Okänd admin-action: {action}")
                     should_broadcast = False
@@ -130,13 +134,13 @@ async def websocket_endpoint(
                 should_broadcast = False
 
             if should_broadcast:
-                await manager.broadcast(session)
+                await state.manager.broadcast(session)
 
     except WebSocketDisconnect:
-        manager.disconnect(sid, websocket)
+        state.manager.disconnect(sid, websocket)
         logger.info("WebSocket: client %s disconnected from session %s", client_id, sid)
-        await manager.broadcast(session)
+        await state.manager.broadcast(session)
     except Exception:
         logger.exception("WebSocket: unexpected error for client %s in session %s", client_id, sid)
-        manager.disconnect(sid, websocket)
-        await manager.broadcast(session)
+        state.manager.disconnect(sid, websocket)
+        await state.manager.broadcast(session)

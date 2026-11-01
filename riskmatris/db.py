@@ -50,7 +50,8 @@ def init_db() -> None:
         conn.commit()
 
 
-def cleanup_expired_sessions() -> None:
+def cleanup_expired_sessions(sessions: dict[str, dict[str, Any]] | None = None) -> None:
+    active_sessions = sessions if sessions is not None else SESSIONS
     cutoff = time.time() - _get_ttl_seconds()
     with sqlite3.connect(_get_db_path()) as conn:
         cursor = conn.execute("SELECT session_id FROM sessions WHERE updated_at < ?", (cutoff,))
@@ -59,7 +60,7 @@ def cleanup_expired_sessions() -> None:
             conn.execute("DELETE FROM sessions WHERE updated_at < ?", (cutoff,))
             conn.commit()
     for sid in expired_ids:
-        SESSIONS.pop(sid, None)
+        active_sessions.pop(sid, None)
     if expired_ids:
         logger.info("Removed %d expired sessions: %s", len(expired_ids), expired_ids)
 

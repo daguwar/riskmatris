@@ -1,8 +1,10 @@
 """WebSocket action handlers for participants and admins."""
 
+from __future__ import annotations
+
 import time
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import WebSocket
 
@@ -12,7 +14,13 @@ from riskmatris.session import compute_risk_stats, create_new_risk, get_session_
 from riskmatris.utils import _safe_int, sanitize_user_text
 from riskmatris.ws_manager import ConnectionInfo
 
-ActionHandler = Callable[[dict[str, Any], dict[str, Any], dict[str, Any], ConnectionInfo], Awaitable[bool]]
+if TYPE_CHECKING:
+    from riskmatris.state import AppState
+
+ActionHandler = Callable[
+    [dict[str, Any], dict[str, Any], dict[str, Any], ConnectionInfo, Any],
+    Awaitable[bool],
+]
 
 
 async def send_ws_error(websocket: WebSocket, message: str) -> None:
@@ -33,6 +41,7 @@ async def handle_vote(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Participant or admin votes on the active risk."""
     prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4)
@@ -76,6 +85,7 @@ async def handle_reveal_now(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Reveals the results for the active risk immediately."""
     active_risk["revealed"] = True
@@ -89,6 +99,7 @@ async def handle_set_label(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Updates the label for a risk."""
     active_num = session["active_risk_number"]
@@ -110,6 +121,7 @@ async def handle_set_title(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Updates the session title."""
     title = sanitize_user_text(str(msg.get("title", "")), MAX_TITLE_LENGTH)
@@ -126,6 +138,7 @@ async def handle_set_threshold(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Sets the vote threshold for automatic revealing."""
     new_t = _safe_int(msg, "threshold", 4, min_val=1, max_val=50)
@@ -145,6 +158,7 @@ async def handle_lock_risk(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Locks the final placement in the summary matrix."""
     eff_thresh = get_session_threshold(session)
@@ -186,6 +200,7 @@ async def handle_unlock_risk(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Unlocks a locked risk."""
     active_risk["locked"] = False
@@ -198,6 +213,7 @@ async def handle_set_final_cell(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Admin clicks a cell in the matrix to adjust suggested/locked placement."""
     prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4)
@@ -219,6 +235,7 @@ async def handle_next_risk(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Locks current risk if auto_lock is set, and creates the next risk."""
     if msg.get("auto_lock", True) and len(active_risk["votes"]) > 0 and not active_risk["locked"]:
@@ -250,6 +267,7 @@ async def handle_select_risk(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Switches the active risk to the specified number."""
     target_num = _safe_int(msg, "number", 1, min_val=1, max_val=9999)
@@ -269,6 +287,7 @@ async def handle_reset_votes(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Resets all votes and placement for the active risk."""
     active_risk["votes"] = {}
@@ -285,6 +304,7 @@ async def handle_delete_risk(
     active_risk: dict[str, Any],
     msg: dict[str, Any],
     conn: ConnectionInfo,
+    state: AppState | None = None,
 ) -> bool:
     """Deletes a risk if more than one exists."""
     active_num = session["active_risk_number"]

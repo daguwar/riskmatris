@@ -12,20 +12,19 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
 from riskmatris.config import SESSION_CLEANUP_INTERVAL, logger
-from riskmatris.db import SESSIONS, cleanup_expired_sessions, load_sessions_from_db
-from riskmatris.rate_limit import cleanup_rate_limit_log
+from riskmatris.db import load_sessions_from_db
 from riskmatris.routes import api, spa, ws
-from riskmatris.ws_tickets import cleanup_expired_ws_tickets
+from riskmatris.state import AppState, default_state
 
 
-async def _periodic_cleanup() -> None:
+async def _periodic_cleanup(state: AppState) -> None:
     """Background loop that removes expired sessions at regular intervals."""
     while True:
         await asyncio.sleep(SESSION_CLEANUP_INTERVAL)
         try:
-            cleanup_expired_sessions()
-            cleanup_expired_ws_tickets()
-            cleanup_rate_limit_log()
+            state.cleanup_expired_sessions()
+            state.cleanup_expired_ws_tickets()
+            state.cleanup_rate_limit_log()
         except Exception:
             logger.exception("Error during periodic session cleanup")
 
@@ -35,12 +34,17 @@ async def lifespan(app: FastAPI):
     from riskmatris.config import DB_PATH
 
     logger.info("Starting Riskmatris Live – loading sessions from DB (%s)", DB_PATH)
+    state = getattr(app.state, "app_state", None)
+    if state is None:
+        state = default_state
+        app.state.app_state = state
+
     loaded = load_sessions_from_db()
-    SESSIONS.update(loaded)
-    logger.info("Server ready. %d active sessions.", len(SESSIONS))
+    state.sessions.update(loaded)
+    logger.info("Server ready. %d active sessions.", len(state.sessions))
 
     # Start background cleanup of expired sessions (hourly)
-    cleanup_task = asyncio.create_task(_periodic_cleanup())
+    cleanup_task = asyncio.create_task(_periodic_cleanup(state))
     logger.info("Periodic cleanup scheduled (interval: %d seconds).", SESSION_CLEANUP_INTERVAL)
 
     yield
@@ -54,6 +58,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Riskmatris Live", lifespan=lifespan)
+# Ensure app.state.app_state is available even before lifespan runs (e.g. TestClient)
+app.state.app_state = default_state
 
 
 # ---------------------------------------------------------------------------

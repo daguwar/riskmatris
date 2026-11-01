@@ -5,7 +5,7 @@ import io
 import secrets
 import time
 
-from fastapi import APIRouter, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import Response, StreamingResponse
 
 import riskmatris.config as config
@@ -19,38 +19,41 @@ from riskmatris.config import (
     logger,
 )
 from riskmatris.models import CreateSessionRequest
-from riskmatris.rate_limit import check_session_create_rate
 from riskmatris.session import (
     compute_risk_stats,
     create_new_risk,
     generate_session_id,
     get_session_threshold,
 )
+from riskmatris.state import AppState, get_app_state
 from riskmatris.utils import get_local_lan_ip, sanitize_user_text
-from riskmatris.ws_manager import ConnectionInfo, manager
-from riskmatris.ws_tickets import create_ws_ticket
+from riskmatris.ws_manager import ConnectionInfo
 
 router = APIRouter()
 
 
 @router.get("/health")
-async def health_check():
+async def health_check(state: AppState = Depends(get_app_state)):
     """Health check for Docker HEALTHCHECK, Kubernetes and cloud platforms."""
     return {
         "status": "ok",
-        "active_sessions": len(db.SESSIONS),
+        "active_sessions": len(state.sessions),
         "db_path": getattr(config, "DB_PATH", "data/riskmatris.db"),
     }
 
 
 @router.post("/api/sessions")
-async def create_session(req: CreateSessionRequest, request: Request):
+async def create_session(
+    req: CreateSessionRequest,
+    request: Request,
+    state: AppState = Depends(get_app_state),
+):
     client_ip = request.client.host if request.client else "unknown"
-    if not check_session_create_rate(client_ip):
+    if not state.check_session_create_rate(client_ip):
         logger.warning("Session creation rate limit hit for client %s", client_ip)
         raise HTTPException(status_code=429, detail="För många sessioner skapade. Försök igen om en stund.")
-    db.cleanup_expired_sessions()
-    session_id = generate_session_id()
+    state.cleanup_expired_sessions()
+    session_id = generate_session_id(state.sessions)
     admin_token = secrets.token_urlsafe(24)
     now = time.time()
     threshold = max(1, min(50, req.threshold or 4))
@@ -66,7 +69,7 @@ async def create_session(req: CreateSessionRequest, request: Request):
         "active_risk_number": 1,
         "risks": [create_new_risk(1, "")],
     }
-    db.SESSIONS[session_id] = session
+    state.sessions[session_id] = session
     db.save_session_to_db(session)
     logger.info("New session created: %s – '%s' (threshold: %d)", session_id, title, threshold)
     return {
@@ -85,9 +88,10 @@ async def get_session_info(
     admin_token: str | None = Query(default=None),
     client_id: str | None = Query(default=None),
     x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+    state: AppState = Depends(get_app_state),
 ):
     sid = session_id.strip().upper()
-    session = db.SESSIONS.get(sid)
+    session = state.sessions.get(sid)
     if not session:
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
     # Prefer the header over the query param (avoids token in URLs/logs/history)
@@ -101,28 +105,36 @@ async def get_session_info(
         client_id=client_id or "",
         is_admin=is_admin,
     )
-    return manager.build_client_payload(session, dummy_conn)
+    return state.manager.build_client_payload(session, dummy_conn)
 
 
 @router.get("/api/sessions/{session_id}/ws-ticket")
-async def get_ws_ticket(session_id: str, x_admin_token: str | None = Header(default=None, alias="X-Admin-Token")):
+async def get_ws_ticket(
+    session_id: str,
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+    state: AppState = Depends(get_app_state),
+):
     """Issues a one-time, short-lived ticket for admin WebSocket authentication.
 
     This keeps the long-lived admin token out of the WebSocket query string.
     """
     sid = session_id.strip().upper()
-    session = db.SESSIONS.get(sid)
+    session = state.sessions.get(sid)
     if not session:
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
     if not x_admin_token or not secrets.compare_digest(x_admin_token, session["admin_token"]):
         raise HTTPException(status_code=401, detail="Ogiltig administratörs-token.")
-    return {"ticket": create_ws_ticket(sid), "expires_in": config.WS_TICKET_TTL_SECONDS}
+    return {"ticket": state.create_ws_ticket(sid), "expires_in": config.WS_TICKET_TTL_SECONDS}
 
 
 @router.get("/api/sessions/{session_id}/qr.svg")
-async def get_session_qr_svg(session_id: str, url: str = Query(...)):
+async def get_session_qr_svg(
+    session_id: str,
+    url: str = Query(...),
+    state: AppState = Depends(get_app_state),
+):
     sid = session_id.strip().upper()
-    if sid not in db.SESSIONS:
+    if sid not in state.sessions:
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
     # Cap the URL: a huge value would produce an enormous QR code (CPU/memory)
     # in a fully public endpoint
@@ -151,9 +163,12 @@ async def get_session_qr_svg(session_id: str, url: str = Query(...)):
 
 
 @router.get("/api/sessions/{session_id}/export.csv")
-async def export_session_csv(session_id: str):
+async def export_session_csv(
+    session_id: str,
+    state: AppState = Depends(get_app_state),
+):
     sid = session_id.strip().upper()
-    session = db.SESSIONS.get(sid)
+    session = state.sessions.get(sid)
     if not session:
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
 

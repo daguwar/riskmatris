@@ -7,12 +7,13 @@ import riskmatris.db as db
 from riskmatris.utils import get_risk_level, round_half_up
 
 
-def generate_session_id() -> str:
+def generate_session_id(sessions: dict[str, Any] | None = None) -> str:
     """Generates a readable 6-character code (without confusable characters like 0/O, 1/I)."""
     alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
+    active_sessions = sessions if sessions is not None else db.SESSIONS
     while True:
         code = "".join(secrets.choice(alphabet) for _ in range(6))
-        if code not in db.SESSIONS:
+        if code not in active_sessions:
             return code
 
 

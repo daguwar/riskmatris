@@ -14,17 +14,12 @@ import riskmatris.config as _config
 import riskmatris.db as _db
 import riskmatris.models as _models
 import riskmatris.rate_limit as _rate_limit
-import riskmatris.routes.spa as _spa
-import riskmatris.routes.ws as _ws
 import riskmatris.session as _session
+import riskmatris.state as _state
 import riskmatris.utils as _utils
 import riskmatris.ws_manager as _ws_manager
 import riskmatris.ws_tickets as _ws_tickets
-
-# --- FastAPI application instance ---
 from riskmatris import app  # noqa: F401
-
-# --- Configuration & constants ---
 from riskmatris.config import (  # noqa: F401
     CONSEQUENCE_LABELS,
     DB_PATH,
@@ -44,8 +39,6 @@ from riskmatris.config import (  # noqa: F401
     _parse_env_int,
     logger,
 )
-
-# --- Database & session store ---
 from riskmatris.db import (  # noqa: F401
     SESSIONS,
     cleanup_expired_sessions,
@@ -53,30 +46,21 @@ from riskmatris.db import (  # noqa: F401
     load_sessions_from_db,
     save_session_to_db,
 )
-
-# --- Models ---
 from riskmatris.models import CreateSessionRequest  # noqa: F401
-
-# --- Rate limiting ---
 from riskmatris.rate_limit import (  # noqa: F401
     SESSION_CREATE_LOG,
     check_session_create_rate,
     cleanup_rate_limit_log,
 )
-
-# --- Route handlers (for direct test imports) ---
 from riskmatris.routes.spa import get_static_version  # noqa: F401
 from riskmatris.routes.ws import websocket_endpoint  # noqa: F401
-
-# --- Session & risk logic ---
 from riskmatris.session import (  # noqa: F401
     compute_risk_stats,
     create_new_risk,
     generate_session_id,
     get_session_threshold,
 )
-
-# --- Utilities ---
+from riskmatris.state import AppState, default_state, get_app_state  # noqa: F401
 from riskmatris.utils import (  # noqa: F401
     _safe_int,
     get_local_lan_ip,
@@ -84,15 +68,11 @@ from riskmatris.utils import (  # noqa: F401
     round_half_up,
     sanitize_user_text,
 )
-
-# --- WebSocket manager ---
 from riskmatris.ws_manager import (  # noqa: F401
     ConnectionInfo,
     SessionConnectionManager,
     manager,
 )
-
-# --- WebSocket tickets ---
 from riskmatris.ws_tickets import (  # noqa: F401
     WS_TICKETS,
     cleanup_expired_ws_tickets,
@@ -111,6 +91,8 @@ class _AppModule(types.ModuleType):
             return getattr(_db, name)
         if hasattr(_config, name):
             return getattr(_config, name)
+        if hasattr(_state, name):
+            return getattr(_state, name)
         if hasattr(_session, name):
             return getattr(_session, name)
         if hasattr(_utils, name):
@@ -119,10 +101,6 @@ class _AppModule(types.ModuleType):
             return getattr(_ws_manager, name)
         if hasattr(_ws_tickets, name):
             return getattr(_ws_tickets, name)
-        if hasattr(_spa, name):
-            return getattr(_spa, name)
-        if hasattr(_ws, name):
-            return getattr(_ws, name)
         if hasattr(_models, name):
             return getattr(_models, name)
         raise AttributeError(f"module 'app' has no attribute '{name}'")
@@ -131,6 +109,8 @@ class _AppModule(types.ModuleType):
         super().__setattr__(name, value)
         if name in ("SESSION_CREATE_LOG", "SESSION_CREATE_LIMIT", "SESSION_CREATE_WINDOW_SECONDS"):
             setattr(_rate_limit, name, value)
+            if hasattr(_state.default_state, name):
+                setattr(_state.default_state, name, value)
         if name in (
             "SESSION_CREATE_LIMIT",
             "SESSION_CREATE_WINDOW_SECONDS",
@@ -141,8 +121,11 @@ class _AppModule(types.ModuleType):
             setattr(_config, name, value)
         if name in ("SESSIONS", "DB_PATH"):
             setattr(_db, name, value)
+            if name == "SESSIONS":
+                _state.default_state.sessions = value
         if name in ("WS_TICKETS",):
             setattr(_ws_tickets, name, value)
+            _state.default_state.ws_tickets = value
 
 
 sys.modules[__name__].__class__ = _AppModule
