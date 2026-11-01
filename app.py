@@ -25,11 +25,20 @@ from pydantic import BaseModel
 # ---------------------------------------------------------------------------
 
 logging.basicConfig(
-    level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("riskmatris")
+
+# Validate LOG_LEVEL after basicConfig so the fallback warning is visible in the
+# log format; an invalid value would otherwise crash the app at import time.
+_raw_log_level = os.environ.get("LOG_LEVEL", "INFO")
+_log_level = getattr(logging, _raw_log_level.upper(), None)
+if isinstance(_log_level, int) and _log_level > 0:
+    logging.getLogger().setLevel(_log_level)
+else:
+    logger.warning("Invalid LOG_LEVEL value %r – falling back to INFO", _raw_log_level)
 
 # ---------------------------------------------------------------------------
 # Configuration & Constants
@@ -40,36 +49,41 @@ DB_PATH = os.environ.get("RISKMATRIS_DB_PATH", os.path.join("data", "riskmatris.
 os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
 
 
-def _parse_ttl_hours(raw: str) -> int:
-    """Parses RISKMATRIS_TTL_HOURS with a safe fallback.
+def _parse_env_int(name: str, default: int, min_value: int, max_value: int | None = None) -> int:
+    """Parses an integer environment variable with a safe fallback.
 
-    Invalid or non-positive values fall back to 48 hours with a warning in the
-    logs: a TTL of 0 or less would make every session count as expired and wipe
-    the database at the next cleanup, and a non-numeric value would crash the
-    app at startup.
+    Invalid or out-of-range values log a warning and fall back to the default.
+    Bare int() would crash at startup on non-numeric values, and a silent zero
+    or negative limit could disable a safety mechanism (rate limiting, message
+    size caps) or wedge the app in a busy loop (cleanup interval).
     """
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
     try:
         value = int(raw)
-    except (TypeError, ValueError):
-        value = -1
-    if value < 1:
-        logger.warning("Invalid RISKMATRIS_TTL_HOURS value %r – falling back to 48 hours", raw)
-        return 48
+    except ValueError:
+        value = None
+    if value is None or value < min_value or (max_value is not None and value > max_value):
+        logger.warning("Invalid %s value %r – falling back to %d", name, raw, default)
+        return default
     return value
 
 
-SESSION_TTL_HOURS = _parse_ttl_hours(os.environ.get("RISKMATRIS_TTL_HOURS", "48"))
+SESSION_TTL_HOURS = _parse_env_int("RISKMATRIS_TTL_HOURS", 48, min_value=1)
 SESSION_TTL_SECONDS = SESSION_TTL_HOURS * 3600
-SESSION_CLEANUP_INTERVAL = int(os.environ.get("RISKMATRIS_CLEANUP_INTERVAL", "3600"))  # 1 hour default
+SESSION_CLEANUP_INTERVAL = _parse_env_int("RISKMATRIS_CLEANUP_INTERVAL", 3600, min_value=60)
 
 # Abuse/availability limits (single-process, in-memory – fits the deployment model)
-SESSION_CREATE_LIMIT = int(os.environ.get("RISKMATRIS_SESSION_CREATE_LIMIT", "10"))  # per IP per window
+SESSION_CREATE_LIMIT = _parse_env_int("RISKMATRIS_SESSION_CREATE_LIMIT", 10, min_value=1)  # per IP per window
 SESSION_CREATE_WINDOW_SECONDS = 3600
-WS_MAX_CONNECTIONS_PER_SESSION = int(os.environ.get("RISKMATRIS_WS_MAX_CONNECTIONS", "200"))
-WS_MAX_MESSAGE_BYTES = int(os.environ.get("RISKMATRIS_WS_MAX_MESSAGE_BYTES", "8192"))
+WS_MAX_CONNECTIONS_PER_SESSION = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS", 200, min_value=2)
+WS_MAX_MESSAGE_BYTES = _parse_env_int("RISKMATRIS_WS_MAX_MESSAGE_BYTES", 8192, min_value=256, max_value=1_048_576)
 WS_TICKET_TTL_SECONDS = 30  # one-time admin WebSocket tickets
 MAX_TITLE_LENGTH = 100
 MAX_LABEL_LENGTH = 120
+MAX_CLIENT_ID_LENGTH = 64
+MAX_QR_URL_LENGTH = 1000
 
 PROBABILITY_LABELS = {
     1: "Osannolik",
@@ -583,6 +597,8 @@ async def get_session_info(
     # Prefer the header over the query param (avoids token in URLs/logs/history)
     token = x_admin_token or admin_token
     is_admin = bool(token and secrets.compare_digest(token, session["admin_token"]))
+    # Clamp/sanitize the client id – it is unbounded query input otherwise
+    client_id = sanitize_user_text(client_id or "", MAX_CLIENT_ID_LENGTH)
     dummy_conn = ConnectionInfo(
         websocket=None,  # type: ignore
         role="admin" if is_admin else "participant",
@@ -612,6 +628,10 @@ async def get_session_qr_svg(session_id: str, url: str = Query(...)):
     sid = session_id.strip().upper()
     if sid not in SESSIONS:
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+    # Cap the URL: a huge value would produce an enormous QR code (CPU/memory)
+    # in a fully public endpoint
+    if len(url) > MAX_QR_URL_LENGTH:
+        raise HTTPException(status_code=400, detail="URL:en är för lång.")
     try:
         import qrcode
         import qrcode.image.svg
@@ -759,6 +779,8 @@ async def websocket_endpoint(
     # admin token, so no secret ever travels in the query string.
     is_admin = consume_ws_ticket(ticket, sid) if ticket else False
     effective_role = "admin" if (role == "admin" and is_admin) else "participant"
+    # Clamp/sanitize the client id – it is unbounded query input otherwise
+    client_id = sanitize_user_text(client_id, MAX_CLIENT_ID_LENGTH)
     if not client_id:
         client_id = f"anon_{secrets.token_hex(6)}"
 

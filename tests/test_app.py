@@ -874,45 +874,143 @@ class TestStaticCacheBusting:
 
 
 # ---------------------------------------------------------------------------
-# RISKMATRIS_TTL_HOURS parsing (safe fallback)
+# Environment variable parsing (safe fallback)
 # ---------------------------------------------------------------------------
 
 
-class TestTtlHoursParsing:
-    """A TTL of 0 or less would wipe every session at the next cleanup, and a
-    non-numeric value would crash the app at startup – both must fall back to
-    48 hours with a warning instead."""
+class TestParseEnvInt:
+    """Bare int() would crash at startup on non-numeric values, and a zero or
+    negative limit could silently disable a safety mechanism or wedge the app
+    in a busy loop – invalid values must fall back to the default with a
+    warning."""
 
-    def test_valid_values(self):
-        from app import _parse_ttl_hours
+    def test_valid_values(self, monkeypatch):
+        from app import _parse_env_int
 
-        assert _parse_ttl_hours("48") == 48
-        assert _parse_ttl_hours("6") == 6
-        assert _parse_ttl_hours("1") == 1
+        monkeypatch.setenv("TEST_ENV_INT", "6")
+        assert _parse_env_int("TEST_ENV_INT", 48, min_value=1) == 6
+        monkeypatch.setenv("TEST_ENV_INT", "1")
+        assert _parse_env_int("TEST_ENV_INT", 48, min_value=1) == 1
 
-    def test_zero_and_negative_fall_back_to_48(self, caplog):
+    def test_unset_returns_default(self, monkeypatch):
+        from app import _parse_env_int
+
+        monkeypatch.delenv("TEST_ENV_INT", raising=False)
+        assert _parse_env_int("TEST_ENV_INT", 48, min_value=1) == 48
+
+    def test_invalid_falls_back_with_warning(self, monkeypatch, caplog):
         import logging
 
-        from app import _parse_ttl_hours
+        from app import _parse_env_int
 
-        with caplog.at_level(logging.WARNING, logger="riskmatris"):
-            assert _parse_ttl_hours("0") == 48
-            assert _parse_ttl_hours("-5") == 48
-        assert any("RISKMATRIS_TTL_HOURS" in rec.message for rec in caplog.records)
+        for bad in ("abc", "", "3.5", "0", "-5"):
+            monkeypatch.setenv("TEST_ENV_INT", bad)
+            with caplog.at_level(logging.WARNING, logger="riskmatris"):
+                assert _parse_env_int("TEST_ENV_INT", 48, min_value=1) == 48
+        assert any("TEST_ENV_INT" in rec.message for rec in caplog.records)
 
-    def test_non_numeric_falls_back_to_48(self, caplog):
-        import logging
+    def test_above_max_falls_back(self, monkeypatch):
+        from app import _parse_env_int
 
-        from app import _parse_ttl_hours
+        monkeypatch.setenv("TEST_ENV_INT", "999999")
+        assert _parse_env_int("TEST_ENV_INT", 100, min_value=1, max_value=1000) == 100
 
-        with caplog.at_level(logging.WARNING, logger="riskmatris"):
-            assert _parse_ttl_hours("abc") == 48
-            assert _parse_ttl_hours("") == 48
-            assert _parse_ttl_hours("3.5") == 48
-        assert any("RISKMATRIS_TTL_HOURS" in rec.message for rec in caplog.records)
-
-    def test_default_session_ttl_is_valid(self):
+    def test_configured_defaults_are_consistent(self):
         import app as app_module
 
         assert app_module.SESSION_TTL_HOURS >= 1
         assert app_module.SESSION_TTL_SECONDS == app_module.SESSION_TTL_HOURS * 3600
+        assert app_module.SESSION_CLEANUP_INTERVAL >= 60
+        assert app_module.SESSION_CREATE_LIMIT >= 1
+        assert app_module.WS_MAX_CONNECTIONS_PER_SESSION >= 2
+        assert app_module.WS_MAX_MESSAGE_BYTES >= 256
+
+
+# ---------------------------------------------------------------------------
+# client_id clamping (unbounded query input otherwise)
+# ---------------------------------------------------------------------------
+
+
+class TestClientIdClamping:
+    def test_long_client_id_is_clamped(self, monkeypatch, tmp_path):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "DB_PATH", str(tmp_path / "test.db"))
+        app_module.init_db()
+        sid = "CLAMPID"
+        app_module.SESSIONS[sid] = {
+            "session_id": sid,
+            "admin_token": "x",
+            "title": "Test",
+            "threshold": 4,
+            "created_at": 0.0,
+            "updated_at": 0.0,
+            "active_risk_number": 1,
+            "risks": [app_module.create_new_risk(1, "")],
+        }
+        try:
+            from fastapi.testclient import TestClient
+
+            client = TestClient(app_module.app)
+            long_id = "x" * 300
+            with client.websocket_connect(f"/ws/{sid}?role=participant&client_id={long_id}") as ws:
+                ws.receive_json()  # drain the on-connect broadcast
+                ws.send_json({"action": "vote", "probability": 2, "consequence": 2})
+                ws.receive_json()
+            votes = app_module.SESSIONS[sid]["risks"][0]["votes"]
+            assert len(votes) == 1
+            key = next(iter(votes))
+            assert len(key) <= app_module.MAX_CLIENT_ID_LENGTH
+        finally:
+            app_module.SESSIONS.pop(sid, None)
+
+
+# ---------------------------------------------------------------------------
+# QR endpoint URL limit
+# ---------------------------------------------------------------------------
+
+
+class TestQrUrlLimit:
+    def _add_session(self, sid):
+        import app as app_module
+
+        app_module.SESSIONS[sid] = {
+            "session_id": sid,
+            "admin_token": "x",
+            "title": "Test",
+            "threshold": 4,
+            "created_at": 0.0,
+            "updated_at": 0.0,
+            "active_risk_number": 1,
+            "risks": [app_module.create_new_risk(1, "")],
+        }
+        return app_module.SESSIONS[sid]
+
+    def test_long_url_rejected_with_400(self):
+        from fastapi.testclient import TestClient
+
+        import app as app_module
+
+        sid = "QRTEST1"
+        self._add_session(sid)
+        try:
+            client = TestClient(app_module.app)
+            resp = client.get(f"/api/sessions/{sid}/qr.svg?url={'a' * 2000}")
+            assert resp.status_code == 400
+        finally:
+            app_module.SESSIONS.pop(sid, None)
+
+    def test_short_url_returns_svg(self):
+        from fastapi.testclient import TestClient
+
+        import app as app_module
+
+        sid = "QRTEST2"
+        self._add_session(sid)
+        try:
+            client = TestClient(app_module.app)
+            resp = client.get(f"/api/sessions/{sid}/qr.svg?url=http://localhost:8000/s/{sid}")
+            assert resp.status_code == 200
+            assert resp.headers["content-type"] == "image/svg+xml"
+        finally:
+            app_module.SESSIONS.pop(sid, None)
