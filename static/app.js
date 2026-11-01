@@ -68,6 +68,8 @@
   let adminSelectedCons = null;
   let customShareBaseUrl = "";
   let currentView = "voteView";
+  // Set from the ?view= URL parameter (presentation popup window)
+  let pendingInitialView = null;
 
   // DOM elements
   const landingView = document.getElementById("landingView");
@@ -169,6 +171,10 @@
 
     const pathMatch = window.location.pathname.match(/^\/s\/([A-Za-z0-9]+)/);
     if (pathMatch) {
+      // The presentation popup opens with ?view=present – start there directly
+      if (new URLSearchParams(window.location.search).get("view") === "present") {
+        pendingInitialView = "presentView";
+      }
       const sid = pathMatch[1].toUpperCase();
       enterSession(sid);
     }
@@ -445,8 +451,11 @@
     if (!isAdmin) {
       switchView("voteView");
     } else {
-      // Admin should start on adminView by default
-      if (currentView !== "adminView" && currentView !== "presentView") {
+      // Honor ?view=present (presentation popup), otherwise start on adminView
+      if (pendingInitialView) {
+        switchView(pendingInitialView);
+        pendingInitialView = null;
+      } else if (currentView !== "adminView" && currentView !== "presentView") {
         switchView("adminView");
       }
     }
@@ -1111,6 +1120,14 @@
     document.getElementById("btnCloseQrModal").addEventListener("click", closeQrModal);
     qrModal.addEventListener("click", (e) => {
       if (e.target === qrModal) closeQrModal();
+    });
+
+    // Presentation view: QR modal and separate projector window
+    document.getElementById("btnPresentQr").addEventListener("click", openQrModal);
+    document.getElementById("btnPresentWindow").addEventListener("click", () => {
+      // The popup shares localStorage (same origin), so the admin token
+      // travels with it and the window opens directly in presentation view.
+      window.open(`${window.location.pathname}?view=present`, "_blank", "width=1280,height=860");
     });
 
     document.getElementById("btnApplyCustomUrl").addEventListener("click", () => {

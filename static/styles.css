@@ -516,6 +516,10 @@ button {
   color: var(--text);
 }
 
+.about-list a {
+  color: var(--accent);
+}
+
 .recent-sessions {
   margin-top: 16px;
   padding-top: 14px;
@@ -596,6 +600,12 @@ button {
 
 .present-subtabs {
   margin-bottom: -6px;
+}
+
+.present-view-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .admin-view {

@@ -132,6 +132,22 @@
           </p>
         </div>
       </section>
+
+      <!-- Self-hosting & feedback -->
+      <section class="card landing-card landing-card-muted" id="selfHostSection">
+        <h2>Driv tjänsten själv</h2>
+        <div class="about-list">
+          <p>
+            Riskmatris är öppen källkod och kan köras på egen server, helt utan konton
+            eller inloggning. Kod och instruktioner finns på
+            <a href="https://github.com/daguwar/riskmatris" target="_blank" rel="noopener">GitHub</a>.
+          </p>
+          <p>
+            Har du förslag, synpunkter eller har hittat en bugg? Skriv gärna en rad i
+            <a href="https://github.com/daguwar/riskmatris/issues" target="_blank" rel="noopener">Issues</a>.
+          </p>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -146,7 +162,7 @@
           </button>
           <button type="button" class="tab-btn hidden" data-view="presentView" id="tabBtnPresent">Presentation</button>
           <button type="button" class="tab-btn hidden" data-view="adminView" id="tabBtnAdmin">
-            Admin <span class="tab-count" id="tabLockedCount">0</span>
+            Administration <span class="tab-count" id="tabLockedCount">0</span>
           </button>
         </div>
       </div>
@@ -252,6 +268,10 @@
           <div class="view-tabs" id="presentSubTabs">
             <button type="button" class="tab-btn active" data-subview="presentActive" id="tabBtnPresentActive">Aktuell risk</button>
             <button type="button" class="tab-btn" data-subview="presentSummary" id="tabBtnPresentSummary">Sammanställning</button>
+          </div>
+          <div class="present-view-actions">
+            <button type="button" class="btn btn-outline btn-sm" id="btnPresentQr" title="Visa QR-kod och delningslänk">Visa QR-kod</button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnPresentWindow" title="Öppna presentationen i ett eget fönster">Eget fönster</button>
           </div>
         </div>
 
