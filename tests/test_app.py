@@ -687,9 +687,7 @@ class TestWsTicketEndpoint:
         try:
             client = TestClient(app)
             assert client.get(f"/api/sessions/{sid}/ws-ticket").status_code == 401
-            assert (
-                client.get(f"/api/sessions/{sid}/ws-ticket", headers={"X-Admin-Token": "wrong"}).status_code == 401
-            )
+            assert client.get(f"/api/sessions/{sid}/ws-ticket", headers={"X-Admin-Token": "wrong"}).status_code == 401
             resp = client.get(f"/api/sessions/{sid}/ws-ticket", headers={"X-Admin-Token": "secret-token"})
             assert resp.status_code == 200
             ticket = resp.json()["ticket"]
@@ -773,8 +771,7 @@ class TestThresholdSemantics:
         risk = create_new_risk(1, "")
         if votes:
             risk["votes"] = {
-                f"c{i}": {"probability": p, "consequence": c, "updated_at": 0}
-                for i, (p, c) in enumerate(votes)
+                f"c{i}": {"probability": p, "consequence": c, "updated_at": 0} for i, (p, c) in enumerate(votes)
             }
         return {
             "session_id": "THRESH1",
