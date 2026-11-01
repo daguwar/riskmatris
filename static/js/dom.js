@@ -93,3 +93,4 @@ export function initDom() {
 
   dom.qrModal = document.getElementById("qrModal");
 }
+

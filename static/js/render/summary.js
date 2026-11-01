@@ -107,3 +107,4 @@ export function renderSummaryTable(risks) {
     dom.summaryTableBody.appendChild(tr);
   });
 }
+

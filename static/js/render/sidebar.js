@@ -48,3 +48,4 @@ export function renderSidebarRiskList(risks, activeNum, isAdmin, onSelectRisk) {
     dom.riskListContainer.appendChild(btn);
   });
 }
+

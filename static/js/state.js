@@ -18,3 +18,4 @@ export const state = {
   currentView: "voteView",
   pendingInitialView: null,
 };
+

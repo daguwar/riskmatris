@@ -129,3 +129,4 @@ export function drawRoundedRect(ctx, x, y, w, h, r, fill, stroke, lineWidth = 1)
     ctx.stroke();
   }
 }
+

@@ -67,3 +67,4 @@ export function renderAdminVotingControls(risk, hasVoted) {
       "Klicka på en Sannolikhet (1–4) och en Konsekvens (1–4) ovan för att rösta.";
   }
 }
+

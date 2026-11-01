@@ -28,3 +28,4 @@ export function renderActiveRiskHeader(risk, threshold, isAdmin) {
     dom.btnLockRisk.textContent = risk.locked ? "Uppdatera låst placering" : "Lås placering i sammanställning";
   }
 }
+

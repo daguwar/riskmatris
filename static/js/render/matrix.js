@@ -141,3 +141,4 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
     dom.activeMatrixGrid.appendChild(xHeader);
   }
 }
+

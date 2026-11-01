@@ -15,3 +15,4 @@ export const CONS_LABELS = {
   3: "Allvarlig",
   4: "Mycket allvarlig",
 };
+

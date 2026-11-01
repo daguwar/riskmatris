@@ -184,3 +184,4 @@ export function handleSessionState(newState) {
   renderSummaryMatrix(newState.risks, isAdmin, onSelectRisk);
   renderSummaryTable(newState.risks);
 }
+
