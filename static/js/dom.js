@@ -92,5 +92,11 @@ export function initDom() {
   dom.summaryTableBody = document.getElementById("summaryTableBody");
 
   dom.qrModal = document.getElementById("qrModal");
+
+  dom.presentQrOverlay = document.getElementById("presentQrOverlay");
+  dom.presentQrContainer = document.getElementById("presentQrContainer");
+  dom.presentQrCode = document.getElementById("presentQrCode");
+  dom.presentQrUrl = document.getElementById("presentQrUrl");
+  dom.btnTogglePresentQr = document.getElementById("btnTogglePresentQr");
 }
 

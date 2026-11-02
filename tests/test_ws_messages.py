@@ -7,7 +7,7 @@ from riskmatris.ws_messages import WS_ACTION_MODELS, format_validation_error, pa
 
 
 class TestParseWsMessage:
-    def test_all_twelve_actions_have_models(self):
+    def test_all_thirteen_actions_have_models(self):
         assert set(WS_ACTION_MODELS) == {
             "vote",
             "reveal_now",
@@ -21,7 +21,15 @@ class TestParseWsMessage:
             "select_risk",
             "reset_votes",
             "delete_risk",
+            "set_qr_visible",
         }
+
+    def test_set_qr_visible_valid(self):
+        msg = parse_ws_message("set_qr_visible", {"action": "set_qr_visible", "visible": False})
+        assert msg.visible is False
+        # Default: missing flag means "show"
+        msg_default = parse_ws_message("set_qr_visible", {"action": "set_qr_visible"})
+        assert msg_default.visible is True
 
     def test_vote_valid(self):
         msg = parse_ws_message("vote", {"action": "vote", "probability": 3, "consequence": 2})

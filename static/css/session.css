@@ -53,6 +53,40 @@
   margin-left: auto;
 }
 
+/* QR overlay in the presentation view, toggled remotely from the admin view */
+.present-qr-overlay {
+  position: fixed;
+  inset: 0;
+  /* Below the QR modal (z-index 100) so "Förstora QR" still stacks on top */
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.9);
+  padding: 24px;
+}
+
+.present-qr-panel {
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+}
+
+.present-qr-panel h3 {
+  margin-bottom: 16px;
+}
+
+.present-qr-code {
+  margin-top: 14px;
+  font-size: 1.1rem;
+}
+
+.present-qr-url {
+  margin-top: 6px;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
 .admin-view {
   width: 100%;
 }

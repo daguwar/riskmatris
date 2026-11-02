@@ -322,6 +322,24 @@ async def handle_delete_risk(
     return False
 
 
+async def handle_set_qr_visible(
+    session: dict[str, Any],
+    active_risk: dict[str, Any],
+    msg: dict[str, Any],
+    conn: ConnectionInfo,
+    state: AppState | None = None,
+) -> bool:
+    """Shows/hides the large QR overlay in the session's presentation views.
+
+    The flag lives on the session so every connected presentation view
+    (including the projector window) follows it in real time, and so it
+    survives a reload of the projector window.
+    """
+    session["qr_visible"] = bool(msg.get("visible", True))
+    await db.save_session_to_db_async(session)
+    return True
+
+
 # ---------------------------------------------------------------------------
 # Dispatch Tables
 # ---------------------------------------------------------------------------
@@ -342,4 +360,5 @@ ADMIN_ACTIONS: dict[str, ActionHandler] = {
     "select_risk": handle_select_risk,
     "reset_votes": handle_reset_votes,
     "delete_risk": handle_delete_risk,
+    "set_qr_visible": handle_set_qr_visible,
 }

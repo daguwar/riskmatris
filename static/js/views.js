@@ -55,6 +55,8 @@ export function updateShareUrlAndQr(lanIp) {
   const qrEndpoint = `/api/sessions/${state.currentSessionId}/qr.svg?url=${encodeURIComponent(shareUrl)}`;
   dom.sidebarQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för session ${state.currentSessionId}" />`;
   dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för session ${state.currentSessionId}" />`;
+  dom.presentQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för session ${state.currentSessionId}" />`;
+  dom.presentQrUrl.textContent = shareUrl;
 }
 
 export function handleSessionState(newState) {
@@ -66,6 +68,14 @@ export function handleSessionState(newState) {
   dom.headerSessionCode.textContent = newState.session_id;
   dom.sidebarSessionCode.textContent = newState.session_id;
   dom.modalSessionCode.textContent = newState.session_id;
+  dom.presentQrCode.textContent = newState.session_id;
+
+  // QR overlay in the presentation views (toggled remotely from the admin view)
+  const qrVisible = Boolean(newState.qr_visible);
+  dom.presentQrOverlay.classList.toggle("hidden", !qrVisible);
+  dom.btnTogglePresentQr.textContent = qrVisible
+    ? "Dölj QR i presentationsvyn"
+    : "Visa QR i presentationsvyn";
 
   const pCount = newState.participant_count || 0;
   dom.participantCountText.textContent = `${pCount} ${pCount === 1 ? "deltagare" : "deltagare"}`;

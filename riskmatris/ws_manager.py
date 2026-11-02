@@ -94,6 +94,8 @@ class SessionConnectionManager:
             "my_vote": my_vote,
             "is_admin": bool(conn and conn.is_admin),
             "lan_ip": get_local_lan_ip(),
+            # QR overlay in the presentation views, toggled from the admin view
+            "qr_visible": bool(session.get("qr_visible", False)),
             # Static cell meta so the client never duplicates risk-level logic (fas 7.2)
             "cell_meta": build_cell_meta(),
         }

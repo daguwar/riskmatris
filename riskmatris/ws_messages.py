@@ -78,6 +78,13 @@ class DeleteRiskMessage(BaseModel):
     number: int | None = Field(default=None, ge=1, le=9999)
 
 
+class SetQrVisibleMessage(BaseModel):
+    """Admin toggles the large QR overlay in the session's presentation views."""
+
+    action: Literal["set_qr_visible"] = "set_qr_visible"
+    visible: bool = True
+
+
 WS_ACTION_MODELS: dict[str, type[BaseModel]] = {
     model.model_fields["action"].default: model
     for model in (
@@ -93,6 +100,7 @@ WS_ACTION_MODELS: dict[str, type[BaseModel]] = {
         SelectRiskMessage,
         ResetVotesMessage,
         DeleteRiskMessage,
+        SetQrVisibleMessage,
     )
 }
 

@@ -325,3 +325,9 @@ class TestCellMetaPayload:
                 assert meta["score"] == p * c
                 assert meta["level"] == expected["level"]
                 assert meta["color"] == expected["color"]
+
+    def test_payload_defaults_qr_visible_false(self, make_session):
+        from app import manager
+
+        payload = manager.build_client_payload(make_session())
+        assert payload["qr_visible"] is False

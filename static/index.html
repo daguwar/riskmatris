@@ -286,6 +286,16 @@
           </div>
         </div>
 
+        <!-- QR overlay: toggled remotely from the admin view -->
+        <div class="present-qr-overlay hidden" id="presentQrOverlay">
+          <div class="card present-qr-panel">
+            <h3>Skanna för att delta</h3>
+            <div id="presentQrContainer" class="qr-box-large"></div>
+            <div class="present-qr-code">Sessionskod: <strong id="presentQrCode">------</strong></div>
+            <p class="present-qr-url" id="presentQrUrl"></p>
+          </div>
+        </div>
+
         <!-- Result matrix for the current risk -->
         <div id="presentActive">
           <div class="card matrix-section-card">
@@ -504,6 +514,9 @@
           <div class="qr-preview-wrapper" id="qrPreviewWrapper" title="Klicka för att förstora QR-koden">
             <div id="sidebarQrContainer" class="qr-box"></div>
           </div>
+          <button type="button" class="btn btn-outline btn-sm btn-block" id="btnTogglePresentQr">
+            Visa QR i presentationsvyn
+          </button>
           <div class="share-url-group">
             <input type="text" id="shareUrlInput" class="form-input form-input-sm" readonly />
             <button type="button" class="btn btn-secondary btn-sm" id="btnCopyShareUrl">Kopiera</button>

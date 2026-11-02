@@ -282,6 +282,12 @@ export function bindSessionEvents() {
     updateShareUrlAndQr(state.sessionState ? state.sessionState.lan_ip : "");
   });
 
+  // Admin: show/hide the big QR overlay in the session's presentation views
+  dom.btnTogglePresentQr.addEventListener("click", () => {
+    const visible = !(state.sessionState && state.sessionState.qr_visible);
+    sendWsAction({ action: "set_qr_visible", visible });
+  });
+
   // Export CSV
   document.getElementById("btnExportCsv").addEventListener("click", () => {
     if (!state.currentSessionId) return;

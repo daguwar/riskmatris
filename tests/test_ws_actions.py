@@ -14,6 +14,7 @@ from riskmatris.ws_actions import (
     handle_select_risk,
     handle_set_final_cell,
     handle_set_label,
+    handle_set_qr_visible,
     handle_set_threshold,
     handle_set_title,
     handle_unlock_risk,
@@ -236,3 +237,21 @@ async def test_handle_delete_risk(test_session, mock_admin_conn):
     assert res_del is True
     assert len(test_session["risks"]) == 1
     assert test_session["active_risk_number"] == 1
+
+
+@pytest.mark.asyncio
+async def test_handle_set_qr_visible(test_session, mock_admin_conn):
+    active_risk = test_session["risks"][0]
+
+    res_show = await handle_set_qr_visible(test_session, active_risk, {"visible": True}, mock_admin_conn)
+    assert res_show is True
+    assert test_session["qr_visible"] is True
+
+    res_hide = await handle_set_qr_visible(test_session, active_risk, {"visible": False}, mock_admin_conn)
+    assert res_hide is True
+    assert test_session["qr_visible"] is False
+
+    # Missing flag defaults to showing the overlay
+    res_default = await handle_set_qr_visible(test_session, active_risk, {}, mock_admin_conn)
+    assert res_default is True
+    assert test_session["qr_visible"] is True
