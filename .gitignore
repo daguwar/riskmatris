@@ -44,4 +44,3 @@ Thumbs.db
 
 # Environment / deployment (local values – do not commit)
 .env
-REFACTORING.md
