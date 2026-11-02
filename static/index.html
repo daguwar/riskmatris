@@ -4,7 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Riskmatris Live – Interaktiv Riskbedömning</title>
-  <link rel="stylesheet" href="/static/styles.css" />
+  <!-- Styles are split per section into static/css/ (see REFACTORING.md fas 5).
+       Load order matters: it mirrors the original single styles.css cascade. -->
+  <link rel="stylesheet" href="/static/css/base.css" />
+  <link rel="stylesheet" href="/static/css/topbar.css" />
+  <link rel="stylesheet" href="/static/css/components.css" />
+  <link rel="stylesheet" href="/static/css/landing.css" />
+  <link rel="stylesheet" href="/static/css/session.css" />
+  <link rel="stylesheet" href="/static/css/voting.css" />
+  <link rel="stylesheet" href="/static/css/matrix.css" />
+  <link rel="stylesheet" href="/static/css/table.css" />
+  <link rel="stylesheet" href="/static/css/modal.css" />
+  <link rel="stylesheet" href="/static/css/responsive.css" />
   <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon.png" />
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
 </head>

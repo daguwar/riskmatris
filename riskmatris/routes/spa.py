@@ -2,6 +2,7 @@
 
 import hashlib
 import os
+import re
 from functools import cache
 
 from fastapi import APIRouter, Request
@@ -16,9 +17,9 @@ router = APIRouter()
 def get_static_version() -> str:
     """Returns a content hash of all frontend assets (JS/CSS), used for cache busting.
 
-    index.html is always served fresh (no-cache), while app.js/styles.css are
-    cached for a day. Referencing them with a content-based version parameter
-    guarantees that clients pick up new code immediately after a deploy
+    index.html is always served fresh (no-cache), while the JS/CSS files under
+    static/ are cached for a day. Referencing them with a content-based version
+    parameter guarantees that clients pick up new code immediately after a deploy
     instead of mixing a stale script with fresh markup.
     """
     hasher = hashlib.sha256()
@@ -37,8 +38,13 @@ async def serve_spa(request: Request, session_id: str | None = None):
     with open(os.path.join("static", "index.html"), encoding="utf-8") as f:
         html = f.read()
     version = get_static_version()
-    html = html.replace('"/static/styles.css"', f'"/static/styles.css?v={version}"')
-    html = html.replace('"/static/app.js"', f'"/static/app.js?v={version}"')
+    # Append the content hash to every versioned static asset reference
+    # (stylesheets under static/css/ and the JS entry point).
+    html = re.sub(
+        r'((?:href|src)="/static/[^"]+\.(?:css|js))"',
+        rf'\1?v={version}"',
+        html,
+    )
     # Inject the configured session retention into the info text so it always
     # matches what the server actually enforces
     ttl_hours = getattr(config, "SESSION_TTL_HOURS", 48)

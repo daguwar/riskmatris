@@ -1,6 +1,7 @@
 """Unit tests for the core functions in app.py."""
 
 import os
+import re
 import sys
 
 # Add the project root to sys.path so we can import app
@@ -846,7 +847,12 @@ class TestStaticCacheBusting:
             resp = client.get(path)
             assert resp.status_code == 200
             assert f"/static/app.js?v={version}" in resp.text
-            assert f"/static/styles.css?v={version}" in resp.text
+            # Every stylesheet under static/css/ must be versioned (fas 5 split)
+            css_links = re.findall(r'href="(/static/[^"]+\.css[^"]*)"', resp.text)
+            assert len(css_links) >= 10
+            for link in css_links:
+                assert link.endswith(f"?v={version}")
+            assert "/static/styles.css" not in resp.text
             # The SPA shell itself must always be revalidated
             assert resp.headers["cache-control"] == "no-cache"
 

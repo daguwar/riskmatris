@@ -1,0 +1,134 @@
+/* --------------------------------------------------------------------------
+   Landing Page
+   -------------------------------------------------------------------------- */
+
+.landing {
+  display: flex;
+  justify-content: center;
+  padding: 56px 16px 72px;
+}
+
+.landing-inner {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.landing-hero {
+  text-align: center;
+  padding: 8px 8px 4px;
+}
+
+.landing-hero h1 {
+  font-size: 1.75rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.landing-hero p {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 0.98rem;
+}
+
+.landing-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.landing-card-muted {
+  background: #fafbfe;
+}
+
+.card-tag {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+.landing-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-divider::before,
+.landing-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.about-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.about-list p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.about-list strong {
+  color: var(--text);
+}
+
+.about-list a {
+  color: var(--accent);
+}
+
+.recent-sessions {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.recent-sessions h3 {
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.recent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.recent-chip {
+  font-size: 0.78rem;
+  font-weight: 550;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 11px;
+  text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.recent-chip:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
