@@ -70,3 +70,56 @@ class TestParseEnvInt:
         assert app_module.SESSION_CREATE_LIMIT >= 1
         assert app_module.WS_MAX_CONNECTIONS_PER_SESSION >= 2
         assert app_module.WS_MAX_MESSAGE_BYTES >= 256
+
+
+# ---------------------------------------------------------------------------
+# Structured (JSON) logging – fas 7.5
+# ---------------------------------------------------------------------------
+
+
+class TestJsonFormatter:
+    def test_output_is_parseable_json_with_expected_fields(self):
+        import json
+        import logging
+
+        from riskmatris.config import JsonFormatter
+
+        record = logging.LogRecord(
+            name="riskmatris",
+            level=logging.INFO,
+            pathname=__file__,
+            lineno=1,
+            msg="Session %s created",
+            args=("ABC123",),
+            exc_info=None,
+        )
+        line = JsonFormatter().format(record)
+        payload = json.loads(line)
+        assert payload["level"] == "INFO"
+        assert payload["logger"] == "riskmatris"
+        assert payload["message"] == "Session ABC123 created"
+        assert "ts" in payload
+
+    def test_exception_info_included(self):
+        import json
+        import logging
+
+        from riskmatris.config import JsonFormatter
+
+        try:
+            raise ValueError("boom")
+        except ValueError:
+            import sys
+
+            record = logging.LogRecord(
+                name="riskmatris",
+                level=logging.ERROR,
+                pathname=__file__,
+                lineno=1,
+                msg="failed",
+                args=(),
+                exc_info=sys.exc_info(),
+            )
+        payload = json.loads(JsonFormatter().format(record))
+        assert "exc_info" in payload
+        assert "ValueError" in payload["exc_info"]

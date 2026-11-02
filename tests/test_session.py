@@ -303,3 +303,25 @@ class TestThresholdSemantics:
         session = make_session(threshold=4, votes=votes)
         stats = compute_risk_stats(session["risks"][0], threshold=4)
         assert stats["threshold_reached"] is True
+
+
+# ---------------------------------------------------------------------------
+# Cell meta in the session payload (fas 7.2 – server is the single source of
+# risk level/color so the frontend does not duplicate the thresholds)
+# ---------------------------------------------------------------------------
+
+
+class TestCellMetaPayload:
+    def test_payload_contains_all_16_cells_matching_server_risk_levels(self, make_session):
+        from app import get_risk_level, manager
+
+        payload = manager.build_client_payload(make_session())
+        cell_meta = payload["cell_meta"]
+        assert len(cell_meta) == 16
+        for p in range(1, 5):
+            for c in range(1, 5):
+                meta = cell_meta[f"{p}_{c}"]
+                expected = get_risk_level(p * c)
+                assert meta["score"] == p * c
+                assert meta["level"] == expected["level"]
+                assert meta["color"] == expected["color"]

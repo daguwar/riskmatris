@@ -1,10 +1,17 @@
-"""SQLite database operations and the in-memory sessions store."""
+"""SQLite database operations and the in-memory sessions store.
+
+The sync functions below block the event loop while they run; the ``*_async``
+wrappers (fas 7.3) run them in a worker thread via ``anyio.to_thread`` and are
+what async call sites (routes, WS handlers, lifespan) should use.
+"""
 
 import json
 import sqlite3
 import sys
 import time
 from typing import Any
+
+import anyio
 
 import riskmatris.config as config
 from riskmatris.config import logger
@@ -102,3 +109,20 @@ def load_sessions_from_db() -> dict[str, dict[str, Any]]:
                 continue
     logger.info("Loaded %d sessions from DB at startup", len(loaded))
     return loaded
+
+
+# ---------------------------------------------------------------------------
+# Async wrappers (fas 7.3) – run the blocking sqlite calls in a thread
+# ---------------------------------------------------------------------------
+
+
+async def save_session_to_db_async(session: dict[str, Any]) -> None:
+    await anyio.to_thread.run_sync(save_session_to_db, session)
+
+
+async def cleanup_expired_sessions_async(sessions: dict[str, dict[str, Any]] | None = None) -> None:
+    await anyio.to_thread.run_sync(cleanup_expired_sessions, sessions)
+
+
+async def load_sessions_from_db_async() -> dict[str, dict[str, Any]]:
+    return await anyio.to_thread.run_sync(load_sessions_from_db)

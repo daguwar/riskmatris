@@ -5,6 +5,7 @@ WORKDIR /app
 # Create a directory for the SQLite database so it can be mounted as a volume
 RUN mkdir -p /app/data
 ENV RISKMATRIS_DB_PATH=/app/data/riskmatris.db
+ENV RISKMATRIS_LOG_FORMAT=json
 ENV PORT=8000
 
 COPY requirements.txt .

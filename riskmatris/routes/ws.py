@@ -4,6 +4,7 @@ import json
 import secrets
 
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
 
 from riskmatris.config import (
     MAX_CLIENT_ID_LENGTH,
@@ -19,6 +20,7 @@ from riskmatris.ws_actions import (
     send_ws_error,
 )
 from riskmatris.ws_manager import ConnectionInfo
+from riskmatris.ws_messages import format_validation_error, parse_ws_message
 
 router = APIRouter()
 
@@ -110,6 +112,15 @@ async def websocket_endpoint(
             action = msg.get("action")
             if not isinstance(action, str):
                 await send_ws_error(websocket, "Saknar giltig 'action'.")
+                continue
+
+            # Validate the message shape against the Pydantic model for this
+            # action before dispatching (fas 7.4) – handlers re-check values
+            # defensively, but this gives early, clear validation errors.
+            try:
+                parse_ws_message(action, msg)
+            except ValidationError as exc:
+                await send_ws_error(websocket, format_validation_error(exc))
                 continue
 
             active_num = session["active_risk_number"]

@@ -4,10 +4,11 @@ import secrets
 from typing import Any
 
 import riskmatris.db as db
+from riskmatris.models import Risk, Session
 from riskmatris.utils import get_risk_level, round_half_up
 
 
-def generate_session_id(sessions: dict[str, Any] | None = None) -> str:
+def generate_session_id(sessions: dict[str, Session] | None = None) -> str:
     """Generates a readable 6-character code (without confusable characters like 0/O, 1/I)."""
     alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
     active_sessions = sessions if sessions is not None else db.SESSIONS
@@ -17,7 +18,7 @@ def generate_session_id(sessions: dict[str, Any] | None = None) -> str:
             return code
 
 
-def create_new_risk(number: int, label: str = "") -> dict[str, Any]:
+def create_new_risk(number: int, label: str = "") -> Risk:
     return {
         "number": number,
         "label": label.strip(),
@@ -29,7 +30,7 @@ def create_new_risk(number: int, label: str = "") -> dict[str, Any]:
     }
 
 
-def get_session_threshold(session: dict[str, Any]) -> int:
+def get_session_threshold(session: Session) -> int:
     """Returns the session's configured vote threshold.
 
     The threshold is the exact number of votes needed to auto-reveal a risk's
@@ -41,7 +42,7 @@ def get_session_threshold(session: dict[str, Any]) -> int:
     return max(1, int(session.get("threshold", 4)))
 
 
-def compute_risk_stats(risk: dict[str, Any], threshold: int) -> dict[str, Any]:
+def compute_risk_stats(risk: Risk, threshold: int) -> dict[str, Any]:
     """Computes statistics for a risk without side effects (pure function).
 
     Also returns ``threshold_reached`` so the caller can update

@@ -12,7 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
 from riskmatris.config import SESSION_CLEANUP_INTERVAL, logger
-from riskmatris.db import load_sessions_from_db
+from riskmatris.db import load_sessions_from_db_async
 from riskmatris.routes import api, spa, ws
 from riskmatris.state import AppState, default_state
 
@@ -22,7 +22,7 @@ async def _periodic_cleanup(state: AppState) -> None:
     while True:
         await asyncio.sleep(SESSION_CLEANUP_INTERVAL)
         try:
-            state.cleanup_expired_sessions()
+            await state.cleanup_expired_sessions_async()
             state.cleanup_expired_ws_tickets()
             state.cleanup_rate_limit_log()
         except Exception:
@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
         state = default_state
         app.state.app_state = state
 
-    loaded = load_sessions_from_db()
+    loaded = await load_sessions_from_db_async()
     state.sessions.update(loaded)
     logger.info("Server ready. %d active sessions.", len(state.sessions))
 

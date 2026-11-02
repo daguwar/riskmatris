@@ -18,7 +18,7 @@ from riskmatris.config import (
     PROBABILITY_LABELS,
     logger,
 )
-from riskmatris.models import CreateSessionRequest
+from riskmatris.models import CreateSessionRequest, CreateSessionResponse, HealthResponse, WsTicketResponse
 from riskmatris.session import (
     compute_risk_stats,
     create_new_risk,
@@ -32,7 +32,7 @@ from riskmatris.ws_manager import ConnectionInfo
 router = APIRouter()
 
 
-@router.get("/health")
+@router.get("/health", response_model=HealthResponse)
 async def health_check(state: AppState = Depends(get_app_state)):
     """Health check for Docker HEALTHCHECK, Kubernetes and cloud platforms."""
     return {
@@ -42,7 +42,7 @@ async def health_check(state: AppState = Depends(get_app_state)):
     }
 
 
-@router.post("/api/sessions")
+@router.post("/api/sessions", response_model=CreateSessionResponse)
 async def create_session(
     req: CreateSessionRequest,
     request: Request,
@@ -52,7 +52,7 @@ async def create_session(
     if not state.check_session_create_rate(client_ip):
         logger.warning("Session creation rate limit hit for client %s", client_ip)
         raise HTTPException(status_code=429, detail="För många sessioner skapade. Försök igen om en stund.")
-    state.cleanup_expired_sessions()
+    await state.cleanup_expired_sessions_async()
     session_id = generate_session_id(state.sessions)
     admin_token = secrets.token_urlsafe(24)
     now = time.time()
@@ -70,7 +70,7 @@ async def create_session(
         "risks": [create_new_risk(1, "")],
     }
     state.sessions[session_id] = session
-    db.save_session_to_db(session)
+    await db.save_session_to_db_async(session)
     logger.info("New session created: %s – '%s' (threshold: %d)", session_id, title, threshold)
     return {
         "session_id": session_id,
@@ -105,10 +105,10 @@ async def get_session_info(
         client_id=client_id or "",
         is_admin=is_admin,
     )
-    return state.manager.build_client_payload(session, dummy_conn)
+    return await state.manager.build_client_payload_async(session, dummy_conn)
 
 
-@router.get("/api/sessions/{session_id}/ws-ticket")
+@router.get("/api/sessions/{session_id}/ws-ticket", response_model=WsTicketResponse)
 async def get_ws_ticket(
     session_id: str,
     x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),

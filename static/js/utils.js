@@ -2,49 +2,30 @@
  * General helper utilities for risk matrix calculation, storage, and DOM formatting.
  */
 
+import { COLOR_STYLES } from "./constants.js";
+import { state } from "./state.js";
+
+/**
+ * Cell metadata (score/level/color) comes from the server payload
+ * (state.sessionState.cell_meta) so the risk-level thresholds exist in exactly
+ * one place – the backend. This function only attaches presentation styles.
+ */
 export function getCellMeta(prob, cons) {
-  const score = prob * cons;
-  if (score <= 2) {
-    return {
-      score,
-      level: "Låg",
-      colorClass: "cell-green",
-      pillClass: "green",
-      hexBg: "#86efac",
-      hexBorder: "#16a34a",
-      hexText: "#064e3b",
-    };
-  } else if (score <= 6) {
-    return {
-      score,
-      level: "Medel",
-      colorClass: "cell-yellow",
-      pillClass: "yellow",
-      hexBg: "#fde047",
-      hexBorder: "#ca8a04",
-      hexText: "#422006",
-    };
-  } else if (score <= 9) {
-    return {
-      score,
-      level: "Hög",
-      colorClass: "cell-orange",
-      pillClass: "orange",
-      hexBg: "#fdba74",
-      hexBorder: "#ea580c",
-      hexText: "#431407",
-    };
-  } else {
-    return {
-      score,
-      level: "Mycket Hög",
-      colorClass: "cell-red",
-      pillClass: "red",
-      hexBg: "#fca5a5",
-      hexBorder: "#dc2626",
-      hexText: "#450a0a",
-    };
-  }
+  const meta = state.sessionState?.cell_meta?.[`${prob}_${cons}`] || {
+    score: prob * cons,
+    level: "",
+    color: "green",
+  };
+  const styles = COLOR_STYLES[meta.color] || COLOR_STYLES.green;
+  return {
+    score: meta.score,
+    level: meta.level,
+    colorClass: styles.colorClass,
+    pillClass: styles.pillClass,
+    hexBg: styles.hexBg,
+    hexBorder: styles.hexBorder,
+    hexText: styles.hexText,
+  };
 }
 
 export function escapeHtml(str) {

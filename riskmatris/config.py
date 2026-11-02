@@ -1,5 +1,6 @@
 """Configuration, constants and environment variable parsing."""
 
+import json
 import logging
 import os
 
@@ -7,11 +8,37 @@ import os
 # Logging
 # ---------------------------------------------------------------------------
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
+class JsonFormatter(logging.Formatter):
+    """Structured JSON-lines logging (one JSON object per line) for production.
+
+    Enabled with RISKMATRIS_LOG_FORMAT=json (set by default in the Docker
+    image); the default "text" keeps the human-readable format for local dev.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        payload = {
+            "ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S%z"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            payload["exc_info"] = self.formatException(record.exc_info)
+        return json.dumps(payload, ensure_ascii=False)
+
+
+_log_format = os.environ.get("RISKMATRIS_LOG_FORMAT", "text").strip().lower()
+if _log_format == "json":
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(JsonFormatter())
+    logging.basicConfig(level=logging.INFO, handlers=[_handler])
+else:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 logger = logging.getLogger("riskmatris")
 
 # Validate LOG_LEVEL after basicConfig so the fallback warning is visible in the

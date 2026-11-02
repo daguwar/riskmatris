@@ -61,7 +61,7 @@ async def handle_vote(
     eff_thresh = get_session_threshold(session)
     if len(active_risk["votes"]) >= eff_thresh:
         active_risk["revealed"] = True
-    db.save_session_to_db(session)
+    await db.save_session_to_db_async(session)
     logger.info(
         "Vote received: session %s, risk #%d, client %s -> P=%d, C=%d (%d votes, threshold %d)",
         session["session_id"],
@@ -89,7 +89,7 @@ async def handle_reveal_now(
 ) -> bool:
     """Reveals the results for the active risk immediately."""
     active_risk["revealed"] = True
-    db.save_session_to_db(session)
+    await db.save_session_to_db_async(session)
     logger.info("Admin: results revealed – session %s, risk #%d", session["session_id"], session["active_risk_number"])
     return True
 
@@ -112,7 +112,7 @@ async def handle_set_label(
         if r["number"] == risk_num:
             r["label"] = label
             break
-    db.save_session_to_db(session)
+    await db.save_session_to_db_async(session)
     return True
 
 
@@ -127,7 +127,7 @@ async def handle_set_title(
     title = sanitize_user_text(str(msg.get("title", "")), MAX_TITLE_LENGTH)
     if title:
         session["title"] = title
-        db.save_session_to_db(session)
+        await db.save_session_to_db_async(session)
         return True
     await send_ws_error(conn.websocket, "Titel får inte vara tom.")
     return False
@@ -149,7 +149,7 @@ async def handle_set_threshold(
     eff_thresh = get_session_threshold(session)
     if len(active_risk["votes"]) > 0 and len(active_risk["votes"]) >= eff_thresh:
         active_risk["revealed"] = True
-    db.save_session_to_db(session)
+    await db.save_session_to_db_async(session)
     return True
 
 
@@ -183,7 +183,7 @@ async def handle_lock_risk(
     active_risk["final_consequence"] = cons
     active_risk["revealed"] = True
     active_risk["locked"] = True
-    db.save_session_to_db(session)
+    await db.save_session_to_db_async(session)
     logger.info(
         "Admin: risk #%d locked in session %s -> P=%d, C=%d (risk score %d)",
         session["active_risk_number"],
@@ -204,7 +204,7 @@ async def handle_unlock_risk(
 ) -> bool:
     """Unlocks a locked risk."""
     active_risk["locked"] = False
-    db.save_session_to_db(session)
+    await db.save_session_to_db_async(session)
     return True
 
 
@@ -226,7 +226,7 @@ async def handle_set_final_cell(
     active_risk["revealed"] = True
     if msg.get("lock", False):
         active_risk["locked"] = True
-    db.save_session_to_db(session)
+    await db.save_session_to_db_async(session)
     return True
 
 
@@ -252,7 +252,7 @@ async def handle_next_risk(
     new_r = create_new_risk(next_num, next_label)
     session["risks"].append(new_r)
     session["active_risk_number"] = next_num
-    db.save_session_to_db(session)
+    await db.save_session_to_db_async(session)
     logger.info(
         "Admin: new risk #%d created in session %s (%d risks total)",
         next_num,
@@ -276,7 +276,7 @@ async def handle_select_risk(
         return False
     if any(r["number"] == target_num for r in session["risks"]):
         session["active_risk_number"] = target_num
-        db.save_session_to_db(session)
+        await db.save_session_to_db_async(session)
         return True
     await send_ws_error(conn.websocket, f"Risk #{target_num} finns inte.")
     return False
@@ -295,7 +295,7 @@ async def handle_reset_votes(
     active_risk["locked"] = False
     active_risk["final_probability"] = None
     active_risk["final_consequence"] = None
-    db.save_session_to_db(session)
+    await db.save_session_to_db_async(session)
     return True
 
 
@@ -316,7 +316,7 @@ async def handle_delete_risk(
         session["risks"] = [r for r in session["risks"] if r["number"] != target_num]
         if session["active_risk_number"] == target_num:
             session["active_risk_number"] = session["risks"][-1]["number"]
-        db.save_session_to_db(session)
+        await db.save_session_to_db_async(session)
         return True
     await send_ws_error(conn.websocket, "Kan inte ta bort den enda risken.")
     return False
