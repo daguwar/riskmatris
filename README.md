@@ -86,3 +86,11 @@ Fill in `.env`:
 - `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERT_RESOLVER` – names of the entrypoint and certificate resolver (defaults: `websecure` / `letsencrypt`)
 
 Open the app via your domain (`https://riskmatris.example.com`). The share link and QR code then point to the right address automatically, and WebSockets (`wss://`) work through Traefik without extra configuration. For local debugging on the server you can add `ports: - "127.0.0.1:8000:8000"` to the compose file (binding to localhost only).
+
+---
+
+## License
+
+Licensed under the **European Union Public Licence v. 1.2 (EUPL-1.2)** – see [LICENSE](LICENSE) for the full text (SPDX identifier: `EUPL-1.2`).
+
+The EUPL is a copyleft open-source licence created and maintained by the European Commission, available in all official EU languages (all versions are equally authentic). In short: you may use, study, modify and distribute this software freely, but if you distribute it (or works based on it), you must do so under the same licence and provide access to the source code.
