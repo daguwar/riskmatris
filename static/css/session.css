@@ -3,7 +3,10 @@
    -------------------------------------------------------------------------- */
 
 .session-layout {
-  max-width: 880px;
+  /* Wide enough that the 9-column summary table (all cells nowrap) does not
+     have to scroll on a normal desktop screen. The vote view is narrower on
+     its own (.vote-view max-width below), and the landing page is separate. */
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px 16px 72px;
 }
