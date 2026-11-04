@@ -56,3 +56,86 @@ class TestWebSocketDisconnect:
         assert result.get("ok") is True, f"Endpoint did not return as expected: {result.get('error')}"
         # The connection must be removed after the disconnect
         assert sid not in manager.connections
+
+
+# ---------------------------------------------------------------------------
+# Origin check (sakerhetsrapport A01-2: cross-site WebSocket hijacking)
+# ---------------------------------------------------------------------------
+
+
+class TestWebSocketOriginCheck:
+    """Browsers do not enforce same-origin on WebSocket handshakes – without
+    a server-side check, any webpage can open a participant socket and vote
+    if it knows the session code. Connections whose Origin does not match the
+    request Host must be rejected with close code 1008. Connections without
+    an Origin header (non-browser clients) are allowed; they are covered by
+    connection/rate limits instead."""
+
+    def test_foreign_origin_rejected(self, add_session, test_client):
+        import pytest
+        from starlette.websockets import WebSocketDisconnect
+
+        sid = "ORIGIN1"
+        add_session(sid)
+        url = f"/ws/{sid}?role=participant&client_id=origin-check"
+        origin = "https://evil.example"
+        with pytest.raises(WebSocketDisconnect):
+            with test_client.websocket_connect(url, headers={"Origin": origin}) as ws:
+                ws.receive_json()
+        # The rejected connection must not remain in the manager
+        import app as app_module
+
+        assert sid not in app_module.manager.connections
+
+    def test_same_origin_allowed(self, add_session, test_client):
+        sid = "ORIGIN2"
+        add_session(sid)
+        url = f"/ws/{sid}?role=participant&client_id=origin-check"
+        # TestClient sends Host "testserver" – an Origin matching it must pass
+        with test_client.websocket_connect(url, headers={"Origin": "http://testserver"}) as ws:
+            data = ws.receive_json()
+        assert data["type"] == "session_state"
+        assert data["session_id"] == sid
+
+    def test_same_origin_with_port_allowed(self, add_session, test_client):
+        sid = "ORIGIN3"
+        add_session(sid)
+        url = f"/ws/{sid}?role=participant&client_id=origin-check"
+        with test_client.websocket_connect(
+            url, headers={"Origin": "http://localhost:8000", "Host": "localhost:8000"}
+        ) as ws:
+            data = ws.receive_json()
+        assert data["type"] == "session_state"
+
+    def test_origin_port_mismatch_rejected(self, add_session, test_client):
+        import pytest
+        from starlette.websockets import WebSocketDisconnect
+
+        sid = "ORIGIN4"
+        add_session(sid)
+        url = f"/ws/{sid}?role=participant&client_id=origin-check"
+        with pytest.raises(WebSocketDisconnect):
+            with test_client.websocket_connect(
+                url, headers={"Origin": "http://localhost:9999", "Host": "localhost:8000"}
+            ) as ws:
+                ws.receive_json()
+
+    def test_malformed_origin_rejected(self, add_session, test_client):
+        import pytest
+        from starlette.websockets import WebSocketDisconnect
+
+        sid = "ORIGIN5"
+        add_session(sid)
+        url = f"/ws/{sid}?role=participant&client_id=origin-check"
+        with pytest.raises(WebSocketDisconnect):
+            with test_client.websocket_connect(url, headers={"Origin": "http://[::1", "Host": "testserver"}) as ws:
+                ws.receive_json()
+
+    def test_missing_origin_allowed(self, add_session, test_client):
+        """Non-browser clients (no Origin header) must not be blocked."""
+        sid = "ORIGIN6"
+        add_session(sid)
+        url = f"/ws/{sid}?role=participant&client_id=origin-check"
+        with test_client.websocket_connect(url) as ws:
+            data = ws.receive_json()
+        assert data["type"] == "session_state"

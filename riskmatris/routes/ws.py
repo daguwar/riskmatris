@@ -2,6 +2,7 @@
 
 import json
 import secrets
+import urllib.parse
 
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
@@ -25,6 +26,61 @@ from riskmatris.ws_messages import format_validation_error, parse_ws_message
 router = APIRouter()
 
 
+def origin_matches_host(websocket: WebSocket) -> bool:
+    """Returns True if the request's Origin header matches its Host (same site).
+
+    Browsers do not enforce same-origin on WebSocket handshakes (RFC 6455
+    puts the responsibility on the server), so without this check any webpage
+    can open a participant socket and vote if it knows the session code
+    (sakerhetsrapport A01-2). The browser always sends Origin; matching it
+    against Host covers all legitimate usages of this app – the public domain
+    in production, the LAN IP when the QR code points at the local network,
+    and the separate projector window.
+
+    Non-browser clients (scripts, curl) send no Origin header and are allowed
+    through – a missing header cannot be verified anyway, and they are
+    covered by connection/rate limits instead.
+    """
+    origin = websocket.headers.get("origin")
+    if not isinstance(origin, str) or not origin:
+        return True
+    host = websocket.headers.get("host")
+    if not isinstance(host, str) or not host:
+        return True
+
+    try:
+        parts = urllib.parse.urlsplit(origin)
+        origin_host = (parts.hostname or "").lower()
+        # No port in the Origin -> derive it from the scheme (https=443, else 80)
+        origin_port = parts.port or (443 if parts.scheme == "https" else 80)
+    except ValueError:
+        return False
+    if not origin_host:
+        return False
+
+    # Host header: "example.com", "localhost:8000" or "[::1]:8000"
+    if host.startswith("["):
+        end = host.find("]")
+        req_host = host[1:end].lower() if end > 0 else ""
+        rest = host[end + 1 :] if end > 0 else ""
+        req_port = int(rest[1:]) if rest.startswith(":") and rest[1:].isdigit() else None
+    elif host.count(":") == 1:
+        req_host, _, req_port_raw = host.partition(":")
+        req_host = req_host.lower()
+        req_port = int(req_port_raw) if req_port_raw.isdigit() else None
+    else:
+        req_host = host.lower()
+        req_port = None
+
+    if origin_host != req_host:
+        return False
+    # The Host header often omits the port (default port behind a proxy);
+    # only compare ports when the client actually sent one.
+    if req_port is not None and origin_port != req_port:
+        return False
+    return True
+
+
 @router.websocket("/ws/{session_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
@@ -43,6 +99,20 @@ async def websocket_endpoint(
     if not session:
         logger.warning("WebSocket: session %s not found – connection denied", sid)
         await websocket.close(code=4004, reason="Sessionen finns inte")
+        return
+
+    # Cross-site WebSocket hijacking: a foreign Origin must never reach the
+    # session (vote manipulation and forced early reveal otherwise).
+    if not origin_matches_host(websocket):
+        origin = websocket.headers.get("origin")
+        client_ip = websocket.client.host if websocket.client else "unknown"
+        logger.warning(
+            "WebSocket: blocked cross-site connection to session %s – origin %s not allowed (client %s)",
+            sid,
+            origin,
+            client_ip,
+        )
+        await websocket.close(code=1008, reason="Origin är inte tillåten")
         return
 
     if state.manager.get_connection_count(sid) >= WS_MAX_CONNECTIONS_PER_SESSION:
