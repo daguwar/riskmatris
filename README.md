@@ -84,6 +84,8 @@ Fill in `.env`:
 - `RISKMATRIS_TTL_HOURS` – session retention in hours (default: `48`)
 - `RISKMATRIS_SESSION_READ_LIMIT` / `RISKMATRIS_SESSION_READ_WINDOW_SECONDS` – per-IP rate limit on read endpoints keyed by session code, in requests per window (defaults: `300` per `60` seconds); protects against enumeration of session codes
 - `RISKMATRIS_SESSION_CODE_LENGTH` – length of generated session codes, 6–16 (default: `8` = 40 bits of entropy)
+- `RISKMATRIS_WS_MAX_CONNECTIONS_PER_IP` / `RISKMATRIS_WS_MAX_CONNECTIONS_TOTAL` – WebSocket connection caps per client IP / globally (defaults: `20` / `1000`)
+- `RISKMATRIS_WS_MESSAGE_RATE_LIMIT` / `RISKMATRIS_WS_MESSAGE_RATE_WINDOW_SECONDS` – max WS messages per connection per window (defaults: `120` per `60` seconds)
 - `TRAEFIK_NETWORK` – the name of the Docker network your Traefik runs on (usually `traefik-public`; the network must already exist)
 - `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERT_RESOLVER` – names of the entrypoint and certificate resolver (defaults: `websecure` / `letsencrypt`)
 

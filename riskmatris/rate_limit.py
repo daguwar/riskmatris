@@ -50,6 +50,26 @@ def check_session_read_rate(client_ip: str, log: dict[str, list[float]] | None =
     return check_rate(active_log, client_ip, limit, window)
 
 
+def check_connection_message_rate(
+    times: list[float], limit: int, window: float, now: float | None = None
+) -> bool:
+    """Sliding-window message-rate limiter for a single WS connection.
+
+    ``times`` is the connection's own list of recent message timestamps
+    (monotonic clock); it is pruned and updated in place. Returns True if the
+    connection is still within the limit (sakerhetsrapport A04-1).
+    """
+    now = time.monotonic() if now is None else now
+    cutoff = now - window
+    recent = [t for t in times if t > cutoff]
+    if len(recent) >= limit:
+        times[:] = recent
+        return False
+    recent.append(now)
+    times[:] = recent
+    return True
+
+
 def _cleanup_log(log: dict[str, list[float]], window: float) -> None:
     """Drops entries that are entirely outside the current window."""
     cutoff = time.time() - window

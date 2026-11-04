@@ -184,3 +184,136 @@ class TestWebSocketReadRateLimit:
             with test_client.websocket_connect("/ws/NOPE02?role=participant&client_id=probe"):
                 pass
         assert exc_info.value.code == 1013
+
+
+# ---------------------------------------------------------------------------
+# Connection caps (sakerhetsrapport A04-1/T-1): per-IP and global limits on
+# WS connections, rejected with close code 1013
+# ---------------------------------------------------------------------------
+
+
+class TestWebSocketConnectionCaps:
+    def test_per_ip_cap_rejects_second_connection(self, add_session, test_client, monkeypatch):
+        import pytest
+        from starlette.websockets import WebSocketDisconnect
+
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "WS_MAX_CONNECTIONS_PER_IP", 1)
+        sid = "CAPIP01"
+        add_session(sid)
+        # TestClient connects all come from the same IP ("testclient"): the
+        # first connection stays open, the second must be rejected.
+        with test_client.websocket_connect(f"/ws/{sid}?role=participant&client_id=cap1") as ws1:
+            assert ws1.receive_json()["type"] == "session_state"
+            with pytest.raises(WebSocketDisconnect) as exc_info:
+                with test_client.websocket_connect(f"/ws/{sid}?role=participant&client_id=cap2"):
+                    pass
+            assert exc_info.value.code == 1013
+
+    def test_global_cap_rejects_when_total_reached(self, add_session, test_client, monkeypatch):
+        import pytest
+        from starlette.websockets import WebSocketDisconnect
+
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "WS_MAX_CONNECTIONS_TOTAL", 1)
+        sid = "CAPTOT1"
+        add_session(sid)
+        with test_client.websocket_connect(f"/ws/{sid}?role=participant&client_id=tot1") as ws1:
+            assert ws1.receive_json()["type"] == "session_state"
+            with pytest.raises(WebSocketDisconnect) as exc_info:
+                with test_client.websocket_connect(f"/ws/{sid}?role=participant&client_id=tot2"):
+                    pass
+            assert exc_info.value.code == 1013
+
+    def test_manager_connection_counters(self):
+        from unittest.mock import MagicMock
+
+        from app import ConnectionInfo, manager
+
+        ws = MagicMock()
+        manager.connections["CAPCNT1"] = [
+            ConnectionInfo(websocket=ws, role="participant", client_id="a", is_admin=False, client_ip="1.1.1.1"),
+            ConnectionInfo(websocket=ws, role="participant", client_id="b", is_admin=False, client_ip="2.2.2.2"),
+        ]
+        manager.connections["CAPCNT2"] = [
+            ConnectionInfo(websocket=ws, role="participant", client_id="c", is_admin=False, client_ip="1.1.1.1"),
+        ]
+        try:
+            assert manager.total_connection_count() == 3
+            assert manager.count_connections_for_ip("1.1.1.1") == 2
+            assert manager.count_connections_for_ip("2.2.2.2") == 1
+            assert manager.count_connections_for_ip("9.9.9.9") == 0
+            assert manager.count_connections_for_ip("") == 0
+        finally:
+            manager.connections.pop("CAPCNT1", None)
+            manager.connections.pop("CAPCNT2", None)
+
+
+# ---------------------------------------------------------------------------
+# Per-connection message rate limit (sakerhetsrapport A04-1)
+# ---------------------------------------------------------------------------
+
+
+class TestWebSocketMessageRateLimit:
+    def test_messages_over_limit_get_error_not_broadcast(self, add_session, test_client, monkeypatch):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "WS_MESSAGE_RATE_LIMIT", 2)
+        monkeypatch.setattr(app_module, "WS_MESSAGE_RATE_WINDOW_SECONDS", 60)
+        sid = "MSGRAT1"
+        add_session(sid)
+        with test_client.websocket_connect(f"/ws/{sid}?role=participant&client_id=rate1") as ws:
+            assert ws.receive_json()["type"] == "session_state"  # on-connect broadcast
+            ws.send_json({"action": "vote", "probability": 2, "consequence": 2})
+            assert ws.receive_json()["type"] == "session_state"
+            ws.send_json({"action": "vote", "probability": 3, "consequence": 3})
+            assert ws.receive_json()["type"] == "session_state"
+            # Third message within the window is rejected with an error
+            ws.send_json({"action": "vote", "probability": 1, "consequence": 1})
+            msg = ws.receive_json()
+            assert msg["type"] == "error"
+            assert "meddelanden" in msg["message"]
+
+
+# ---------------------------------------------------------------------------
+# Broadcast cost (sakerhetsrapport T-2): the shared payload is computed once
+# per broadcast; only my_vote/is_admin differ per connection
+# ---------------------------------------------------------------------------
+
+
+class TestBroadcastSharedPayload:
+    def test_broadcast_sets_per_connection_fields_on_shared_payload(self, make_session):
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock
+
+        from app import ConnectionInfo, manager
+
+        session = make_session(sid="BCAST01")
+        session["risks"][0]["votes"] = {
+            "alice": {"probability": 2, "consequence": 2, "updated_at": 0},
+            "bob": {"probability": 3, "consequence": 3, "updated_at": 0},
+        }
+        ws_a, ws_b = MagicMock(), MagicMock()
+        ws_a.send_json = AsyncMock()
+        ws_b.send_json = AsyncMock()
+        conn_a = ConnectionInfo(websocket=ws_a, role="participant", client_id="alice", is_admin=False)
+        conn_b = ConnectionInfo(websocket=ws_b, role="participant", client_id="bob", is_admin=False)
+        manager.connections["BCAST01"] = [conn_a, conn_b]
+        try:
+            asyncio.run(manager.broadcast(session))
+            payload_a = ws_a.send_json.call_args[0][0]
+            payload_b = ws_b.send_json.call_args[0][0]
+            # Shared part is identical (computed once) ...
+            assert payload_a["risks"] == payload_b["risks"]
+            assert payload_a["cell_meta"] == payload_b["cell_meta"]
+            # ... only the per-connection fields differ
+            assert payload_a["my_vote"]["probability"] == 2
+            assert payload_b["my_vote"]["probability"] == 3
+            assert payload_a["is_admin"] is False
+            # Each connection got its own top-level dict (no cross-talk)
+            payload_a["risks"] = []
+            assert payload_b["risks"] != []
+        finally:
+            manager.connections.pop("BCAST01", None)

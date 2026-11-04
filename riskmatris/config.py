@@ -86,6 +86,14 @@ SESSION_READ_WINDOW_SECONDS = _parse_env_int("RISKMATRIS_SESSION_READ_WINDOW_SEC
 # (6 chars = only 30 bits). Still fits the manual join field and the QR code.
 SESSION_CODE_LENGTH = _parse_env_int("RISKMATRIS_SESSION_CODE_LENGTH", 8, min_value=6, max_value=16)
 WS_MAX_CONNECTIONS_PER_SESSION = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS", 200, min_value=2)
+# Per-IP and global connection caps (sakerhetsrapport A04-1/T-1): without them
+# one IP could occupy all per-session slots with throwaway connections.
+WS_MAX_CONNECTIONS_PER_IP = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS_PER_IP", 20, min_value=1)
+WS_MAX_CONNECTIONS_TOTAL = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS_TOTAL", 1000, min_value=10)
+# Per-connection message rate limit (A04-1): each vote triggers a DB write +
+# a broadcast, so an unthrottled connection is an amplification vector.
+WS_MESSAGE_RATE_LIMIT = _parse_env_int("RISKMATRIS_WS_MESSAGE_RATE_LIMIT", 120, min_value=1)  # per connection per window
+WS_MESSAGE_RATE_WINDOW_SECONDS = _parse_env_int("RISKMATRIS_WS_MESSAGE_RATE_WINDOW_SECONDS", 60, min_value=1)
 WS_MAX_MESSAGE_BYTES = _parse_env_int("RISKMATRIS_WS_MAX_MESSAGE_BYTES", 8192, min_value=256, max_value=1_048_576)
 WS_TICKET_TTL_SECONDS = 30  # one-time admin WebSocket tickets
 MAX_TITLE_LENGTH = 100

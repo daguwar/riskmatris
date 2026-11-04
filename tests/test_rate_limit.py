@@ -1,6 +1,7 @@
 """Tests for the rate limiters (riskmatris.rate_limit)."""
 
 from app import (
+    check_connection_message_rate,
     check_session_create_rate,
     check_session_read_rate,
     cleanup_rate_limit_log,
@@ -127,3 +128,27 @@ class TestSessionReadRateLimit:
         assert check_session_create_rate("1.2.3.4") is True
         assert check_session_create_rate("1.2.3.4") is False
         assert check_session_read_rate("1.2.3.4") is True
+
+
+# ---------------------------------------------------------------------------
+# Per-connection WS message rate limit (sakerhetsrapport A04-1)
+# ---------------------------------------------------------------------------
+
+
+class TestConnectionMessageRate:
+    def test_allows_within_limit_then_blocks(self):
+        times: list[float] = []
+        assert check_connection_message_rate(times, 2, 60, now=1000.0) is True
+        assert check_connection_message_rate(times, 2, 60, now=1001.0) is True
+        assert check_connection_message_rate(times, 2, 60, now=1002.0) is False
+        assert check_connection_message_rate(times, 2, 60, now=1003.0) is False
+
+    def test_window_expiry_allows_again_and_prunes(self):
+        times = [0.0]
+        assert check_connection_message_rate(times, 1, 60, now=120.0) is True
+        assert times == [120.0]  # old entry pruned, only the fresh one remains
+
+    def test_prunes_old_entries_in_place(self):
+        times = [1.0, 2.0, 3.0]
+        assert check_connection_message_rate(times, 5, 60, now=100.0) is True
+        assert times == [100.0]

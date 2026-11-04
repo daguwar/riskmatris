@@ -7,6 +7,8 @@ import urllib.parse
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
+import riskmatris.config as config
+import riskmatris.rate_limit as rate_limit
 from riskmatris.config import (
     MAX_CLIENT_ID_LENGTH,
     WS_MAX_CONNECTIONS_PER_SESSION,
@@ -133,6 +135,28 @@ async def websocket_endpoint(
         await websocket.close(code=1013, reason="Sessionsgränsen för anslutningar är nådd")
         return
 
+    # Per-IP and global connection caps (sakerhetsrapport A04-1/T-1): without
+    # them one IP could fill every per-session slot with throwaway connections
+    # and starve legitimate participants.
+    per_ip_cap = getattr(config, "WS_MAX_CONNECTIONS_PER_IP", 20)
+    if state.manager.count_connections_for_ip(client_ip) >= per_ip_cap:
+        logger.warning(
+            "WebSocket: per-IP connection limit (%d) reached for %s – rejecting",
+            per_ip_cap,
+            client_ip,
+        )
+        await websocket.close(code=1013, reason="För många anslutningar från denna adress")
+        return
+    total_cap = getattr(config, "WS_MAX_CONNECTIONS_TOTAL", 1000)
+    if state.manager.total_connection_count() >= total_cap:
+        logger.warning(
+            "WebSocket: global connection limit (%d) reached – rejecting client %s",
+            total_cap,
+            client_ip,
+        )
+        await websocket.close(code=1013, reason="Serverns totala anslutningsgräns är nådd")
+        return
+
     # Admins authenticate with a one-time ticket instead of the long-lived
     # admin token, so no secret ever travels in the query string.
     is_admin = state.consume_ws_ticket(ticket, sid) if ticket else False
@@ -147,6 +171,7 @@ async def websocket_endpoint(
         role=effective_role,
         client_id=client_id,
         is_admin=is_admin,
+        client_ip=client_ip,
     )
     await state.manager.connect(sid, conn)
     logger.info(
@@ -171,6 +196,22 @@ async def websocket_endpoint(
                 raise
             except Exception:
                 await send_ws_error(websocket, "Ogiltigt meddelande.")
+                continue
+
+            # Per-connection message rate limit (A04-1): every vote triggers a
+            # DB write + a broadcast to all connections, so an unthrottled
+            # connection is an amplification vector.
+            msg_limit = getattr(config, "WS_MESSAGE_RATE_LIMIT", 120)
+            msg_window = getattr(config, "WS_MESSAGE_RATE_WINDOW_SECONDS", 60)
+            if not rate_limit.check_connection_message_rate(conn.message_times, msg_limit, msg_window):
+                logger.warning(
+                    "WebSocket: message rate limit (%d/%ds) hit for client %s in session %s",
+                    msg_limit,
+                    msg_window,
+                    client_id,
+                    sid,
+                )
+                await send_ws_error(websocket, "För många meddelanden – sakta ner takten.")
                 continue
 
             if len(raw.encode("utf-8")) > WS_MAX_MESSAGE_BYTES:

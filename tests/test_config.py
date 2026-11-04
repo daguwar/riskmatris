@@ -72,6 +72,10 @@ class TestParseEnvInt:
         assert app_module.SESSION_READ_WINDOW_SECONDS >= 1
         assert 6 <= app_module.SESSION_CODE_LENGTH <= 16
         assert app_module.WS_MAX_CONNECTIONS_PER_SESSION >= 2
+        assert app_module.WS_MAX_CONNECTIONS_PER_IP >= 1
+        assert app_module.WS_MAX_CONNECTIONS_TOTAL >= 10
+        assert app_module.WS_MESSAGE_RATE_LIMIT >= 1
+        assert app_module.WS_MESSAGE_RATE_WINDOW_SECONDS >= 1
         assert app_module.WS_MAX_MESSAGE_BYTES >= 256
 
 
