@@ -26,7 +26,7 @@ from riskmatris.session import (
     get_session_threshold,
 )
 from riskmatris.state import AppState, get_app_state
-from riskmatris.utils import get_local_lan_ip, sanitize_user_text
+from riskmatris.utils import get_local_lan_ip, sanitize_csv_cell, sanitize_user_text
 from riskmatris.ws_manager import ConnectionInfo
 
 router = APIRouter()
@@ -199,7 +199,13 @@ async def export_session_csv(
     output.write("\ufeff")
     writer = csv.writer(output, delimiter=";")
 
-    writer.writerow(
+    def write_row(cells: list) -> None:
+        # Every cell is escaped against CSV formula injection (A03-1): labels and
+        # titles are user-controlled and a leading = + - @ (or tab/CR) would be
+        # evaluated as a formula when the file is opened in Excel/LibreOffice.
+        writer.writerow([sanitize_csv_cell(c) for c in cells])
+
+    write_row(
         [
             "Risk #",
             "Beskrivning / Etikett",
@@ -230,7 +236,7 @@ async def export_session_csv(
             sp, sc = cell_key.split("_")
             dist_parts.append(f"S{sp}xK{sc}: {count} st")
 
-        writer.writerow(
+        write_row(
             [
                 f"#{r['number']}",
                 r["label"],

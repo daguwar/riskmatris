@@ -2,7 +2,15 @@
 
 import pytest
 
-from app import MAX_TITLE_LENGTH, _safe_int, get_local_lan_ip, get_risk_level, round_half_up, sanitize_user_text
+from app import (
+    MAX_TITLE_LENGTH,
+    _safe_int,
+    get_local_lan_ip,
+    get_risk_level,
+    round_half_up,
+    sanitize_csv_cell,
+    sanitize_user_text,
+)
 
 # ---------------------------------------------------------------------------
 # round_half_up
@@ -192,3 +200,45 @@ class TestSanitizeUserText:
 
     def test_empty_result_for_whitespace_only(self):
         assert sanitize_user_text("   \n\t ", 50) == ""
+
+
+# ---------------------------------------------------------------------------
+# sanitize_csv_cell (CSV formula injection, sakerhetsrapport A03-1)
+# ---------------------------------------------------------------------------
+
+
+class TestSanitizeCsvCell:
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "=cmd|' /C calc'!A1",
+            "=HYPERLINK(\"http://evil\",\"x\")",
+            "+1+1",
+            "-2+3",
+            "@SUM(A1:A9)",
+            "\t=1+1",
+            "\r=1+1",
+        ],
+    )
+    def test_formula_prefixes_get_apostrophe(self, value):
+        result = sanitize_csv_cell(value)
+        assert result == "'" + value
+        assert result.startswith("'")
+
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            ("Brandrisk", "Brandrisk"),
+            ("=", "'=",),  # bare "=" is still a formula start
+            ("Risk #1", "Risk #1"),
+            ("2", "2"),
+            ("2,5", "2,5"),
+            ("", ""),
+            (None, ""),
+            (5, "5"),
+            (2.5, "2.5"),
+            ("a=b", "a=b"),  # only a LEADING prefix char is dangerous
+        ],
+    )
+    def test_safe_values_pass_through(self, value, expected):
+        assert sanitize_csv_cell(value) == expected

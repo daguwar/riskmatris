@@ -77,6 +77,7 @@ from riskmatris.utils import (  # noqa: F401
     get_local_lan_ip,
     get_risk_level,
     round_half_up,
+    sanitize_csv_cell,
     sanitize_user_text,
 )
 from riskmatris.ws_manager import (  # noqa: F401

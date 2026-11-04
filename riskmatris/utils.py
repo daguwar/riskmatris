@@ -16,6 +16,25 @@ def sanitize_user_text(value: str, max_length: int) -> str:
     return "".join(ch for ch in value if unicodedata.category(ch) not in ("Cc", "Cf")).strip()[:max_length]
 
 
+# Leading characters that make Excel/LibreOffice interpret a CSV cell as a
+# formula (OWASP CSV-injection guidance also covers tab and CR).
+CSV_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def sanitize_csv_cell(value: Any) -> str:
+    """Escapes a CSV cell against formula injection (sakerhetsrapport A03-1).
+
+    A cell starting with =, +, -, @ (or tab/CR) is evaluated as a formula by
+    Excel/LibreOffice when the file is opened (classic ``=cmd|' /C ...'``).
+    Prefixing with a single quote forces text interpretation; the quote itself
+    is not displayed by the spreadsheet application.
+    """
+    text = "" if value is None else str(value)
+    if text[:1] in CSV_FORMULA_PREFIXES:
+        return "'" + text
+    return text
+
+
 def round_half_up(value: float) -> int:
     """Rounds half up (cautious rounding: .5 rounds up) to an integer in 1..4."""
     rounded = int(math.floor(value + 0.5))

@@ -139,3 +139,40 @@ class TestReadRateLimit:
         monkeypatch.setattr(app_module, "SESSION_READ_LIMIT", 1)
         for _ in range(5):
             assert isolated_client.get("/health").status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# CSV export: formula injection (sakerhetsrapport A03-1)
+# ---------------------------------------------------------------------------
+
+
+class TestCsvFormulaInjection:
+    def test_malicious_label_is_escaped_in_export(self, add_session, test_client):
+        import csv
+        import io
+
+        sid = "CSVEVIL1"
+        session = add_session(sid)
+        session["risks"][0]["label"] = "=cmd|' /C calc'!A1"
+        resp = test_client.get(f"/api/sessions/{sid}/export.csv")
+        assert resp.status_code == 200
+        text = resp.content.decode("utf-8-sig")  # strip the BOM
+        rows = list(csv.reader(io.StringIO(text), delimiter=";"))
+        data_row = next(r for r in rows if r and r[0] == "#1")
+        # The label cell must be prefixed with an apostrophe so Excel/LibreOffice
+        # treats it as text instead of evaluating it as a formula
+        assert data_row[1] == "'=cmd|' /C calc'!A1"
+
+    def test_normal_label_is_unchanged_in_export(self, add_session, test_client):
+        import csv
+        import io
+
+        sid = "CSVOK01"
+        session = add_session(sid)
+        session["risks"][0]["label"] = "Brandrisk i lager"
+        resp = test_client.get(f"/api/sessions/{sid}/export.csv")
+        assert resp.status_code == 200
+        text = resp.content.decode("utf-8-sig")
+        rows = list(csv.reader(io.StringIO(text), delimiter=";"))
+        data_row = next(r for r in rows if r and r[0] == "#1")
+        assert data_row[1] == "Brandrisk i lager"
