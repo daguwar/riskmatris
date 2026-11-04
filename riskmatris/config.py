@@ -92,6 +92,11 @@ DB_PATH = os.environ.get("RISKMATRIS_DB_PATH", os.path.join("data", "riskmatris.
 # Create the data directory if it does not exist (for local runs without Docker)
 os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
 
+# SQLite: how long a connection waits for a lock before failing with
+# "database is locked" (sakerhetsrapport T-4). Writes run in a thread pool, so
+# without this, concurrent writes fail immediately under load.
+SQLITE_BUSY_TIMEOUT_MS = _parse_env_int("RISKMATRIS_SQLITE_BUSY_TIMEOUT_MS", 5000, min_value=0, max_value=60_000)
+
 # ---------------------------------------------------------------------------
 # Session & WebSocket constants
 # ---------------------------------------------------------------------------

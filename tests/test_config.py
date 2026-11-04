@@ -103,6 +103,7 @@ class TestParseEnvBool:
         import app as app_module
 
         assert app_module.ENABLE_DOCS is False  # secure by default (A05-1)
+        assert app_module.SQLITE_BUSY_TIMEOUT_MS >= 0
         assert app_module.SESSION_TTL_HOURS >= 1
         assert app_module.SESSION_TTL_SECONDS == app_module.SESSION_TTL_HOURS * 3600
         assert app_module.SESSION_CLEANUP_INTERVAL >= 60

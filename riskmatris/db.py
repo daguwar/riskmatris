@@ -36,13 +36,29 @@ def _get_ttl_seconds() -> int:
     return getattr(config, "SESSION_TTL_SECONDS", getattr(config, "SESSION_TTL_HOURS", 48) * 3600)
 
 
+def _connect() -> sqlite3.Connection:
+    """Opens a SQLite connection with WAL journal mode and a busy timeout.
+
+    Without busy_timeout, concurrent writers from the thread pool fail
+    immediately with "database is locked"; WAL (write-ahead logging) lets
+    readers proceed while a write is in progress (sakerhetsrapport T-4).
+    WAL is persistent per database file; the -wal/-shm files live next to the
+    DB on the data volume.
+    """
+    conn = sqlite3.connect(_get_db_path())
+    busy_timeout_ms = int(getattr(config, "SQLITE_BUSY_TIMEOUT_MS", 5000))
+    conn.execute(f"PRAGMA busy_timeout = {busy_timeout_ms}")
+    conn.execute("PRAGMA journal_mode = WAL")
+    return conn
+
+
 # ---------------------------------------------------------------------------
 # Schema & lifecycle
 # ---------------------------------------------------------------------------
 
 
 def init_db() -> None:
-    with sqlite3.connect(_get_db_path()) as conn:
+    with _connect() as conn:
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS sessions (
@@ -60,7 +76,7 @@ def init_db() -> None:
 def cleanup_expired_sessions(sessions: dict[str, dict[str, Any]] | None = None) -> None:
     active_sessions = sessions if sessions is not None else SESSIONS
     cutoff = time.time() - _get_ttl_seconds()
-    with sqlite3.connect(_get_db_path()) as conn:
+    with _connect() as conn:
         cursor = conn.execute("SELECT session_id FROM sessions WHERE updated_at < ?", (cutoff,))
         expired_ids = [row[0] for row in cursor.fetchall()]
         if expired_ids:
@@ -75,7 +91,7 @@ def cleanup_expired_sessions(sessions: dict[str, dict[str, Any]] | None = None) 
 def save_session_to_db(session: dict[str, Any]) -> None:
     session["updated_at"] = time.time()
     payload = json.dumps(session, ensure_ascii=False)
-    with sqlite3.connect(_get_db_path()) as conn:
+    with _connect() as conn:
         conn.execute(
             """
             INSERT INTO sessions (session_id, admin_token, created_at, updated_at, data_json)
@@ -99,7 +115,7 @@ def load_sessions_from_db() -> dict[str, dict[str, Any]]:
     init_db()
     cleanup_expired_sessions()
     loaded: dict[str, dict[str, Any]] = {}
-    with sqlite3.connect(_get_db_path()) as conn:
+    with _connect() as conn:
         cursor = conn.execute("SELECT session_id, data_json FROM sessions")
         for sid, data_json in cursor.fetchall():
             try:
