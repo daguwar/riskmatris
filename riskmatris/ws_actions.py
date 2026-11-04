@@ -62,13 +62,12 @@ async def handle_vote(
     if len(active_risk["votes"]) >= eff_thresh:
         active_risk["revealed"] = True
     await db.save_session_to_db_async(session)
+    # Log aggregate data only: a client_id -> vote mapping in the logs would
+    # conflict with the service's anonymity promise (sakerhetsrapport A09-1).
     logger.info(
-        "Vote received: session %s, risk #%d, client %s -> P=%d, C=%d (%d votes, threshold %d)",
+        "Vote received: session %s, risk #%d (%d votes, threshold %d)",
         session["session_id"],
         session["active_risk_number"],
-        conn.client_id,
-        prob,
-        cons,
         len(active_risk["votes"]),
         eff_thresh,
     )

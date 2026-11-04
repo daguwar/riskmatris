@@ -77,6 +77,25 @@ async def test_handle_vote_reaches_threshold(test_session, mock_conn):
 
 
 @pytest.mark.asyncio
+async def test_vote_log_contains_no_client_id_or_vote_values(test_session, mock_conn, caplog):
+    """Sakerhetsrapport A09-1: logs must not link a client_id to its vote –
+    only aggregate counts may be logged (anonymity promise)."""
+    import logging
+
+    active_risk = test_session["risks"][0]
+    msg = {"action": "vote", "probability": 3, "consequence": 2}
+    with caplog.at_level(logging.INFO, logger="riskmatris"):
+        await handle_vote(test_session, active_risk, msg, mock_conn)
+    vote_logs = [r for r in caplog.records if "Vote received" in r.getMessage()]
+    assert vote_logs, "expected an aggregate vote log line"
+    for record in caplog.records:
+        text = record.getMessage()
+        assert "test_client" not in text
+        assert "P=" not in text and "C=" not in text
+    assert "1 votes" in vote_logs[0].getMessage()  # aggregate count is logged
+
+
+@pytest.mark.asyncio
 async def test_handle_vote_invalid_bounds(test_session, mock_conn):
     active_risk = test_session["risks"][0]
     msg = {"action": "vote", "probability": 5, "consequence": 2}
