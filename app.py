@@ -23,6 +23,7 @@ from riskmatris import app  # noqa: F401
 from riskmatris.config import (  # noqa: F401
     CONSEQUENCE_LABELS,
     DB_PATH,
+    ENABLE_DOCS,
     MAX_CLIENT_ID_LENGTH,
     MAX_LABEL_LENGTH,
     MAX_QR_URL_LENGTH,
@@ -43,6 +44,7 @@ from riskmatris.config import (  # noqa: F401
     WS_MESSAGE_RATE_LIMIT,
     WS_MESSAGE_RATE_WINDOW_SECONDS,
     WS_TICKET_TTL_SECONDS,
+    _parse_env_bool,
     _parse_env_int,
     logger,
 )
@@ -140,6 +142,7 @@ class _AppModule(types.ModuleType):
             "WS_MAX_CONNECTIONS_TOTAL",
             "WS_MESSAGE_RATE_LIMIT",
             "WS_MESSAGE_RATE_WINDOW_SECONDS",
+            "ENABLE_DOCS",
             "DB_PATH",
             "SESSION_TTL_HOURS",
             "SESSION_TTL_SECONDS",

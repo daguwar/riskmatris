@@ -11,6 +11,9 @@ services:
     environment:
       - RISKMATRIS_DB_PATH=/app/data/riskmatris.db
       - RISKMATRIS_TTL_HOURS=48
+      # Local debugging only: keep the interactive API docs (/docs) available.
+      # Production (docker-compose.traefik.yml) leaves this off (sakerhetsrapport A05-1).
+      - RISKMATRIS_ENABLE_DOCS=1
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]

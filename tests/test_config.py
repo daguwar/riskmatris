@@ -61,9 +61,48 @@ class TestParseEnvInt:
         monkeypatch.setenv("TEST_ENV_INT", "999999")
         assert _parse_env_int("TEST_ENV_INT", 100, min_value=1, max_value=1000) == 100
 
+
+# ---------------------------------------------------------------------------
+# Boolean environment variable parsing (safe fallback)
+# ---------------------------------------------------------------------------
+
+
+class TestParseEnvBool:
+    def test_true_values(self, monkeypatch):
+        from app import _parse_env_bool
+
+        for v in ("1", "true", "TRUE", "Yes", "on"):
+            monkeypatch.setenv("TEST_ENV_BOOL", v)
+            assert _parse_env_bool("TEST_ENV_BOOL", False) is True
+
+    def test_false_values(self, monkeypatch):
+        from app import _parse_env_bool
+
+        for v in ("0", "false", "FALSE", "No", "off"):
+            monkeypatch.setenv("TEST_ENV_BOOL", v)
+            assert _parse_env_bool("TEST_ENV_BOOL", True) is False
+
+    def test_unset_returns_default(self, monkeypatch):
+        from app import _parse_env_bool
+
+        monkeypatch.delenv("TEST_ENV_BOOL", raising=False)
+        assert _parse_env_bool("TEST_ENV_BOOL", True) is True
+        assert _parse_env_bool("TEST_ENV_BOOL", False) is False
+
+    def test_invalid_falls_back_with_warning(self, monkeypatch, caplog):
+        import logging
+
+        from app import _parse_env_bool
+
+        monkeypatch.setenv("TEST_ENV_BOOL", "kanske")
+        with caplog.at_level(logging.WARNING, logger="riskmatris"):
+            assert _parse_env_bool("TEST_ENV_BOOL", False) is False
+        assert any("TEST_ENV_BOOL" in rec.message for rec in caplog.records)
+
     def test_configured_defaults_are_consistent(self):
         import app as app_module
 
+        assert app_module.ENABLE_DOCS is False  # secure by default (A05-1)
         assert app_module.SESSION_TTL_HOURS >= 1
         assert app_module.SESSION_TTL_SECONDS == app_module.SESSION_TTL_HOURS * 3600
         assert app_module.SESSION_CLEANUP_INTERVAL >= 60

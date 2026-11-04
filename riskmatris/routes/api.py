@@ -52,7 +52,9 @@ async def health_check(state: AppState = Depends(get_app_state)):
     return {
         "status": "ok",
         "active_sessions": len(state.sessions),
-        "db_path": getattr(config, "DB_PATH", "data/riskmatris.db"),
+        # Fixed relative path on purpose: the configured absolute DB path would
+        # leak the server layout (sakerhetsrapport A05-2).
+        "db_path": "data/riskmatris.db",
     }
 
 
@@ -99,7 +101,6 @@ async def create_session(
 async def get_session_info(
     session_id: str,
     request: Request,
-    admin_token: str | None = Query(default=None),
     client_id: str | None = Query(default=None),
     x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
     state: AppState = Depends(get_app_state),
@@ -109,8 +110,10 @@ async def get_session_info(
     session = state.sessions.get(sid)
     if not session:
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
-    # Prefer the header over the query param (avoids token in URLs/logs/history)
-    token = x_admin_token or admin_token
+    # Only the X-Admin-Token header is accepted – a token in the query string
+    # would leak into proxy logs, browser history and the Referer header
+    # (sakerhetsrapport A01-4).
+    token = x_admin_token
     is_admin = bool(token and secrets.compare_digest(token, session["admin_token"]))
     # Clamp/sanitize the client id – it is unbounded query input otherwise
     client_id = sanitize_user_text(client_id or "", MAX_CLIENT_ID_LENGTH)
@@ -176,9 +179,11 @@ async def get_session_qr_svg(
         img.save(buf)
         svg_bytes = buf.getvalue()
         return Response(content=svg_bytes, media_type="image/svg+xml")
-    except Exception as exc:
+    except Exception:
+        # Full traceback in the log; the client gets a generic message –
+        # str(exc) could leak internal paths (sakerhetsrapport A03-5).
         logger.exception("QR-SVG: could not generate QR code for session %s", sid)
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail="Kunde inte generera QR-koden – kontrollera URL:en.")
 
 
 @router.get("/api/sessions/{session_id}/export.csv")

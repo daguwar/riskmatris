@@ -86,6 +86,7 @@ Fill in `.env`:
 - `RISKMATRIS_SESSION_CODE_LENGTH` – length of generated session codes, 6–16 (default: `8` = 40 bits of entropy)
 - `RISKMATRIS_WS_MAX_CONNECTIONS_PER_IP` / `RISKMATRIS_WS_MAX_CONNECTIONS_TOTAL` – WebSocket connection caps per client IP / globally (defaults: `20` / `1000`)
 - `RISKMATRIS_WS_MESSAGE_RATE_LIMIT` / `RISKMATRIS_WS_MESSAGE_RATE_WINDOW_SECONDS` – max WS messages per connection per window (defaults: `120` per `60` seconds)
+- `RISKMATRIS_ENABLE_DOCS` – set to `1` to expose the interactive API docs (`/docs`, `/redoc`, `/openapi.json`); disabled by default, enabled only in the local `docker-compose.yml`
 - `TRAEFIK_NETWORK` – the name of the Docker network your Traefik runs on (usually `traefik-public`; the network must already exist)
 - `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERT_RESOLVER` – names of the entrypoint and certificate resolver (defaults: `websecure` / `letsencrypt`)
 

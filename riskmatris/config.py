@@ -56,6 +56,34 @@ def _parse_env_int(name: str, default: int, min_value: int, max_value: int | Non
     return value
 
 
+def _parse_env_bool(name: str, default: bool) -> bool:
+    """Parses a boolean environment variable with a safe fallback.
+
+    Accepts 1/true/yes/on as True and 0/false/no/off as False (case-insensitive);
+    anything else logs a warning and falls back to the default.
+    """
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    value = raw.strip().lower()
+    if value in ("1", "true", "yes", "on"):
+        return True
+    if value in ("0", "false", "no", "off"):
+        return False
+    logger.warning("Invalid %s value %r – falling back to %s", name, raw, default)
+    return default
+
+
+# ---------------------------------------------------------------------------
+# Feature toggles
+# ---------------------------------------------------------------------------
+
+# Interactive API docs (/docs, /redoc, /openapi.json). Disabled by default –
+# secure by default: in production they are a recon aid (sakerhetsrapport
+# A05-1). Set RISKMATRIS_ENABLE_DOCS=1 for local debugging (the local
+# docker-compose.yml does this).
+ENABLE_DOCS = _parse_env_bool("RISKMATRIS_ENABLE_DOCS", False)
+
 # ---------------------------------------------------------------------------
 # Database path
 # ---------------------------------------------------------------------------

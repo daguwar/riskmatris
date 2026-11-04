@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
-from riskmatris.config import SESSION_CLEANUP_INTERVAL, logger
+from riskmatris.config import ENABLE_DOCS, SESSION_CLEANUP_INTERVAL, logger
 from riskmatris.db import load_sessions_from_db_async
 from riskmatris.routes import api, spa, ws
 from riskmatris.state import AppState, default_state
@@ -57,7 +57,15 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down – sessions saved to DB.")
 
 
-app = FastAPI(title="Riskmatris Live", lifespan=lifespan)
+# Interactive API docs (/docs, /redoc, /openapi.json) are disabled unless
+# explicitly enabled via RISKMATRIS_ENABLE_DOCS=1 (sakerhetsrapport A05-1).
+app = FastAPI(
+    title="Riskmatris Live",
+    lifespan=lifespan,
+    docs_url="/docs" if ENABLE_DOCS else None,
+    redoc_url="/redoc" if ENABLE_DOCS else None,
+    openapi_url="/openapi.json" if ENABLE_DOCS else None,
+)
 # Ensure app.state.app_state is available even before lifespan runs (e.g. TestClient)
 app.state.app_state = default_state
 
@@ -81,6 +89,44 @@ async def add_cache_headers(request: Request, call_next):
         response.headers["Cache-Control"] = "public, max-age=86400"
     elif path == "/" or path.startswith("/s/"):
         response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
+# ---------------------------------------------------------------------------
+# Security headers (sakerhetsrapport A05-3) – defense in depth on every response
+# ---------------------------------------------------------------------------
+
+SECURITY_HEADERS = {
+    # CSP: no inline scripts (the frontend is pure ES modules); ws:/wss: for the
+    # WebSocket; data: for the PNG export; 'unsafe-inline' for styles only (one
+    # inline width attribute in index.html – styles cannot execute JS in modern
+    # browsers). frame-ancestors 'none' blocks clickjacking. Also applies to the
+    # QR endpoint's SVG responses, so a directly opened SVG cannot run scripts.
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "connect-src 'self' ws: wss:; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "frame-ancestors 'none'; "
+        "form-action 'self'"
+    ),
+    "X-Content-Type-Options": "nosniff",
+    # The session code sits in the URL – never let it leak via Referer
+    "Referrer-Policy": "no-referrer",
+    # Legacy complement to CSP frame-ancestors
+    "X-Frame-Options": "DENY",
+}
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Adds defense-in-depth security headers to every HTTP response (A05-3)."""
+    response = await call_next(request)
+    for header, value in SECURITY_HEADERS.items():
+        response.headers[header] = value
     return response
 
 
