@@ -95,6 +95,15 @@ async def websocket_endpoint(
         state = get_ws_app_state(websocket)
 
     sid = session_id.strip().upper()
+    client_ip = websocket.client.host if websocket.client else "unknown"
+    # Read/probe rate limit also covers WS handshakes: the distinguishable
+    # close codes (4004 = unknown session) would otherwise make session codes
+    # enumerable by scripted connects (sakerhetsrapport A01-3).
+    if not state.check_session_read_rate(client_ip):
+        logger.warning("WebSocket: rate limit hit for client %s (connect to session %s)", client_ip, sid)
+        await websocket.close(code=1013, reason="För många anslutningsförsök – försök igen om en stund")
+        return
+
     session = state.sessions.get(sid)
     if not session:
         logger.warning("WebSocket: session %s not found – connection denied", sid)
@@ -105,7 +114,6 @@ async def websocket_endpoint(
     # session (vote manipulation and forced early reveal otherwise).
     if not origin_matches_host(websocket):
         origin = websocket.headers.get("origin")
-        client_ip = websocket.client.host if websocket.client else "unknown"
         logger.warning(
             "WebSocket: blocked cross-site connection to session %s – origin %s not allowed (client %s)",
             sid,

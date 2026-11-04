@@ -29,8 +29,11 @@ from riskmatris.config import (  # noqa: F401
     MAX_TITLE_LENGTH,
     PROBABILITY_LABELS,
     SESSION_CLEANUP_INTERVAL,
+    SESSION_CODE_LENGTH,
     SESSION_CREATE_LIMIT,
     SESSION_CREATE_WINDOW_SECONDS,
+    SESSION_READ_LIMIT,
+    SESSION_READ_WINDOW_SECONDS,
     SESSION_TTL_HOURS,
     SESSION_TTL_SECONDS,
     WS_MAX_CONNECTIONS_PER_SESSION,
@@ -49,8 +52,11 @@ from riskmatris.db import (  # noqa: F401
 from riskmatris.models import CreateSessionRequest  # noqa: F401
 from riskmatris.rate_limit import (  # noqa: F401
     SESSION_CREATE_LOG,
+    SESSION_READ_LOG,
     check_session_create_rate,
+    check_session_read_rate,
     cleanup_rate_limit_log,
+    cleanup_read_rate_limit_log,
 )
 from riskmatris.routes.spa import get_static_version  # noqa: F401
 from riskmatris.routes.ws import websocket_endpoint  # noqa: F401
@@ -107,13 +113,23 @@ class _AppModule(types.ModuleType):
 
     def __setattr__(self, name: str, value):
         super().__setattr__(name, value)
-        if name in ("SESSION_CREATE_LOG", "SESSION_CREATE_LIMIT", "SESSION_CREATE_WINDOW_SECONDS"):
+        if name in (
+            "SESSION_CREATE_LOG",
+            "SESSION_CREATE_LIMIT",
+            "SESSION_CREATE_WINDOW_SECONDS",
+            "SESSION_READ_LOG",
+            "SESSION_READ_LIMIT",
+            "SESSION_READ_WINDOW_SECONDS",
+        ):
             setattr(_rate_limit, name, value)
             if hasattr(_state.default_state, name):
                 setattr(_state.default_state, name, value)
         if name in (
             "SESSION_CREATE_LIMIT",
             "SESSION_CREATE_WINDOW_SECONDS",
+            "SESSION_READ_LIMIT",
+            "SESSION_READ_WINDOW_SECONDS",
+            "SESSION_CODE_LENGTH",
             "DB_PATH",
             "SESSION_TTL_HOURS",
             "SESSION_TTL_SECONDS",

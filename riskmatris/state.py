@@ -23,11 +23,13 @@ class AppState:
         self,
         sessions: dict[str, dict[str, Any]] | None = None,
         session_create_log: dict[str, list[float]] | None = None,
+        session_read_log: dict[str, list[float]] | None = None,
         ws_tickets: dict[str, dict[str, Any]] | None = None,
         manager: SessionConnectionManager | None = None,
     ) -> None:
         self._sessions = sessions
         self._session_create_log = session_create_log
+        self._session_read_log = session_read_log
         self._ws_tickets = ws_tickets
         self._manager = manager
 
@@ -50,6 +52,16 @@ class AppState:
     @session_create_log.setter
     def session_create_log(self, val: dict[str, list[float]]) -> None:
         self._session_create_log = val
+
+    @property
+    def session_read_log(self) -> dict[str, list[float]]:
+        if self._session_read_log is not None:
+            return self._session_read_log
+        return rate_limit.SESSION_READ_LOG
+
+    @session_read_log.setter
+    def session_read_log(self, val: dict[str, list[float]]) -> None:
+        self._session_read_log = val
 
     @property
     def ws_tickets(self) -> dict[str, dict[str, Any]]:
@@ -76,8 +88,12 @@ class AppState:
     def check_session_create_rate(self, client_ip: str) -> bool:
         return rate_limit.check_session_create_rate(client_ip, self.session_create_log)
 
+    def check_session_read_rate(self, client_ip: str) -> bool:
+        return rate_limit.check_session_read_rate(client_ip, self.session_read_log)
+
     def cleanup_rate_limit_log(self) -> None:
         rate_limit.cleanup_rate_limit_log(self.session_create_log)
+        rate_limit.cleanup_read_rate_limit_log(self.session_read_log)
 
     def create_ws_ticket(self, session_id: str) -> str:
         return ws_tickets_mod.create_ws_ticket(session_id, self.ws_tickets)

@@ -32,6 +32,20 @@ from riskmatris.ws_manager import ConnectionInfo
 router = APIRouter()
 
 
+def _enforce_read_rate_limit(request: Request, state: AppState) -> None:
+    """Per-IP rate limit on the public read endpoints (sakerhetsrapport A01-3).
+
+    Session info, WS ticket, QR and CSV export are all keyed by the session
+    code and answer 404 for unknown codes – without a limit, a scripted client
+    could enumerate active session codes. The limit is generous enough for a
+    whole meeting behind one shared NAT.
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    if not state.check_session_read_rate(client_ip):
+        logger.warning("Read rate limit hit for client %s on %s", client_ip, request.url.path)
+        raise HTTPException(status_code=429, detail="För många förfrågningar. Försök igen om en stund.")
+
+
 @router.get("/health", response_model=HealthResponse)
 async def health_check(state: AppState = Depends(get_app_state)):
     """Health check for Docker HEALTHCHECK, Kubernetes and cloud platforms."""
@@ -90,6 +104,7 @@ async def get_session_info(
     x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
     state: AppState = Depends(get_app_state),
 ):
+    _enforce_read_rate_limit(request, state)
     sid = session_id.strip().upper()
     session = state.sessions.get(sid)
     if not session:
@@ -111,6 +126,7 @@ async def get_session_info(
 @router.get("/api/sessions/{session_id}/ws-ticket", response_model=WsTicketResponse)
 async def get_ws_ticket(
     session_id: str,
+    request: Request,
     x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
     state: AppState = Depends(get_app_state),
 ):
@@ -118,6 +134,7 @@ async def get_ws_ticket(
 
     This keeps the long-lived admin token out of the WebSocket query string.
     """
+    _enforce_read_rate_limit(request, state)
     sid = session_id.strip().upper()
     session = state.sessions.get(sid)
     if not session:
@@ -130,9 +147,11 @@ async def get_ws_ticket(
 @router.get("/api/sessions/{session_id}/qr.svg")
 async def get_session_qr_svg(
     session_id: str,
+    request: Request,
     url: str = Query(...),
     state: AppState = Depends(get_app_state),
 ):
+    _enforce_read_rate_limit(request, state)
     sid = session_id.strip().upper()
     if sid not in state.sessions:
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
@@ -165,8 +184,10 @@ async def get_session_qr_svg(
 @router.get("/api/sessions/{session_id}/export.csv")
 async def export_session_csv(
     session_id: str,
+    request: Request,
     state: AppState = Depends(get_app_state),
 ):
+    _enforce_read_rate_limit(request, state)
     sid = session_id.strip().upper()
     session = state.sessions.get(sid)
     if not session:

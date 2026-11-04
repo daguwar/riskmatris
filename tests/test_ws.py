@@ -139,3 +139,48 @@ class TestWebSocketOriginCheck:
         with test_client.websocket_connect(url) as ws:
             data = ws.receive_json()
         assert data["type"] == "session_state"
+
+
+# ---------------------------------------------------------------------------
+# Read rate limit on WS handshakes (sakerhetsrapport A01-3: the close codes
+# 4004/1008/1013 would otherwise make session codes enumerable via WS)
+# ---------------------------------------------------------------------------
+
+
+class TestWebSocketReadRateLimit:
+    def test_ws_connect_rate_limited_with_1013(self, add_session, test_client, monkeypatch):
+        import pytest
+        from starlette.websockets import WebSocketDisconnect
+
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_READ_LOG", {})
+        monkeypatch.setattr(app_module, "SESSION_READ_LIMIT", 1)
+        sid = "WSRATE1"
+        add_session(sid)
+        with test_client.websocket_connect(f"/ws/{sid}?role=participant&client_id=rl1") as ws:
+            data = ws.receive_json()
+            assert data["type"] == "session_state"
+        with pytest.raises(WebSocketDisconnect) as exc_info:
+            with test_client.websocket_connect(f"/ws/{sid}?role=participant&client_id=rl2"):
+                pass
+        assert exc_info.value.code == 1013
+
+    def test_ws_probe_of_unknown_session_also_limited(self, test_client, monkeypatch):
+        """Repeated connects to non-existent sessions must be throttled."""
+        import pytest
+        from starlette.websockets import WebSocketDisconnect
+
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_READ_LOG", {})
+        monkeypatch.setattr(app_module, "SESSION_READ_LIMIT", 2)
+        for code in (4004, 4004):
+            with pytest.raises(WebSocketDisconnect) as exc_info:
+                with test_client.websocket_connect("/ws/NOPE01?role=participant&client_id=probe"):
+                    pass
+            assert exc_info.value.code == code
+        with pytest.raises(WebSocketDisconnect) as exc_info:
+            with test_client.websocket_connect("/ws/NOPE02?role=participant&client_id=probe"):
+                pass
+        assert exc_info.value.code == 1013

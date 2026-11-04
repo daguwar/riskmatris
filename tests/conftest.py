@@ -68,4 +68,5 @@ def isolated_client(monkeypatch, tmp_path):
     app_module.init_db()
     monkeypatch.setattr(app_module, "SESSIONS", {})
     monkeypatch.setattr(app_module, "SESSION_CREATE_LOG", {})
+    monkeypatch.setattr(app_module, "SESSION_READ_LOG", {})
     return TestClient(app_module.app)

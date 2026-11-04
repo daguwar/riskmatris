@@ -3,17 +3,21 @@
 import secrets
 from typing import Any
 
+import riskmatris.config as config
 import riskmatris.db as db
 from riskmatris.models import Risk, Session
 from riskmatris.utils import get_risk_level, round_half_up
 
 
 def generate_session_id(sessions: dict[str, Session] | None = None) -> str:
-    """Generates a readable 6-character code (without confusable characters like 0/O, 1/I)."""
+    """Generates a readable code (default 8 chars = 40 bits, without confusable
+    characters like 0/O, 1/I). Length is configurable via SESSION_CODE_LENGTH
+    (sakerhetsrapport A01-3: 6 chars gave only ~30 bits of entropy)."""
     alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
+    length = getattr(config, "SESSION_CODE_LENGTH", 8)
     active_sessions = sessions if sessions is not None else db.SESSIONS
     while True:
-        code = "".join(secrets.choice(alphabet) for _ in range(6))
+        code = "".join(secrets.choice(alphabet) for _ in range(length))
         if code not in active_sessions:
             return code
 

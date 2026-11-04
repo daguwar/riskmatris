@@ -75,6 +75,16 @@ SESSION_CLEANUP_INTERVAL = _parse_env_int("RISKMATRIS_CLEANUP_INTERVAL", 3600, m
 # Abuse/availability limits (single-process, in-memory – fits the deployment model)
 SESSION_CREATE_LIMIT = _parse_env_int("RISKMATRIS_SESSION_CREATE_LIMIT", 10, min_value=1)  # per IP per window
 SESSION_CREATE_WINDOW_SECONDS = 3600
+# Per-IP limit on the public read endpoints (session info, WS ticket, QR, CSV
+# export, WS handshake). These are keyed by the session code and answer 404 for
+# unknown codes – without a limit the codes could be enumerated by scripted
+# requests (sakerhetsrapport A01-3). Generous enough for a whole meeting behind
+# one shared NAT, infeasible for enumeration of the code space.
+SESSION_READ_LIMIT = _parse_env_int("RISKMATRIS_SESSION_READ_LIMIT", 300, min_value=1)  # per IP per window
+SESSION_READ_WINDOW_SECONDS = _parse_env_int("RISKMATRIS_SESSION_READ_WINDOW_SECONDS", 60, min_value=1)
+# Length of generated session codes. 8 chars from a 32-char alphabet = 40 bits
+# (6 chars = only 30 bits). Still fits the manual join field and the QR code.
+SESSION_CODE_LENGTH = _parse_env_int("RISKMATRIS_SESSION_CODE_LENGTH", 8, min_value=6, max_value=16)
 WS_MAX_CONNECTIONS_PER_SESSION = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS", 200, min_value=2)
 WS_MAX_MESSAGE_BYTES = _parse_env_int("RISKMATRIS_WS_MAX_MESSAGE_BYTES", 8192, min_value=256, max_value=1_048_576)
 WS_TICKET_TTL_SECONDS = 30  # one-time admin WebSocket tickets

@@ -91,3 +91,51 @@ class TestQrUrlLimit:
         resp = test_client.get(f"/api/sessions/{sid}/qr.svg?url=http://localhost:8000/s/{sid}")
         assert resp.status_code == 200
         assert resp.headers["content-type"] == "image/svg+xml"
+
+
+# ---------------------------------------------------------------------------
+# Per-IP rate limit on read endpoints (sakerhetsrapport A01-3: session-code
+# enumeration via 404 probing on /api/sessions/{sid}, qr.svg, export.csv,
+# ws-ticket)
+# ---------------------------------------------------------------------------
+
+
+class TestReadRateLimit:
+    def test_session_info_returns_429_over_limit(self, isolated_client, add_session, monkeypatch):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_READ_LIMIT", 2)
+        sid = "READLIM1"
+        add_session(sid)
+        assert isolated_client.get(f"/api/sessions/{sid}").status_code == 200
+        assert isolated_client.get(f"/api/sessions/{sid}").status_code == 200
+        resp = isolated_client.get(f"/api/sessions/{sid}")
+        assert resp.status_code == 429
+
+    def test_failed_lookups_count_toward_limit(self, isolated_client, monkeypatch):
+        """404 probing of unknown session codes must be throttled, not free."""
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_READ_LIMIT", 2)
+        assert isolated_client.get("/api/sessions/NOPE01").status_code == 404
+        assert isolated_client.get("/api/sessions/NOPE02").status_code == 404
+        assert isolated_client.get("/api/sessions/NOPE03").status_code == 429
+
+    def test_qr_export_and_ticket_share_the_read_budget(self, isolated_client, add_session, monkeypatch):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_READ_LIMIT", 3)
+        sid = "READLIM2"
+        add_session(sid, admin_token="tok")
+        assert isolated_client.get(f"/api/sessions/{sid}/qr.svg?url=http://x/s/{sid}").status_code == 200
+        assert isolated_client.get(f"/api/sessions/{sid}/export.csv").status_code == 200
+        assert isolated_client.get(f"/api/sessions/{sid}/ws-ticket", headers={"X-Admin-Token": "tok"}).status_code == 200
+        assert isolated_client.get(f"/api/sessions/{sid}/qr.svg?url=http://x/s/{sid}").status_code == 429
+
+    def test_health_is_not_rate_limited(self, isolated_client, monkeypatch):
+        """The health endpoint is used by Docker HEALTHCHECK and must stay free."""
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_READ_LIMIT", 1)
+        for _ in range(5):
+            assert isolated_client.get("/health").status_code == 200

@@ -8,13 +8,25 @@ from app import compute_risk_stats, create_new_risk, generate_session_id
 
 
 class TestGenerateSessionId:
-    """Session IDs must be 6 characters, without confusable characters."""
+    """Session IDs use the configured length (default 8 = 40 bits, sakerhetsrapport
+    A01-3 raised it from 6 chars = ~30 bits), without confusable characters."""
 
     ALLOWED_CHARS = set("23456789ABCDEFGHJKLMNPQRSTUVWXYZ")
 
-    def test_length_is_six(self):
+    def test_length_matches_configured_default(self):
+        import app as app_module
+
+        assert app_module.SESSION_CODE_LENGTH == 8  # default: 8 chars from a 32-char alphabet = 40 bits
         sid = generate_session_id()
-        assert len(sid) == 6
+        assert len(sid) == app_module.SESSION_CODE_LENGTH
+
+    def test_length_is_configurable(self, monkeypatch):
+        import app as app_module
+
+        monkeypatch.setattr(app_module, "SESSION_CODE_LENGTH", 6)
+        assert len(generate_session_id()) == 6
+        monkeypatch.setattr(app_module, "SESSION_CODE_LENGTH", 12)
+        assert len(generate_session_id()) == 12
 
     def test_only_allowed_chars(self):
         for _ in range(100):

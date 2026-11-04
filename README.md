@@ -82,6 +82,8 @@ Fill in `.env`:
 
 - `RISKMATRIS_DOMAIN` – the domain Traefik should respond on (required), e.g. `riskmatris.example.com`
 - `RISKMATRIS_TTL_HOURS` – session retention in hours (default: `48`)
+- `RISKMATRIS_SESSION_READ_LIMIT` / `RISKMATRIS_SESSION_READ_WINDOW_SECONDS` – per-IP rate limit on read endpoints keyed by session code, in requests per window (defaults: `300` per `60` seconds); protects against enumeration of session codes
+- `RISKMATRIS_SESSION_CODE_LENGTH` – length of generated session codes, 6–16 (default: `8` = 40 bits of entropy)
 - `TRAEFIK_NETWORK` – the name of the Docker network your Traefik runs on (usually `traefik-public`; the network must already exist)
 - `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERT_RESOLVER` – names of the entrypoint and certificate resolver (defaults: `websecure` / `letsencrypt`)
 

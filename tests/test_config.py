@@ -68,6 +68,9 @@ class TestParseEnvInt:
         assert app_module.SESSION_TTL_SECONDS == app_module.SESSION_TTL_HOURS * 3600
         assert app_module.SESSION_CLEANUP_INTERVAL >= 60
         assert app_module.SESSION_CREATE_LIMIT >= 1
+        assert app_module.SESSION_READ_LIMIT >= 1
+        assert app_module.SESSION_READ_WINDOW_SECONDS >= 1
+        assert 6 <= app_module.SESSION_CODE_LENGTH <= 16
         assert app_module.WS_MAX_CONNECTIONS_PER_SESSION >= 2
         assert app_module.WS_MAX_MESSAGE_BYTES >= 256
 
