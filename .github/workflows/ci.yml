@@ -1,0 +1,36 @@
+name: CI
+
+# Runs on every push/PR to master (sakerhetsrapport A06/A08-1): lint, tests and
+# a dependency security audit (pip-audit) must pass before code is merged.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies (incl. dev tools and pip-audit)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Tests (pytest)
+        run: pytest -q
+
+      # Audit the production requirements (what actually ships in the Docker
+      # image), not the runner's own tooling such as setuptools.
+      - name: Dependency security audit (pip-audit)
+        run: pip-audit -r requirements.txt

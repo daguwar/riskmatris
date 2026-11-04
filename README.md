@@ -95,6 +95,12 @@ Open the app via your domain (`https://riskmatris.example.com`). The share link 
 
 ---
 
+## Development & CI
+
+Every push/PR to `master` runs CI (`.github/workflows/ci.yml`): `ruff` lint, the full `pytest` suite, and `pip-audit` against known dependency vulnerabilities. The Docker base image is pinned to an exact content digest in the `Dockerfile`, and Dependabot (`.github/dependabot.yml`) automatically proposes updates for Python dependencies, GitHub Actions and the base image digest.
+
+---
+
 ## License
 
 Licensed under the **European Union Public Licence v. 1.2 (EUPL-1.2)** – see [LICENSE](LICENSE) for the full text (SPDX identifier: `EUPL-1.2`).
