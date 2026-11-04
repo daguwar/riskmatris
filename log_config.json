@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "smart": { "()": "riskmatris.log_formatter.build_log_formatter" }
+  },
+  "handlers": {
+    "console": {
+      "class": "logging.StreamHandler",
+      "formatter": "smart",
+      "stream": "ext://sys.stderr"
+    }
+  },
+  "loggers": {
+    "uvicorn": { "handlers": ["console"], "level": "INFO", "propagate": false },
+    "uvicorn.error": { "level": "INFO" },
+    "uvicorn.access": { "handlers": ["console"], "level": "INFO", "propagate": false }
+  },
+  "root": { "handlers": ["console"], "level": "INFO" }
+}
