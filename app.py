@@ -1,9 +1,8 @@
 """Backward-compatible entry point.
 
-All code has been refactored into the ``riskmatris`` package. This module
-re-exports everything that existing tests and tooling (``uvicorn app:app``,
-``from app import ...``) rely on so that nothing breaks during the transition.
-
+All application code lives in the ``riskmatris`` package (see
+``riskmatris/__init__.py``). This module re-exports the public API so that
+the test suite (``import app ...``) and older tooling keep working.
 New code should import from ``riskmatris.*`` directly.
 """
 

@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for the riskmatris test suite (REFACTORING.md fas 6).
+"""Shared pytest fixtures for the riskmatris test suite.
 
 Centralizes the test client and the session factories that used to be
 duplicated as _add_session()/_make_session()/_client() helpers in test_app.py.

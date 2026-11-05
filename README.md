@@ -6,7 +6,7 @@ An open, interactive real-time web application for running group risk assessment
 
 ## Features
 
-- **Open to everyone (no login):** The meeting leader starts a session and receives a unique 6-character session ID, a **QR code** and a share link. Participants scan the QR code with their phone and go straight into the voting view, fully anonymously.
+- **Open to everyone (no login):** The meeting leader starts a session and receives a unique session code (**8 characters**, configurable 6–16), a **QR code** and a share link. Participants scan the QR code with their phone and go straight into the voting view, fully anonymously.
 - **Step-by-step voting per risk (`#1`, `#2`, `#3`...):**
   - **Probability (X axis, 1–4):** `1 – Osannolik` (unlikely), `2 – Möjlig` (possible), `3 – Sannolik` (likely), `4 – Mycket sannolik` (very likely).
   - **Consequence (Y axis, 1–4):** `1 – Försumbar` (negligible), `2 – Måttlig` (moderate), `3 – Allvarlig` (serious), `4 – Mycket allvarlig` (very serious).
@@ -22,6 +22,7 @@ An open, interactive real-time web application for running group risk assessment
 - **Export to PowerPoint & Excel:**
   - **PNG image:** Download a high-resolution image of the summary matrix with all placed risks (`#1`, `#2`...) ready to paste into PowerPoint.
   - **CSV (Excel):** Export a table with all risks, vote counts, averages, decided Probability/Consequence, risk score and risk level.
+- **Remote-controlled QR overlay:** From the admin view the leader can show/hide a large QR code with the session link directly on the projector view – e.g. to let latecomers join mid-meeting. The state follows every connected presentation window.
 
 ---
 
@@ -35,7 +36,7 @@ Create a Python virtual environment, install the dependencies and start the serv
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-uvicorn app:app --host 0.0.0.0 --port 8000
+uvicorn riskmatris:app --host 0.0.0.0 --port 8000
 ```
 
 Then open **http://localhost:8000** in your browser.
@@ -46,12 +47,12 @@ Then open **http://localhost:8000** in your browser.
 Open the project in VS Code and choose **Dev Containers: Reopen in Container** from the command palette. Once the container has been created, the dependencies from `requirements-dev.txt` are installed automatically. Then start the app in the container's terminal:
 
 ```bash
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+uvicorn riskmatris:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Port 8000 is forwarded automatically. Run the tests with `pytest`.
 
-Check the pinned runtime dependencies for known vulnerabilities (see `TODO_SECURITY.md` for the security decisions):
+Check the pinned runtime dependencies for known vulnerabilities:
 
 ```bash
 pip-audit -r requirements.txt
@@ -90,6 +91,16 @@ Fill in `.env`:
 - `RISKMATRIS_SQLITE_BUSY_TIMEOUT_MS` – how long SQLite waits for a lock before failing (default: `5000` ms); the database runs in WAL mode
 - `TRAEFIK_NETWORK` – the name of the Docker network your Traefik runs on (usually `traefik-public`; the network must already exist)
 - `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERT_RESOLVER` – names of the entrypoint and certificate resolver (defaults: `websecure` / `letsencrypt`)
+
+Other optional settings (see `riskmatris/config.py` for the full list):
+
+- `LOG_LEVEL` – log level (default: `INFO`)
+- `RISKMATRIS_LOG_FORMAT` – `text` (human-readable, default locally) or `json` (one JSON object per line; default in the Docker image)
+- `RISKMATRIS_DB_PATH` – SQLite database path (default: `data/riskmatris.db`)
+- `RISKMATRIS_SESSION_CREATE_LIMIT` – max sessions created per IP per hour (default: `10`)
+- `RISKMATRIS_CLEANUP_INTERVAL` – seconds between automatic session cleanups (default: `3600`)
+- `RISKMATRIS_WS_MAX_CONNECTIONS` – WebSocket connections per session (default: `200`)
+- `RISKMATRIS_WS_MAX_MESSAGE_BYTES` – max WebSocket message size (default: `8192`)
 
 Open the app via your domain (`https://riskmatris.example.com`). The share link and QR code then point to the right address automatically, and WebSockets (`wss://`) work through Traefik without extra configuration. For local debugging on the server you can add `ports: - "127.0.0.1:8000:8000"` to the compose file (binding to localhost only).
 

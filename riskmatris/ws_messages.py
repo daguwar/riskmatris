@@ -1,4 +1,4 @@
-"""Pydantic models for WebSocket messages (REFACTORING.md fas 7.4).
+"""Pydantic models for WebSocket messages.
 
 The dispatch loop in ``routes/ws.py`` validates every incoming message against
 the model registered for its action *before* the handler runs, giving automatic
