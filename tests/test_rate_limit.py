@@ -58,7 +58,7 @@ class TestSessionCreateRateLimit:
 
 
 # ---------------------------------------------------------------------------
-# Read/probe rate limiting (sakerhetsrapport A01-3: session-code enumeration)
+# Read/probe rate limiting (session-code enumeration)
 # ---------------------------------------------------------------------------
 
 
@@ -131,7 +131,7 @@ class TestSessionReadRateLimit:
 
 
 # ---------------------------------------------------------------------------
-# Per-connection WS message rate limit (sakerhetsrapport A04-1)
+# Per-connection WS message rate limit
 # ---------------------------------------------------------------------------
 
 

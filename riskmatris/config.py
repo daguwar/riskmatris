@@ -79,8 +79,7 @@ def _parse_env_bool(name: str, default: bool) -> bool:
 # ---------------------------------------------------------------------------
 
 # Interactive API docs (/docs, /redoc, /openapi.json). Disabled by default –
-# secure by default: in production they are a recon aid (sakerhetsrapport
-# A05-1). Set RISKMATRIS_ENABLE_DOCS=1 for local debugging (the local
+# secure by default: in production they are a recon aid. Set RISKMATRIS_ENABLE_DOCS=1 for local debugging (the local
 # docker-compose.yml does this).
 ENABLE_DOCS = _parse_env_bool("RISKMATRIS_ENABLE_DOCS", False)
 
@@ -93,7 +92,7 @@ DB_PATH = os.environ.get("RISKMATRIS_DB_PATH", os.path.join("data", "riskmatris.
 os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
 
 # SQLite: how long a connection waits for a lock before failing with
-# "database is locked" (sakerhetsrapport T-4). Writes run in a thread pool, so
+# "database is locked". Writes run in a thread pool, so
 # without this, concurrent writes fail immediately under load.
 SQLITE_BUSY_TIMEOUT_MS = _parse_env_int("RISKMATRIS_SQLITE_BUSY_TIMEOUT_MS", 5000, min_value=0, max_value=60_000)
 
@@ -111,7 +110,7 @@ SESSION_CREATE_WINDOW_SECONDS = 3600
 # Per-IP limit on the public read endpoints (session info, WS ticket, QR, CSV
 # export, WS handshake). These are keyed by the session code and answer 404 for
 # unknown codes – without a limit the codes could be enumerated by scripted
-# requests (sakerhetsrapport A01-3). Generous enough for a whole meeting behind
+# requests. Generous enough for a whole meeting behind
 # one shared NAT, infeasible for enumeration of the code space.
 SESSION_READ_LIMIT = _parse_env_int("RISKMATRIS_SESSION_READ_LIMIT", 300, min_value=1)  # per IP per window
 SESSION_READ_WINDOW_SECONDS = _parse_env_int("RISKMATRIS_SESSION_READ_WINDOW_SECONDS", 60, min_value=1)
@@ -119,7 +118,7 @@ SESSION_READ_WINDOW_SECONDS = _parse_env_int("RISKMATRIS_SESSION_READ_WINDOW_SEC
 # (6 chars = only 30 bits). Still fits the manual join field and the QR code.
 SESSION_CODE_LENGTH = _parse_env_int("RISKMATRIS_SESSION_CODE_LENGTH", 8, min_value=6, max_value=16)
 WS_MAX_CONNECTIONS_PER_SESSION = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS", 200, min_value=2)
-# Per-IP and global connection caps (sakerhetsrapport A04-1/T-1): without them
+# Per-IP and global connection caps: without them
 # one IP could occupy all per-session slots with throwaway connections.
 WS_MAX_CONNECTIONS_PER_IP = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS_PER_IP", 20, min_value=1)
 WS_MAX_CONNECTIONS_TOTAL = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS_TOTAL", 1000, min_value=10)

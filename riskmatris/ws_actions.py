@@ -63,7 +63,7 @@ async def handle_vote(
         active_risk["revealed"] = True
     await db.save_session_to_db_async(session)
     # Log aggregate data only: a client_id -> vote mapping in the logs would
-    # conflict with the service's anonymity promise (sakerhetsrapport A09-1).
+    # conflict with the service's anonymity promise.
     logger.info(
         "Vote received: session %s, risk #%d (%d votes, threshold %d)",
         session["session_id"],

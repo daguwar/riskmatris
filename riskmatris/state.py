@@ -108,7 +108,7 @@ class AppState:
         db.cleanup_expired_sessions(self.sessions)
 
     async def cleanup_expired_sessions_async(self) -> None:
-        """Async variant (fas 7.3) – the sqlite work runs in a worker thread."""
+        """Async variant – the sqlite work runs in a worker thread."""
         await db.cleanup_expired_sessions_async(self.sessions)
 
 

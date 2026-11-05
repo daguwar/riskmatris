@@ -58,7 +58,7 @@ async def lifespan(app: FastAPI):
 
 
 # Interactive API docs (/docs, /redoc, /openapi.json) are disabled unless
-# explicitly enabled via RISKMATRIS_ENABLE_DOCS=1 (sakerhetsrapport A05-1).
+# explicitly enabled via RISKMATRIS_ENABLE_DOCS=1.
 app = FastAPI(
     title="Riskmatris Live",
     lifespan=lifespan,
@@ -93,7 +93,7 @@ async def add_cache_headers(request: Request, call_next):
 
 
 # ---------------------------------------------------------------------------
-# Security headers (sakerhetsrapport A05-3) – defense in depth on every response
+# Security headers – defense in depth on every response
 # ---------------------------------------------------------------------------
 
 SECURITY_HEADERS = {

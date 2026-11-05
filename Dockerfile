@@ -1,4 +1,4 @@
-# Base image pinned to an exact content digest (sakerhetsrapport A08-1), not
+# Base image pinned to an exact content digest, not
 # just a tag: a tag can be moved to different content, a digest cannot.
 # Dependabot (.github/dependabot.yml) proposes updates of this digest.
 # Current: python:3.12-slim manifest list, resolved 2026-11-04.
@@ -15,7 +15,7 @@ ENV PORT=8000
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# The backend lives in the riskmatris/ package (fas 1); app.py is only a
+# The backend lives in the riskmatris/ package; app.py is only a
 # backward-compatible shim, so the package itself must be copied too.
 COPY riskmatris/ ./riskmatris/
 COPY app.py .

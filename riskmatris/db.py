@@ -1,7 +1,7 @@
 """SQLite database operations and the in-memory sessions store.
 
 The sync functions below block the event loop while they run; the ``*_async``
-wrappers (fas 7.3) run them in a worker thread via ``anyio.to_thread`` and are
+wrappers run them in a worker thread via ``anyio.to_thread`` and are
 what async call sites (routes, WS handlers, lifespan) should use.
 """
 
@@ -41,7 +41,7 @@ def _connect() -> sqlite3.Connection:
 
     Without busy_timeout, concurrent writers from the thread pool fail
     immediately with "database is locked"; WAL (write-ahead logging) lets
-    readers proceed while a write is in progress (sakerhetsrapport T-4).
+    readers proceed while a write is in progress.
     WAL is persistent per database file; the -wal/-shm files live next to the
     DB on the data volume.
     """
@@ -128,7 +128,7 @@ def load_sessions_from_db() -> dict[str, dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
-# Async wrappers (fas 7.3) – run the blocking sqlite calls in a thread
+# Async wrappers – run the blocking sqlite calls in a thread
 # ---------------------------------------------------------------------------
 
 

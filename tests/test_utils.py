@@ -203,7 +203,7 @@ class TestSanitizeUserText:
 
 
 # ---------------------------------------------------------------------------
-# sanitize_csv_cell (CSV formula injection, sakerhetsrapport A03-1)
+# sanitize_csv_cell (CSV formula injection)
 # ---------------------------------------------------------------------------
 
 

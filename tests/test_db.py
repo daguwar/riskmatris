@@ -1,4 +1,4 @@
-"""Tests for SQLite connection hardening (riskmatris.db, sakerhetsrapport T-4)."""
+"""Tests for SQLite connection hardening (riskmatris.db)."""
 
 import sqlite3
 import time

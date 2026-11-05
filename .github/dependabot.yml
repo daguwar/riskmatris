@@ -1,7 +1,7 @@
 version: 2
 
 # Keeps dependencies and the Docker base image digest current with automatic
-# PRs (sakerhetsrapport A08-1). Weekly is enough for a small self-hosted app.
+# PRs. Weekly is enough for a small self-hosted app.
 updates:
   - package-ecosystem: "pip"
     directory: "/"

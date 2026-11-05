@@ -13,7 +13,7 @@ def build_cell_meta() -> dict[str, dict[str, Any]]:
     """Static 4x4 map of cell key ("prob_cons") -> score/level/color.
 
     Sent in every session payload so the frontend never has to duplicate the
-    server's risk-level thresholds (fas 7.2) – it only maps color -> CSS/hex.
+    server's risk-level thresholds – it only maps color -> CSS/hex.
     """
     return {f"{p}_{c}": {"score": p * c, **get_risk_level(p * c)} for p in range(1, 5) for c in range(1, 5)}
 
@@ -33,7 +33,7 @@ class ConnectionInfo:
         self.is_admin = is_admin
         self.client_ip = client_ip
         # Monotonic timestamps of recent messages, used for the per-connection
-        # message rate limit (sakerhetsrapport A04-1)
+        # message rate limit
         self.message_times: list[float] = []
 
 
@@ -80,8 +80,7 @@ class SessionConnectionManager:
         (everything except my_vote/is_admin). Returns (base, active_risk, state_changed).
 
         Splitting this out lets broadcast() build the expensive part (risk stats,
-        cell meta) once per broadcast instead of once per connection
-        (sakerhetsrapport T-2).
+        cell meta) once per broadcast instead of once per connection.
         """
         sid = session["session_id"]
         participant_count = self.get_participant_count(sid)
@@ -115,7 +114,7 @@ class SessionConnectionManager:
             "lan_ip": get_local_lan_ip(),
             # QR overlay in the presentation views, toggled from the admin view
             "qr_visible": bool(session.get("qr_visible", False)),
-            # Static cell meta so the client never duplicates risk-level logic (fas 7.2)
+            # Static cell meta so the client never duplicates risk-level logic
             "cell_meta": build_cell_meta(),
         }
         return payload, active_risk_raw, state_changed
@@ -143,7 +142,7 @@ class SessionConnectionManager:
     async def build_client_payload_async(
         self, session: dict[str, Any], conn: ConnectionInfo | None = None
     ) -> dict[str, Any]:
-        """Async variant (fas 7.3) – the sqlite write runs in a worker thread."""
+        """Async variant – the sqlite write runs in a worker thread."""
         payload, state_changed = self.compute_client_payload(session, conn)
         if state_changed:
             await save_session_to_db_async(session)

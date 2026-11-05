@@ -6,7 +6,7 @@ Two sliding-window limiters, both keyed by client IP:
 - *read/probe* requests on endpoints keyed by the session code (session info,
   WS ticket, QR, CSV export, WS handshake). Without the latter, the 404
   responses for unknown codes make session codes enumerable by scripted
-  requests (sakerhetsrapport A01-3).
+  requests.
 """
 
 import time
@@ -55,7 +55,7 @@ def check_connection_message_rate(times: list[float], limit: int, window: float,
 
     ``times`` is the connection's own list of recent message timestamps
     (monotonic clock); it is pruned and updated in place. Returns True if the
-    connection is still within the limit (sakerhetsrapport A04-1).
+    connection is still within the limit.
     """
     now = time.monotonic() if now is None else now
     cutoff = now - window

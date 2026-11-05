@@ -59,7 +59,7 @@ class TestWebSocketDisconnect:
 
 
 # ---------------------------------------------------------------------------
-# Origin check (sakerhetsrapport A01-2: cross-site WebSocket hijacking)
+# Origin check (cross-site WebSocket hijacking)
 # ---------------------------------------------------------------------------
 
 
@@ -142,7 +142,7 @@ class TestWebSocketOriginCheck:
 
 
 # ---------------------------------------------------------------------------
-# Read rate limit on WS handshakes (sakerhetsrapport A01-3: the close codes
+# Read rate limit on WS handshakes (the close codes
 # 4004/1008/1013 would otherwise make session codes enumerable via WS)
 # ---------------------------------------------------------------------------
 
@@ -187,7 +187,7 @@ class TestWebSocketReadRateLimit:
 
 
 # ---------------------------------------------------------------------------
-# Connection caps (sakerhetsrapport A04-1/T-1): per-IP and global limits on
+# Connection caps : per-IP and global limits on
 # WS connections, rejected with close code 1013
 # ---------------------------------------------------------------------------
 
@@ -252,7 +252,7 @@ class TestWebSocketConnectionCaps:
 
 
 # ---------------------------------------------------------------------------
-# Per-connection message rate limit (sakerhetsrapport A04-1)
+# Per-connection message rate limit
 # ---------------------------------------------------------------------------
 
 
@@ -278,7 +278,7 @@ class TestWebSocketMessageRateLimit:
 
 
 # ---------------------------------------------------------------------------
-# Broadcast cost (sakerhetsrapport T-2): the shared payload is computed once
+# Broadcast cost: the shared payload is computed once
 # per broadcast; only my_vote/is_admin differ per connection
 # ---------------------------------------------------------------------------
 

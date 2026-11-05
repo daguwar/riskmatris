@@ -22,7 +22,7 @@ CSV_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
 
 def sanitize_csv_cell(value: Any) -> str:
-    """Escapes a CSV cell against formula injection (sakerhetsrapport A03-1).
+    """Escapes a CSV cell against formula injection.
 
     A cell starting with =, +, -, @ (or tab/CR) is evaluated as a formula by
     Excel/LibreOffice when the file is opened (classic ``=cmd|' /C ...'``).

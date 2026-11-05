@@ -3,7 +3,7 @@
 The session/risk structures are stored as plain dicts (they are serialized to
 SQLite as JSON), so full Pydantic models would require conversion at every
 boundary. Instead, ``Session``/``Risk``/``Vote`` are TypedDicts: zero runtime
-cost, but the keys are documented and type-checked (fas 7.1).
+cost, but the keys are documented and type-checked.
 """
 
 from typing import TypedDict
@@ -11,7 +11,7 @@ from typing import TypedDict
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
-# Typed dicts for the internal session/risk state (fas 7.1)
+# Typed dicts for the internal session/risk state
 # ---------------------------------------------------------------------------
 
 

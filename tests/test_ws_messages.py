@@ -1,4 +1,4 @@
-"""Tests for the Pydantic WebSocket message models (riskmatris.ws_messages, fas 7.4)."""
+"""Tests for the Pydantic WebSocket message models (riskmatris.ws_messages)."""
 
 import pytest
 from pydantic import ValidationError

@@ -8,8 +8,7 @@ from app import compute_risk_stats, create_new_risk, generate_session_id
 
 
 class TestGenerateSessionId:
-    """Session IDs use the configured length (default 8 = 40 bits, sakerhetsrapport
-    A01-3 raised it from 6 chars = ~30 bits), without confusable characters."""
+    """Session IDs use the configured length (default 8 = 40 bits), without confusable characters."""
 
     ALLOWED_CHARS = set("23456789ABCDEFGHJKLMNPQRSTUVWXYZ")
 
@@ -318,8 +317,7 @@ class TestThresholdSemantics:
 
 
 # ---------------------------------------------------------------------------
-# Cell meta in the session payload (fas 7.2 – server is the single source of
-# risk level/color so the frontend does not duplicate the thresholds)
+# Cell meta in the session payload
 # ---------------------------------------------------------------------------
 
 

@@ -94,7 +94,7 @@ class TestQrUrlLimit:
 
 
 # ---------------------------------------------------------------------------
-# Per-IP rate limit on read endpoints (sakerhetsrapport A01-3: session-code
+# Per-IP rate limit on read endpoints (session-code
 # enumeration via 404 probing on /api/sessions/{sid}, qr.svg, export.csv,
 # ws-ticket)
 # ---------------------------------------------------------------------------
@@ -144,7 +144,7 @@ class TestReadRateLimit:
 
 
 # ---------------------------------------------------------------------------
-# CSV export: formula injection (sakerhetsrapport A03-1)
+# CSV export: formula injection
 # ---------------------------------------------------------------------------
 
 

@@ -78,7 +78,7 @@ async def test_handle_vote_reaches_threshold(test_session, mock_conn):
 
 @pytest.mark.asyncio
 async def test_vote_log_contains_no_client_id_or_vote_values(test_session, mock_conn, caplog):
-    """Sakerhetsrapport A09-1: logs must not link a client_id to its vote –
+    """logs must not link a client_id to its vote –
     only aggregate counts may be logged (anonymity promise)."""
     import logging
 

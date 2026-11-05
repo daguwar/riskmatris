@@ -12,7 +12,7 @@ from riskmatris.utils import get_risk_level, round_half_up
 def generate_session_id(sessions: dict[str, Session] | None = None) -> str:
     """Generates a readable code (default 8 chars = 40 bits, without confusable
     characters like 0/O, 1/I). Length is configurable via SESSION_CODE_LENGTH
-    (sakerhetsrapport A01-3: 6 chars gave only ~30 bits of entropy)."""
+    (6 chars gave only ~30 bits of entropy)."""
     alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
     length = getattr(config, "SESSION_CODE_LENGTH", 8)
     active_sessions = sessions if sessions is not None else db.SESSIONS

@@ -21,8 +21,7 @@ services:
       - RISKMATRIS_DB_PATH=/app/data/riskmatris.db
       - RISKMATRIS_TTL_HOURS=${RISKMATRIS_TTL_HOURS:-48}
       # Trust X-Forwarded-For from Traefik so the rate limiter and logs see
-      # the real client IP instead of Traefik's container IP (sakerhetsrapport
-      # A01-1). Safe here because the container is only reachable via the
+      # the real client IP instead of Traefik's container IP. Safe here because the container is only reachable via the
       # Traefik network; do NOT set this when port 8000 is exposed directly.
       - FORWARDED_ALLOW_IPS=*
     restart: unless-stopped

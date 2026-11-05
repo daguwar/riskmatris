@@ -33,7 +33,7 @@ router = APIRouter()
 
 
 def _enforce_read_rate_limit(request: Request, state: AppState) -> None:
-    """Per-IP rate limit on the public read endpoints (sakerhetsrapport A01-3).
+    """Per-IP rate limit on the public read endpoints.
 
     Session info, WS ticket, QR and CSV export are all keyed by the session
     code and answer 404 for unknown codes – without a limit, a scripted client
@@ -53,7 +53,7 @@ async def health_check(state: AppState = Depends(get_app_state)):
         "status": "ok",
         "active_sessions": len(state.sessions),
         # Fixed relative path on purpose: the configured absolute DB path would
-        # leak the server layout (sakerhetsrapport A05-2).
+        # leak the server layout.
         "db_path": "data/riskmatris.db",
     }
 
@@ -112,7 +112,6 @@ async def get_session_info(
         raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
     # Only the X-Admin-Token header is accepted – a token in the query string
     # would leak into proxy logs, browser history and the Referer header
-    # (sakerhetsrapport A01-4).
     token = x_admin_token
     is_admin = bool(token and secrets.compare_digest(token, session["admin_token"]))
     # Clamp/sanitize the client id – it is unbounded query input otherwise
@@ -181,7 +180,7 @@ async def get_session_qr_svg(
         return Response(content=svg_bytes, media_type="image/svg+xml")
     except Exception:
         # Full traceback in the log; the client gets a generic message –
-        # str(exc) could leak internal paths (sakerhetsrapport A03-5).
+        # str(exc) could leak internal paths.
         logger.exception("QR-SVG: could not generate QR code for session %s", sid)
         raise HTTPException(status_code=500, detail="Kunde inte generera QR-koden – kontrollera URL:en.")
 

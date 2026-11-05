@@ -21,7 +21,7 @@ class TestStaticCacheBusting:
             resp = test_client.get(path)
             assert resp.status_code == 200
             assert f"/static/app.js?v={version}" in resp.text
-            # Every stylesheet under static/css/ must be versioned (fas 5 split)
+            # Every stylesheet under static/css/ must be versioned
             css_links = re.findall(r'href="(/static/[^"]+\.css[^"]*)"', resp.text)
             assert len(css_links) >= 10
             for link in css_links:

@@ -1,6 +1,6 @@
 name: CI
 
-# Runs on every push/PR to master (sakerhetsrapport A06/A08-1): lint, tests and
+# Runs on every push/PR to master: lint, tests and
 # a dependency security audit (pip-audit) must pass before code is merged.
 
 on:

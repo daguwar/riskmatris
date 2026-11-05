@@ -33,8 +33,7 @@ def origin_matches_host(websocket: WebSocket) -> bool:
 
     Browsers do not enforce same-origin on WebSocket handshakes (RFC 6455
     puts the responsibility on the server), so without this check any webpage
-    can open a participant socket and vote if it knows the session code
-    (sakerhetsrapport A01-2). The browser always sends Origin; matching it
+    can open a participant socket and vote if it knows the session code. The browser always sends Origin; matching it
     against Host covers all legitimate usages of this app – the public domain
     in production, the LAN IP when the QR code points at the local network,
     and the separate projector window.
@@ -100,7 +99,7 @@ async def websocket_endpoint(
     client_ip = websocket.client.host if websocket.client else "unknown"
     # Read/probe rate limit also covers WS handshakes: the distinguishable
     # close codes (4004 = unknown session) would otherwise make session codes
-    # enumerable by scripted connects (sakerhetsrapport A01-3).
+    # enumerable by scripted connects.
     if not state.check_session_read_rate(client_ip):
         logger.warning("WebSocket: rate limit hit for client %s (connect to session %s)", client_ip, sid)
         await websocket.close(code=1013, reason="För många anslutningsförsök – försök igen om en stund")
@@ -135,7 +134,7 @@ async def websocket_endpoint(
         await websocket.close(code=1013, reason="Sessionsgränsen för anslutningar är nådd")
         return
 
-    # Per-IP and global connection caps (sakerhetsrapport A04-1/T-1): without
+    # Per-IP and global connection caps: without
     # them one IP could fill every per-session slot with throwaway connections
     # and starve legitimate participants.
     per_ip_cap = getattr(config, "WS_MAX_CONNECTIONS_PER_IP", 20)
@@ -234,7 +233,7 @@ async def websocket_endpoint(
                 continue
 
             # Validate the message shape against the Pydantic model for this
-            # action before dispatching (fas 7.4) – handlers re-check values
+            # action before dispatching – handlers re-check values
             # defensively, but this gives early, clear validation errors.
             try:
                 parse_ws_message(action, msg)
