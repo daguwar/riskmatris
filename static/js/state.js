@@ -17,5 +17,8 @@ export const state = {
   customShareBaseUrl: "",
   currentView: "voteView",
   pendingInitialView: null,
+  // True while the QR modal is open because of the remote admin toggle
+  // (set_qr_visible) rather than a local button click
+  qrModalFromRemote: false,
 };
 

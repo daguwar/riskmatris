@@ -9,7 +9,9 @@ import {
   saveRecentSession,
 } from "./utils.js";
 import {
+  closeQrModal,
   handleSessionState,
+  openQrModal,
   switchPresentSub,
   switchView,
   updateShareUrlAndQr,
@@ -260,19 +262,33 @@ export function bindSessionEvents() {
     setTimeout(() => (btnCopyShareUrl.textContent = old), 1500);
   });
 
-  // QR modal
-  const openQrModal = () => dom.qrModal.classList.remove("hidden");
-  const closeQrModal = () => dom.qrModal.classList.add("hidden");
-  document.getElementById("btnExpandQr").addEventListener("click", openQrModal);
-  document.getElementById("qrPreviewWrapper").addEventListener("click", openQrModal);
-  document.getElementById("topSessionCodeBox").addEventListener("click", openQrModal);
-  document.getElementById("btnCloseQrModal").addEventListener("click", closeQrModal);
+  // QR modal: manual open from top bar / share card / presentation view button
+  const openQrManually = () => {
+    state.qrModalFromRemote = false;
+    openQrModal();
+  };
+  document.getElementById("btnExpandQr").addEventListener("click", openQrManually);
+  document.getElementById("qrPreviewWrapper").addEventListener("click", openQrManually);
+  document.getElementById("topSessionCodeBox").addEventListener("click", openQrManually);
+  document.getElementById("btnPresentQr").addEventListener("click", openQrManually);
+
+  // Closing the QR modal hides it locally; if it was opened by the remote
+  // presentation-QR toggle (admin view), also tell the server so the modal
+  // closes in every connected presentation window.
+  const closeQr = () => {
+    const wasRemote = state.qrModalFromRemote;
+    state.qrModalFromRemote = false;
+    closeQrModal();
+    if (wasRemote && state.sessionState && state.sessionState.qr_visible) {
+      sendWsAction({ action: "set_qr_visible", visible: false });
+    }
+  };
+  document.getElementById("btnCloseQrModal").addEventListener("click", closeQr);
   dom.qrModal.addEventListener("click", (e) => {
-    if (e.target === dom.qrModal) closeQrModal();
+    if (e.target === dom.qrModal) closeQr();
   });
 
-  // Presentation view: QR modal and separate projector window
-  document.getElementById("btnPresentQr").addEventListener("click", openQrModal);
+  // Presentation view: separate projector window
   document.getElementById("btnPresentWindow").addEventListener("click", () => {
     window.open(`${window.location.pathname}?view=present`, "_blank", "width=1280,height=860");
   });
@@ -282,7 +298,7 @@ export function bindSessionEvents() {
     updateShareUrlAndQr(state.sessionState ? state.sessionState.lan_ip : "");
   });
 
-  // Admin: show/hide the big QR overlay in the session's presentation views
+  // Admin: show/hide the QR modal in the session's presentation views
   dom.btnTogglePresentQr.addEventListener("click", () => {
     const visible = !(state.sessionState && state.sessionState.qr_visible);
     sendWsAction({ action: "set_qr_visible", visible });

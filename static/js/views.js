@@ -10,6 +10,31 @@ import { sendWsAction } from "./ws.js";
 const VIEW_IDS = ["voteView", "presentView", "adminView"];
 let currentPresentSub = "presentActive";
 
+export function openQrModal() {
+  dom.qrModal.classList.remove("hidden");
+}
+
+export function closeQrModal() {
+  dom.qrModal.classList.add("hidden");
+}
+
+// The admin toggle "Visa QR i presentationsvyn" drives the shared QR modal:
+// while qr_visible is set, the modal is shown in every presentation view.
+// Manual open/close (top bar, share card, present view button) is tracked via
+// state.qrModalFromRemote so a remote "hide" only closes a remotely opened modal.
+function syncQrModal() {
+  const remote = Boolean(state.sessionState && state.sessionState.qr_visible);
+  if (remote && state.currentView === "presentView") {
+    if (dom.qrModal.classList.contains("hidden")) {
+      openQrModal();
+    }
+    state.qrModalFromRemote = true;
+  } else if (!remote && state.qrModalFromRemote) {
+    closeQrModal();
+    state.qrModalFromRemote = false;
+  }
+}
+
 export function switchView(viewId) {
   state.currentView = viewId;
   const viewButtons = { voteView: dom.tabBtnVote, presentView: dom.tabBtnPresent, adminView: dom.tabBtnAdmin };
@@ -20,6 +45,7 @@ export function switchView(viewId) {
     viewButtons[id].classList.toggle("active", id === viewId);
   });
   if (viewId === "presentView") switchPresentSub(currentPresentSub);
+  syncQrModal();
 }
 
 export function switchPresentSub(subId) {
@@ -55,8 +81,6 @@ export function updateShareUrlAndQr(lanIp) {
   const qrEndpoint = `/api/sessions/${state.currentSessionId}/qr.svg?url=${encodeURIComponent(shareUrl)}`;
   dom.sidebarQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för session ${state.currentSessionId}" />`;
   dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för session ${state.currentSessionId}" />`;
-  dom.presentQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för session ${state.currentSessionId}" />`;
-  dom.presentQrUrl.textContent = shareUrl;
 }
 
 export function handleSessionState(newState) {
@@ -68,11 +92,9 @@ export function handleSessionState(newState) {
   dom.headerSessionCode.textContent = newState.session_id;
   dom.sidebarSessionCode.textContent = newState.session_id;
   dom.modalSessionCode.textContent = newState.session_id;
-  dom.presentQrCode.textContent = newState.session_id;
 
-  // QR overlay in the presentation views (toggled remotely from the admin view)
+  // Admin toggle button label for the presentation QR modal
   const qrVisible = Boolean(newState.qr_visible);
-  dom.presentQrOverlay.classList.toggle("hidden", !qrVisible);
   dom.btnTogglePresentQr.textContent = qrVisible
     ? "Dölj QR i presentationsvyn"
     : "Visa QR i presentationsvyn";
@@ -193,5 +215,6 @@ export function handleSessionState(newState) {
   renderActiveRiskMatrix(activeRisk, newState.threshold, isAdmin, onSetFinalCell);
   renderSummaryMatrix(newState.risks, isAdmin, onSelectRisk);
   renderSummaryTable(newState.risks);
+  syncQrModal();
 }
 
