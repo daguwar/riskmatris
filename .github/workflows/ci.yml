@@ -12,6 +12,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Fail fast if a test hangs: the 6h default job timeout silently "cancels"
+    # the whole run (this happened before – every run died in the pytest step
+    # without any failing test). pytest-timeout then dumps the stuck stack.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -28,7 +32,9 @@ jobs:
         run: ruff check .
 
       - name: Tests (pytest)
-        run: pytest -q
+        # 120s per test with a thread-method stack dump on timeout – the
+        # suite runs in ~15s, so this only ever fires on a genuine hang.
+        run: pytest -q --timeout=120 --timeout-method=thread
 
       # Audit the production requirements (what actually ships in the Docker
       # image), not the runner's own tooling such as setuptools.
