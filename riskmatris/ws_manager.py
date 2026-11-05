@@ -167,9 +167,7 @@ class SessionConnectionManager:
         dead_sockets: list[WebSocket] = []
         for conn in conns:
             payload = dict(base)
-            payload["my_vote"] = (
-                active_risk_raw["votes"].get(conn.client_id) if conn.client_id else None
-            )
+            payload["my_vote"] = active_risk_raw["votes"].get(conn.client_id) if conn.client_id else None
             payload["is_admin"] = conn.is_admin
             try:
                 await conn.websocket.send_json(payload)

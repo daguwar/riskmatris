@@ -212,7 +212,7 @@ class TestSanitizeCsvCell:
         "value",
         [
             "=cmd|' /C calc'!A1",
-            "=HYPERLINK(\"http://evil\",\"x\")",
+            '=HYPERLINK("http://evil","x")',
             "+1+1",
             "-2+3",
             "@SUM(A1:A9)",
@@ -229,7 +229,10 @@ class TestSanitizeCsvCell:
         "value, expected",
         [
             ("Brandrisk", "Brandrisk"),
-            ("=", "'=",),  # bare "=" is still a formula start
+            (
+                "=",
+                "'=",
+            ),  # bare "=" is still a formula start
             ("Risk #1", "Risk #1"),
             ("2", "2"),
             ("2,5", "2,5"),

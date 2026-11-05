@@ -50,9 +50,7 @@ def check_session_read_rate(client_ip: str, log: dict[str, list[float]] | None =
     return check_rate(active_log, client_ip, limit, window)
 
 
-def check_connection_message_rate(
-    times: list[float], limit: int, window: float, now: float | None = None
-) -> bool:
+def check_connection_message_rate(times: list[float], limit: int, window: float, now: float | None = None) -> bool:
     """Sliding-window message-rate limiter for a single WS connection.
 
     ``times`` is the connection's own list of recent message timestamps

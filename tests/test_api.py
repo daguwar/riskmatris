@@ -129,7 +129,9 @@ class TestReadRateLimit:
         add_session(sid, admin_token="tok")
         assert isolated_client.get(f"/api/sessions/{sid}/qr.svg?url=http://x/s/{sid}").status_code == 200
         assert isolated_client.get(f"/api/sessions/{sid}/export.csv").status_code == 200
-        assert isolated_client.get(f"/api/sessions/{sid}/ws-ticket", headers={"X-Admin-Token": "tok"}).status_code == 200
+        assert (
+            isolated_client.get(f"/api/sessions/{sid}/ws-ticket", headers={"X-Admin-Token": "tok"}).status_code == 200
+        )
         assert isolated_client.get(f"/api/sessions/{sid}/qr.svg?url=http://x/s/{sid}").status_code == 429
 
     def test_health_is_not_rate_limited(self, isolated_client, monkeypatch):

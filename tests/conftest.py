@@ -11,6 +11,21 @@ import app as app_module
 from app import app, create_new_risk, manager
 
 
+@pytest.fixture(autouse=True)
+def _isolated_db(monkeypatch, tmp_path):
+    """Gives every test a throwaway SQLite database (schema initialized).
+
+    Tests must never depend on – or write into – data/riskmatris.db in the
+    working tree. On a fresh checkout (CI runner) that file does not exist,
+    and WS actions that persist a vote crashed with 'no such table: sessions',
+    hanging the WS endpoint because the client then waits forever for a
+    broadcast that never comes. Tests that need their own path simply
+    monkeypatch DB_PATH afterwards (monkeypatch reverts in reverse order).
+    """
+    monkeypatch.setattr(app_module, "DB_PATH", str(tmp_path / "test.db"))
+    app_module.init_db()
+
+
 @pytest.fixture
 def test_client():
     """A FastAPI TestClient bound to the app."""

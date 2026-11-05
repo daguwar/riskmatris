@@ -125,7 +125,9 @@ WS_MAX_CONNECTIONS_PER_IP = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS_PER_IP
 WS_MAX_CONNECTIONS_TOTAL = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS_TOTAL", 1000, min_value=10)
 # Per-connection message rate limit (A04-1): each vote triggers a DB write +
 # a broadcast, so an unthrottled connection is an amplification vector.
-WS_MESSAGE_RATE_LIMIT = _parse_env_int("RISKMATRIS_WS_MESSAGE_RATE_LIMIT", 120, min_value=1)  # per connection per window
+WS_MESSAGE_RATE_LIMIT = _parse_env_int(
+    "RISKMATRIS_WS_MESSAGE_RATE_LIMIT", 120, min_value=1
+)  # per connection per window
 WS_MESSAGE_RATE_WINDOW_SECONDS = _parse_env_int("RISKMATRIS_WS_MESSAGE_RATE_WINDOW_SECONDS", 60, min_value=1)
 WS_MAX_MESSAGE_BYTES = _parse_env_int("RISKMATRIS_WS_MAX_MESSAGE_BYTES", 8192, min_value=256, max_value=1_048_576)
 WS_TICKET_TTL_SECONDS = 30  # one-time admin WebSocket tickets
