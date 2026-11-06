@@ -37,12 +37,16 @@ services:
       - traefik
     labels:
       - "traefik.enable=true"
-      # Router: respond on your domain via the HTTPS entrypoint
-      - "traefik.http.routers.riskmatris.rule=Host(`${RISKMATRIS_DOMAIN:?Set RISKMATRIS_DOMAIN in .env}`)"
-      - "traefik.http.routers.riskmatris.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
-      - "traefik.http.routers.riskmatris.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
-      # Service: internal container port (uvicorn listens on 8000)
-      - "traefik.http.services.riskmatris.loadbalancer.server.port=8000"
+      # Router/service names derive from the container name so that a second
+      # (test) instance on the same host gets unique Traefik names; otherwise
+      # both instances define a router/service called "riskmatris" and Traefik
+      # ends up with a broken router (404 on both domains).
+      - "traefik.http.routers.${RISKMATRIS_CONTAINER_NAME:-riskmatris}.rule=Host(`${RISKMATRIS_DOMAIN:?Set RISKMATRIS_DOMAIN in .env}`)"
+      - "traefik.http.routers.${RISKMATRIS_CONTAINER_NAME:-riskmatris}.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.${RISKMATRIS_CONTAINER_NAME:-riskmatris}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      # Service: internal container port (uvicorn listens on 8000); router and
+      # service share the name so the router auto-wires to this service.
+      - "traefik.http.services.${RISKMATRIS_CONTAINER_NAME:-riskmatris}.loadbalancer.server.port=8000"
 
 networks:
   # The same Docker network your Traefik container is attached to.
