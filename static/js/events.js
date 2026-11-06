@@ -48,6 +48,33 @@ export function renderRecentSessions() {
   } catch (_) {}
 }
 
+/** If the URL has ?handover=<token>, exchange it for the admin token (POST body,
+ *  never logged) and strip it from the URL. Must run before enterSession(). */
+export async function consumeHandoverToken(sid) {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("handover");
+  if (!token) return;
+  // Always strip the token from the URL (browser history, logs)
+  params.delete("handover");
+  const qs = params.toString();
+  window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+  try {
+    const res = await fetch(`/api/sessions/${sid}/consume-handover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) {
+      alert(await readErrorDetail(res, "Överlämningskoden är ogiltig eller har gått ut"));
+      return;
+    }
+    const data = await res.json();
+    localStorage.setItem(`riskmatris_admin_${sid}`, data.admin_token);
+  } catch (err) {
+    alert("Kunde inte hämta administratörsrollen: " + err.message);
+  }
+}
+
 export async function enterSession(sessionId) {
   state.currentSessionId = sessionId.toUpperCase();
   const adminToken = getAdminToken(state.currentSessionId);
@@ -307,6 +334,7 @@ export function bindSessionEvents() {
   const closeQr = () => {
     const wasRemote = state.qrModalFromRemote;
     state.qrModalFromRemote = false;
+    state.showingHandoverQr = false;
     closeQrModal();
     if (wasRemote && state.sessionState && state.sessionState.qr_visible) {
       sendWsAction({ action: "set_qr_visible", visible: false });

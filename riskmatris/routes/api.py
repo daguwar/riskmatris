@@ -18,7 +18,14 @@ from riskmatris.config import (
     PROBABILITY_LABELS,
     logger,
 )
-from riskmatris.models import CreateSessionRequest, CreateSessionResponse, HealthResponse, WsTicketResponse
+from riskmatris.models import (
+    ConsumeHandoverRequest,
+    CreateSessionRequest,
+    CreateSessionResponse,
+    HandoverConsumeResponse,
+    HealthResponse,
+    WsTicketResponse,
+)
 from riskmatris.session import (
     compute_risk_stats,
     create_new_risk,
@@ -144,6 +151,47 @@ async def get_ws_ticket(
     if not x_admin_token or not secrets.compare_digest(x_admin_token, session["admin_token"]):
         raise HTTPException(status_code=401, detail="Ogiltig administratörs-token.")
     return {"ticket": state.create_ws_ticket(sid), "expires_in": config.WS_TICKET_TTL_SECONDS}
+
+
+@router.post("/api/sessions/{session_id}/admin-handover", response_model=WsTicketResponse)
+async def create_admin_handover(
+    session_id: str,
+    request: Request,
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+    state: AppState = Depends(get_app_state),
+):
+    """Issues a one-time, short-lived token for handing admin rights to another
+    device (shown as a QR code pointing at ``/s/{sid}?handover={token}``)."""
+    _enforce_read_rate_limit(request, state)
+    sid = session_id.strip().upper()
+    session = state.sessions.get(sid)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+    if not x_admin_token or not secrets.compare_digest(x_admin_token, session["admin_token"]):
+        raise HTTPException(status_code=401, detail="Ogiltig administratörs-token.")
+    return {"ticket": state.create_handover_token(sid), "expires_in": config.ADMIN_HANDOVER_TTL_SECONDS}
+
+
+@router.post("/api/sessions/{session_id}/consume-handover", response_model=HandoverConsumeResponse)
+async def consume_handover(
+    session_id: str,
+    req: ConsumeHandoverRequest,
+    request: Request,
+    state: AppState = Depends(get_app_state),
+):
+    """Exchanges a valid one-time handover token for the session's admin token.
+
+    The admin token is returned in the POST body, never in a URL, so it stays
+    out of proxy/access logs. A failed attempt burns the token (no replay).
+    """
+    _enforce_read_rate_limit(request, state)
+    sid = session_id.strip().upper()
+    session = state.sessions.get(sid)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+    if not state.consume_handover_token(req.token, sid):
+        raise HTTPException(status_code=401, detail="Ogiltig eller utgången överlämningskod.")
+    return {"admin_token": session["admin_token"]}
 
 
 @router.get("/api/sessions/{session_id}/qr.svg")

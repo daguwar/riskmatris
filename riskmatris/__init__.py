@@ -24,6 +24,7 @@ async def _periodic_cleanup(state: AppState) -> None:
         try:
             await state.cleanup_expired_sessions_async()
             state.cleanup_expired_ws_tickets()
+            state.cleanup_expired_handover_tokens()
             state.cleanup_rate_limit_log()
         except Exception:
             logger.exception("Error during periodic session cleanup")

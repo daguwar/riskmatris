@@ -97,5 +97,6 @@ export function initDom() {
   dom.btnThemeToggle = document.getElementById("btnThemeToggle");
 
   dom.btnTogglePresentQr = document.getElementById("btnTogglePresentQr");
+  dom.btnHandoverAdmin = document.getElementById("btnHandoverAdmin");
 }
 

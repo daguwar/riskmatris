@@ -3,11 +3,11 @@
  */
 
 import { initDom } from "./js/dom.js";
-import { bindLandingEvents, bindSessionEvents, enterSession, renderRecentSessions } from "./js/events.js";
+import { bindLandingEvents, bindSessionEvents, consumeHandoverToken, enterSession, renderRecentSessions } from "./js/events.js";
 import { state } from "./js/state.js";
 import { initTheme } from "./js/theme.js";
 
-function init() {
+async function init() {
   initDom();
   initTheme();
   bindLandingEvents();
@@ -20,6 +20,7 @@ function init() {
       state.pendingInitialView = "presentView";
     }
     const sid = pathMatch[1].toUpperCase();
+    await consumeHandoverToken(sid); // stores admin token if ?handover= is present
     enterSession(sid);
   }
 }
