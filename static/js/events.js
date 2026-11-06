@@ -355,6 +355,28 @@ export function bindSessionEvents() {
     updateShareUrlAndQr(state.sessionState ? state.sessionState.lan_ip : "");
   });
 
+  // Admin: hand over admin rights to another device via a one-time QR code
+  dom.btnHandoverAdmin.addEventListener("click", async () => {
+    if (!state.currentSessionId) return;
+    try {
+      const res = await fetch(`/api/sessions/${state.currentSessionId}/admin-handover`, {
+        method: "POST",
+        headers: { "X-Admin-Token": getAdminToken(state.currentSessionId) },
+      });
+      if (!res.ok) throw new Error(await readErrorDetail(res, "Kunde inte skapa överlämningskod"));
+      const data = await res.json();
+      const handoverUrl = `${window.location.origin}/s/${state.currentSessionId}?handover=${encodeURIComponent(data.ticket)}`;
+      const qrEndpoint = `/api/sessions/${state.currentSessionId}/qr.svg?url=${encodeURIComponent(handoverUrl)}`;
+      state.showingHandoverQr = true;
+      dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för överlämning av admin" />`;
+      dom.modalSessionCode.textContent = state.currentSessionId;
+      dom.modalShareUrl.textContent = `Skanna från den nya enheten inom ${Math.round(data.expires_in / 60)} min – koden kan bara användas en gång.`;
+      openQrModal();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
   // Admin: show/hide the QR modal in the session's presentation views
   dom.btnTogglePresentQr.addEventListener("click", () => {
     const visible = !(state.sessionState && state.sessionState.qr_visible);
