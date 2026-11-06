@@ -21,6 +21,13 @@ import riskmatris.utils as _utils
 import riskmatris.ws_manager as _ws_manager
 import riskmatris.ws_tickets as _ws_tickets
 from riskmatris import app  # noqa: F401
+
+# NOTE: every name that _AppModule.__setattr__ syncs to a submodule must also
+# be imported here (i.e. exist in this module's real namespace). Otherwise
+# monkeypatch.undo() restores it via delattr, which does NOT propagate to the
+# submodule – the patched value would leak into riskmatris.config for the rest
+# of the test session (this bit MAX_SNAPSHOT_BYTES once, causing order-
+# dependent 413s in tests/test_snapshot.py).
 from riskmatris.config import (  # noqa: F401
     CONSEQUENCE_LABELS,
     DB_PATH,
@@ -28,6 +35,7 @@ from riskmatris.config import (  # noqa: F401
     MAX_CLIENT_ID_LENGTH,
     MAX_LABEL_LENGTH,
     MAX_QR_URL_LENGTH,
+    MAX_SNAPSHOT_BYTES,
     MAX_TITLE_LENGTH,
     PROBABILITY_LABELS,
     SESSION_CLEANUP_INTERVAL,
