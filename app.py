@@ -11,6 +11,7 @@ import types
 
 import riskmatris.config as _config
 import riskmatris.db as _db
+import riskmatris.handover as _handover
 import riskmatris.models as _models
 import riskmatris.rate_limit as _rate_limit
 import riskmatris.session as _session
@@ -54,6 +55,12 @@ from riskmatris.db import (  # noqa: F401
     init_db,
     load_sessions_from_db,
     save_session_to_db,
+)
+from riskmatris.handover import (  # noqa: F401
+    HANDOVER_TOKENS,
+    cleanup_expired_handover_tokens,
+    consume_handover_token,
+    create_handover_token,
 )
 from riskmatris.models import CreateSessionRequest  # noqa: F401
 from riskmatris.rate_limit import (  # noqa: F401
@@ -115,6 +122,8 @@ class _AppModule(types.ModuleType):
             return getattr(_ws_manager, name)
         if hasattr(_ws_tickets, name):
             return getattr(_ws_tickets, name)
+        if hasattr(_handover, name):
+            return getattr(_handover, name)
         if hasattr(_models, name):
             return getattr(_models, name)
         raise AttributeError(f"module 'app' has no attribute '{name}'")

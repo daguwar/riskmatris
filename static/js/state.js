@@ -20,5 +20,8 @@ export const state = {
   // True while the QR modal is open because of the remote admin toggle
   // (set_qr_visible) rather than a local button click
   qrModalFromRemote: false,
+  // True while the QR modal is intentionally showing the admin-handover QR
+  // (so session_state updates don't overwrite it with the share URL)
+  showingHandoverQr: false,
 };
 

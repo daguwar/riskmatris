@@ -521,6 +521,9 @@
           <button type="button" class="btn btn-outline btn-sm btn-block" id="btnTogglePresentQr">
             Visa QR i presentationsvyn
           </button>
+          <button type="button" class="btn btn-outline btn-sm btn-block" id="btnHandoverAdmin" title="Visa en QR-kod som överför admin-rätten till en annan enhet">
+            Överför admin till annan enhet
+          </button>
           <div class="share-url-group">
             <input type="text" id="shareUrlInput" class="form-input form-input-sm" readonly />
             <button type="button" class="btn btn-secondary btn-sm" id="btnCopyShareUrl">Kopiera</button>
@@ -577,6 +580,10 @@
           Sessionskod: <strong id="modalSessionCode">------</strong>
         </div>
         <p class="modal-url-text" id="modalShareUrl"></p>
+        <div class="share-url-group hidden" id="handoverUrlGroup">
+          <input type="text" id="handoverUrlInput" class="form-input form-input-sm" readonly />
+          <button type="button" class="btn btn-secondary btn-sm" id="btnCopyHandoverUrl">Kopiera länk</button>
+        </div>
 
         <div class="modal-custom-host" id="modalCustomHostBox">
           <label class="small-muted" for="customBaseUrlInput">

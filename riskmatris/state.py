@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import Request, WebSocket
 
 import riskmatris.db as db
+import riskmatris.handover as handover_mod
 import riskmatris.rate_limit as rate_limit
 import riskmatris.ws_manager as ws_manager
 import riskmatris.ws_tickets as ws_tickets_mod
@@ -25,12 +26,14 @@ class AppState:
         session_create_log: dict[str, list[float]] | None = None,
         session_read_log: dict[str, list[float]] | None = None,
         ws_tickets: dict[str, dict[str, Any]] | None = None,
+        handover_tokens: dict[str, dict[str, Any]] | None = None,
         manager: SessionConnectionManager | None = None,
     ) -> None:
         self._sessions = sessions
         self._session_create_log = session_create_log
         self._session_read_log = session_read_log
         self._ws_tickets = ws_tickets
+        self._handover_tokens = handover_tokens
         self._manager = manager
 
     @property
@@ -74,6 +77,16 @@ class AppState:
         self._ws_tickets = val
 
     @property
+    def handover_tokens(self) -> dict[str, dict[str, Any]]:
+        if self._handover_tokens is not None:
+            return self._handover_tokens
+        return handover_mod.HANDOVER_TOKENS
+
+    @handover_tokens.setter
+    def handover_tokens(self, val: dict[str, dict[str, Any]]) -> None:
+        self._handover_tokens = val
+
+    @property
     def manager(self) -> SessionConnectionManager:
         if self._manager is not None:
             return self._manager
@@ -103,6 +116,15 @@ class AppState:
 
     def cleanup_expired_ws_tickets(self) -> None:
         ws_tickets_mod.cleanup_expired_ws_tickets(self.ws_tickets)
+
+    def create_handover_token(self, session_id: str) -> str:
+        return handover_mod.create_handover_token(session_id, self.handover_tokens)
+
+    def consume_handover_token(self, token: str, session_id: str) -> bool:
+        return handover_mod.consume_handover_token(token, session_id, self.handover_tokens)
+
+    def cleanup_expired_handover_tokens(self) -> None:
+        handover_mod.cleanup_expired_handover_tokens(self.handover_tokens)
 
     def cleanup_expired_sessions(self) -> None:
         db.cleanup_expired_sessions(self.sessions)

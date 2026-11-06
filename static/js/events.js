@@ -48,6 +48,33 @@ export function renderRecentSessions() {
   } catch (_) {}
 }
 
+/** If the URL has ?handover=<token>, exchange it for the admin token (POST body,
+ *  never logged) and strip it from the URL. Must run before enterSession(). */
+export async function consumeHandoverToken(sid) {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("handover");
+  if (!token) return;
+  // Always strip the token from the URL (browser history, logs)
+  params.delete("handover");
+  const qs = params.toString();
+  window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+  try {
+    const res = await fetch(`/api/sessions/${sid}/consume-handover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) {
+      alert(await readErrorDetail(res, "Överlämningskoden är ogiltig eller har gått ut"));
+      return;
+    }
+    const data = await res.json();
+    localStorage.setItem(`riskmatris_admin_${sid}`, data.admin_token);
+  } catch (err) {
+    alert("Kunde inte hämta administratörsrollen: " + err.message);
+  }
+}
+
 export async function enterSession(sessionId) {
   state.currentSessionId = sessionId.toUpperCase();
   const adminToken = getAdminToken(state.currentSessionId);
@@ -294,6 +321,8 @@ export function bindSessionEvents() {
   // QR modal: manual open from top bar / share card / presentation view button
   const openQrManually = () => {
     state.qrModalFromRemote = false;
+    state.showingHandoverQr = false;
+    dom.handoverUrlGroup.classList.add("hidden");
     openQrModal();
   };
   document.getElementById("btnExpandQr").addEventListener("click", openQrManually);
@@ -307,6 +336,8 @@ export function bindSessionEvents() {
   const closeQr = () => {
     const wasRemote = state.qrModalFromRemote;
     state.qrModalFromRemote = false;
+    state.showingHandoverQr = false;
+    dom.handoverUrlGroup.classList.add("hidden");
     closeQrModal();
     if (wasRemote && state.sessionState && state.sessionState.qr_visible) {
       sendWsAction({ action: "set_qr_visible", visible: false });
@@ -325,6 +356,42 @@ export function bindSessionEvents() {
   document.getElementById("btnApplyCustomUrl").addEventListener("click", () => {
     state.customShareBaseUrl = dom.customBaseUrlInput.value.trim();
     updateShareUrlAndQr(state.sessionState ? state.sessionState.lan_ip : "");
+  });
+
+  // Admin: hand over admin rights to another device via a one-time QR code
+  dom.btnHandoverAdmin.addEventListener("click", async () => {
+    if (!state.currentSessionId) return;
+    try {
+      const res = await fetch(`/api/sessions/${state.currentSessionId}/admin-handover`, {
+        method: "POST",
+        headers: { "X-Admin-Token": getAdminToken(state.currentSessionId) },
+      });
+      if (!res.ok) throw new Error(await readErrorDetail(res, "Kunde inte skapa överlämningskod"));
+      const data = await res.json();
+      const handoverUrl = `${window.location.origin}/s/${state.currentSessionId}?handover=${encodeURIComponent(data.ticket)}`;
+      const qrEndpoint = `/api/sessions/${state.currentSessionId}/qr.svg?url=${encodeURIComponent(handoverUrl)}`;
+      state.showingHandoverQr = true;
+      dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för överlämning av admin" />`;
+      dom.modalSessionCode.textContent = state.currentSessionId;
+      dom.modalShareUrl.textContent = `Skanna från den nya enheten inom ${Math.round(data.expires_in / 60)} min – koden kan bara användas en gång.`;
+      dom.handoverUrlInput.value = handoverUrl;
+      dom.handoverUrlGroup.classList.remove("hidden");
+      openQrModal();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  // Copy the handover link (for computer-to-computer transfer)
+  dom.btnCopyHandoverUrl.addEventListener("click", async () => {
+    const ok = await copyTextToClipboard(dom.handoverUrlInput.value);
+    const old = dom.btnCopyHandoverUrl.textContent;
+    dom.btnCopyHandoverUrl.textContent = ok ? "Kopierad!" : "Kunde inte kopiera";
+    if (!ok) {
+      dom.handoverUrlInput.focus();
+      dom.handoverUrlInput.select();
+    }
+    setTimeout(() => (dom.btnCopyHandoverUrl.textContent = old), 1500);
   });
 
   // Admin: show/hide the QR modal in the session's presentation views

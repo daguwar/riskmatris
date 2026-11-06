@@ -23,6 +23,7 @@ An open, interactive real-time web application for running group risk assessment
   - **PNG image:** Download a high-resolution image of the summary matrix with all placed risks (`#1`, `#2`...) ready to paste into PowerPoint.
   - **CSV (Excel):** Export a table with all risks, vote counts, averages, decided Probability/Consequence, risk score and risk level.
 - **Remote-controlled QR overlay:** From the admin view the leader can show/hide a large QR code with the session link directly on the projector view – e.g. to let latecomers join mid-meeting. The state follows every connected presentation window.
+- **Admin handover:** The admin view can show a one-time QR code / copyable link that transfers admin rights to another device (e.g. from laptop to phone). The link is single-use and expires after 5 minutes; the original device stays admin too (the token is per session, not per device).
 
 ---
 

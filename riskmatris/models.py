@@ -69,3 +69,11 @@ class CreateSessionResponse(BaseModel):
 class WsTicketResponse(BaseModel):
     ticket: str
     expires_in: int
+
+
+class ConsumeHandoverRequest(BaseModel):
+    token: str
+
+
+class HandoverConsumeResponse(BaseModel):
+    admin_token: str
