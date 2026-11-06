@@ -149,6 +149,30 @@ export function bindLandingEvents() {
     window.history.pushState({}, "", `/s/${code}`);
     enterSession(code);
   });
+
+  // Import a session snapshot (issue #15): creates a NEW session from the file
+  dom.importSnapshotForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const file = dom.inputSnapshotFile.files && dom.inputSnapshotFile.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const includeVotes = dom.inputIncludeVotes.checked;
+      const res = await fetch(`/api/sessions/import?include_votes=${includeVotes}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: text,
+      });
+      if (!res.ok) throw new Error(await readErrorDetail(res, "Kunde inte importera snapshot-filen"));
+      const data = await res.json();
+      localStorage.setItem(`riskmatris_admin_${data.session_id}`, data.admin_token);
+      saveRecentSession(data.session_id, data.title, true);
+      window.history.pushState({}, "", `/s/${data.session_id}`);
+      enterSession(data.session_id);
+    } catch (err) {
+      alert("Importen misslyckades: " + err.message);
+    }
+  });
 }
 
 export function submitVoteIfComplete() {
@@ -398,6 +422,12 @@ export function bindSessionEvents() {
   dom.btnTogglePresentQr.addEventListener("click", () => {
     const visible = !(state.sessionState && state.sessionState.qr_visible);
     sendWsAction({ action: "set_qr_visible", visible });
+  });
+
+  // Export session snapshot (JSON, for later import)
+  dom.btnExportSnapshot.addEventListener("click", () => {
+    if (!state.currentSessionId) return;
+    window.location.href = `/api/sessions/${state.currentSessionId}/snapshot.json`;
   });
 
   // Export CSV

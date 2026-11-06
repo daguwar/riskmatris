@@ -135,6 +135,7 @@ MAX_TITLE_LENGTH = 100
 MAX_LABEL_LENGTH = 120
 MAX_CLIENT_ID_LENGTH = 64
 MAX_QR_URL_LENGTH = 1000
+MAX_SNAPSHOT_BYTES = _parse_env_int("RISKMATRIS_MAX_SNAPSHOT_BYTES", 1_000_000, min_value=1024, max_value=10_000_000)
 
 # ---------------------------------------------------------------------------
 # Risk labels (Swedish)

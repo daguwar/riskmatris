@@ -1,12 +1,14 @@
-"""REST API endpoints: sessions, QR codes, CSV export, health check."""
+"""REST API endpoints: sessions, QR codes, CSV export, snapshots, health check."""
 
 import csv
 import io
+import json
 import secrets
 import time
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import Response, StreamingResponse
+from pydantic import ValidationError
 
 import riskmatris.config as config
 import riskmatris.db as db
@@ -32,6 +34,7 @@ from riskmatris.session import (
     generate_session_id,
     get_session_threshold,
 )
+from riskmatris.snapshot import SnapshotFile, build_snapshot, risks_from_snapshot
 from riskmatris.state import AppState, get_app_state
 from riskmatris.utils import get_local_lan_ip, sanitize_csv_cell, sanitize_user_text
 from riskmatris.ws_manager import ConnectionInfo
@@ -231,6 +234,85 @@ async def get_session_qr_svg(
         # str(exc) could leak internal paths.
         logger.exception("QR-SVG: could not generate QR code for session %s", sid)
         raise HTTPException(status_code=500, detail="Kunde inte generera QR-koden – kontrollera URL:en.")
+
+
+@router.get("/api/sessions/{session_id}/snapshot.json")
+async def export_session_snapshot(
+    session_id: str,
+    request: Request,
+    state: AppState = Depends(get_app_state),
+):
+    """Exports the full session state as a JSON snapshot (issue #15).
+
+    Same visibility as the CSV export: anyone with the session code. The file
+    never contains the admin token.
+    """
+    _enforce_read_rate_limit(request, state)
+    sid = session_id.strip().upper()
+    session = state.sessions.get(sid)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+    payload = json.dumps(build_snapshot(session), ensure_ascii=False)
+    return Response(
+        content=payload,
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="riskmatris_{sid}_snapshot.json"'},
+    )
+
+
+@router.post("/api/sessions/import", response_model=CreateSessionResponse)
+async def import_session_snapshot(
+    request: Request,
+    include_votes: bool = Query(default=False),
+    state: AppState = Depends(get_app_state),
+):
+    """Creates a NEW session from a snapshot file (issue #15).
+
+    The snapshot is strictly validated (Pydantic, size cap, no unknown fields)
+    and all user text is sanitized. Rate-limited like session creation.
+    Votes are only imported when include_votes=true.
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    if not state.check_session_create_rate(client_ip):
+        raise HTTPException(status_code=429, detail="För många sessioner skapade. Försök igen om en stund.")
+    body = await request.body()
+    if len(body) > config.MAX_SNAPSHOT_BYTES:
+        raise HTTPException(status_code=413, detail="Snapshot-filen är för stor.")
+    try:
+        data = json.loads(body)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Ogiltig JSON i snapshot-filen.")
+    try:
+        snap = SnapshotFile.model_validate(data)
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=f"Ogiltig snapshot-fil: {exc.errors()[0]['msg']}")
+
+    session_id = generate_session_id(state.sessions)
+    admin_token = secrets.token_urlsafe(24)
+    now = time.time()
+    risks = risks_from_snapshot(snap, include_votes)
+    if not risks:
+        risks = [create_new_risk(1, "")]
+    session = {
+        "session_id": session_id,
+        "admin_token": admin_token,
+        "title": sanitize_user_text(snap.title, MAX_TITLE_LENGTH) or "Riskanalys",
+        "threshold": snap.threshold,
+        "created_at": now,
+        "updated_at": now,
+        "active_risk_number": risks[0]["number"],
+        "risks": risks,
+    }
+    state.sessions[session_id] = session
+    await db.save_session_to_db_async(session)
+    logger.info("Session %s created from snapshot (%d risks, votes=%s)", session_id, len(risks), include_votes)
+    return {
+        "session_id": session_id,
+        "admin_token": admin_token,
+        "title": session["title"],
+        "threshold": session["threshold"],
+        "lan_ip": get_local_lan_ip(),
+    }
 
 
 @router.get("/api/sessions/{session_id}/export.csv")
