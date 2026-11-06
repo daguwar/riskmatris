@@ -317,3 +317,38 @@ class TestBroadcastSharedPayload:
             assert payload_b["risks"] != []
         finally:
             manager.connections.pop("BCAST01", None)
+
+
+# ---------------------------------------------------------------------------
+# Session title editing over WS (issue #13)
+# ---------------------------------------------------------------------------
+
+
+class TestSetTitleOverWs:
+    def test_admin_can_change_title_over_ws(self, add_session, test_client):
+        sid = "TITLE01"
+        add_session(sid, admin_token="secret")
+        resp = test_client.get(f"/api/sessions/{sid}/ws-ticket", headers={"X-Admin-Token": "secret"})
+        assert resp.status_code == 200
+        ticket = resp.json()["ticket"]
+        with test_client.websocket_connect(f"/ws/{sid}?role=admin&client_id=adm&ticket={ticket}") as ws:
+            assert ws.receive_json()["type"] == "session_state"
+            ws.send_json({"action": "set_title", "title": "Ny titel"})
+            data = ws.receive_json()
+            assert data["type"] == "session_state"
+            assert data["title"] == "Ny titel"
+        import app as app_module
+
+        assert app_module.SESSIONS[sid]["title"] == "Ny titel"
+
+    def test_participant_cannot_change_title(self, add_session, test_client):
+        sid = "TITLE02"
+        add_session(sid)
+        with test_client.websocket_connect(f"/ws/{sid}?role=participant&client_id=p1") as ws:
+            ws.receive_json()
+            ws.send_json({"action": "set_title", "title": "Kapad titel"})
+            msg = ws.receive_json()
+            assert msg["type"] == "error"
+        import app as app_module
+
+        assert app_module.SESSIONS[sid]["title"] == "Test"

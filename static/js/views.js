@@ -164,6 +164,9 @@ export function handleSessionState(newState) {
     if (document.activeElement !== dom.adminThresholdInput) {
       dom.adminThresholdInput.value = newState.threshold;
     }
+    if (document.activeElement !== dom.adminTitleInput) {
+      dom.adminTitleInput.value = newState.title || "";
+    }
     dom.thresholdInfo.textContent = `Automatisk visning när ${newState.threshold} röster kommit in (${pCount} anslutna deltagare)`;
     if (document.activeElement !== dom.adminRiskLabelInput) {
       dom.adminRiskLabelInput.value = activeRisk.label || "";

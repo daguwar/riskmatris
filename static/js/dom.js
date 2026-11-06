@@ -49,6 +49,7 @@ export function initDom() {
 
   dom.activeRiskBadge = document.getElementById("activeRiskBadge");
   dom.adminRiskLabelInput = document.getElementById("adminRiskLabelInput");
+  dom.adminTitleInput = document.getElementById("adminTitleInput");
   dom.participantRiskLabelDisplay = document.getElementById("participantRiskLabelDisplay");
   dom.activeRiskStatusTag = document.getElementById("activeRiskStatusTag");
 

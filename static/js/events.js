@@ -18,6 +18,15 @@ import {
 } from "./views.js";
 import { connectWebSocket, sendWsAction } from "./ws.js";
 
+/** Reads a FastAPI error detail ("detail") from a failed response, with fallback. */
+async function readErrorDetail(res, fallback) {
+  try {
+    const data = await res.json();
+    if (data && typeof data.detail === "string" && data.detail) return data.detail;
+  } catch (_) {}
+  return `${fallback} (HTTP ${res.status})`;
+}
+
 export function renderRecentSessions() {
   try {
     const list = JSON.parse(localStorage.getItem("riskmatris_recent") || "[]");
@@ -54,7 +63,12 @@ export async function enterSession(sessionId) {
       { headers }
     );
     if (!res.ok) {
-      alert(`Sessionen "${state.currentSessionId}" hittades inte. Kontrollera koden.`);
+      if (res.status === 404) {
+        alert(`Sessionen "${state.currentSessionId}" hittades inte. Kontrollera koden.`);
+      } else {
+        // e.g. 429 rate limited – show the server's message
+        alert(await readErrorDetail(res, "Kunde inte ansluta till sessionen"));
+      }
       window.history.pushState({}, "", "/");
       return;
     }
@@ -86,7 +100,10 @@ export function bindLandingEvents() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, threshold }),
       });
-      if (!res.ok) throw new Error("Kunde inte skapa session");
+      if (!res.ok) {
+        // e.g. 429 rate limit – show the server's message ("Too many sessions…")
+        throw new Error(await readErrorDetail(res, "Kunde inte skapa sessionen"));
+      }
       const data = await res.json();
       localStorage.setItem(`riskmatris_admin_${data.session_id}`, data.admin_token);
       saveRecentSession(data.session_id, data.title, true);
@@ -199,6 +216,18 @@ export function bindSessionEvents() {
       });
     });
   }
+
+  // Admin: change session title (debounced; empty titles are rejected server-side)
+  let titleDebounce = null;
+  dom.adminTitleInput.addEventListener("input", () => {
+    clearTimeout(titleDebounce);
+    titleDebounce = setTimeout(() => {
+      const title = dom.adminTitleInput.value.trim();
+      if (title) {
+        sendWsAction({ action: "set_title", title });
+      }
+    }, 400);
+  });
 
   // Admin: change risk label
   let labelDebounce = null;
