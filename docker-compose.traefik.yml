@@ -12,7 +12,9 @@
 services:
   riskmatris:
     build: .
-    container_name: riskmatris
+    # Overridable so a second (test) clone on the same host can run in
+    # parallel: set RISKMATRIS_CONTAINER_NAME=riskmatris-test in its .env.
+    container_name: ${RISKMATRIS_CONTAINER_NAME:-riskmatris}
     # No "ports" here – all traffic goes through Traefik.
     # For local debugging on the server, add: "127.0.0.1:8000:8000"
     volumes:
