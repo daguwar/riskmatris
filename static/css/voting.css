@@ -84,13 +84,6 @@
   transform: translateY(-1px);
 }
 
-.vote-option-btn.selected {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
-}
-
 /* Static colors on voting buttons (1=green, 2=yellow, 3=orange, 4=red) */
 .vote-option-btn[data-prob="1"],
 .vote-option-btn[data-cons="1"] {
@@ -151,6 +144,22 @@
 [data-theme="dark"] .vote-option-btn:not(.selected)[data-prob="4"],
 [data-theme="dark"] .vote-option-btn:not(.selected)[data-cons="4"] {
   color: var(--red-text);
+}
+
+/* Selected state – must come AFTER the per-level [data-prob]/[data-cons]
+   rules: at equal specificity the later rule wins, and previously the level
+   background overrode the accent background, making the selection hard to
+   see in both themes (issue #19 follow-up). Now: solid accent fill, white
+   number, thicker border, outer ring and a slight lift. */
+.vote-option-btn.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  border-width: 2px;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 3px var(--accent-soft),
+    0 4px 14px rgba(79, 70, 229, 0.35);
 }
 
 .vote-option-btn:disabled {
