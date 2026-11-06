@@ -5,9 +5,11 @@
 import { initDom } from "./js/dom.js";
 import { bindLandingEvents, bindSessionEvents, enterSession, renderRecentSessions } from "./js/events.js";
 import { state } from "./js/state.js";
+import { initTheme } from "./js/theme.js";
 
 function init() {
   initDom();
+  initTheme();
   bindLandingEvents();
   bindSessionEvents();
   renderRecentSessions();

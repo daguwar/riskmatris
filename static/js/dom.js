@@ -94,6 +94,8 @@ export function initDom() {
 
   dom.qrModal = document.getElementById("qrModal");
 
+  dom.btnThemeToggle = document.getElementById("btnThemeToggle");
+
   dom.btnTogglePresentQr = document.getElementById("btnTogglePresentQr");
 }
 

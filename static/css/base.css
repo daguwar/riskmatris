@@ -39,6 +39,63 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
+/* Dark theme: same semantic variables, dark values. Applied via
+   <html data-theme="dark"> (set by theme-init.js before first paint). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1120;
+  --surface: #131c31;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+  --border: #243049;
+  --border-strong: #334166;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --accent-soft: rgba(99, 102, 241, 0.18);
+  --success: #22c55e;
+  --success-hover: #4ade80;
+  --danger: #ef4444;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  /* Risk colors become translucent so they read well on dark surfaces */
+  --green-bg: rgba(74, 222, 128, 0.12);
+  --green-border: #14532d;
+  --green-text: #86efac;
+  --yellow-bg: rgba(250, 204, 21, 0.1);
+  --yellow-border: #713f12;
+  --yellow-text: #fde047;
+  --orange-bg: rgba(251, 146, 60, 0.14);
+  --orange-border: #7c2d12;
+  --orange-text: #fdba74;
+  --red-bg: rgba(248, 113, 113, 0.14);
+  --red-border: #7f1d1d;
+  --red-text: #fca5a5;
+}
+
+/* Dark overrides for the few hardcoded light colors in other sections */
+[data-theme="dark"] .topbar {
+  background: rgba(11, 17, 32, 0.92);
+}
+[data-theme="dark"] .landing-card-muted,
+[data-theme="dark"] .admin-toolbar,
+[data-theme="dark"] .matrix-masked-banner {
+  background: #10182c;
+}
+[data-theme="dark"] .qr-preview-wrapper {
+  background: #0b1120;
+}
+[data-theme="dark"] .view-tabs,
+[data-theme="dark"] .matrix-axis-header,
+[data-theme="dark"] .risk-summary-table tbody tr:hover {
+  background: #1b2540;
+}
+[data-theme="dark"] .risk-status-tag.locked {
+  background: #243049;
+  color: #cbd5e1;
+}
+
 /* --------------------------------------------------------------------------
    Base & Utility Classes
    -------------------------------------------------------------------------- */
