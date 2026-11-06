@@ -98,6 +98,10 @@ export function initDom() {
 
   dom.btnTogglePresentQr = document.getElementById("btnTogglePresentQr");
   dom.btnHandoverAdmin = document.getElementById("btnHandoverAdmin");
+  dom.btnExportSnapshot = document.getElementById("btnExportSnapshot");
+  dom.importSnapshotForm = document.getElementById("importSnapshotForm");
+  dom.inputSnapshotFile = document.getElementById("inputSnapshotFile");
+  dom.inputIncludeVotes = document.getElementById("inputIncludeVotes");
   dom.handoverUrlGroup = document.getElementById("handoverUrlGroup");
   dom.handoverUrlInput = document.getElementById("handoverUrlInput");
   dom.btnCopyHandoverUrl = document.getElementById("btnCopyHandoverUrl");

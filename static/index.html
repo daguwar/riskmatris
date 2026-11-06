@@ -115,6 +115,20 @@
         </form>
       </section>
 
+      <!-- Import a previously exported session snapshot -->
+      <section class="card landing-card landing-card-muted">
+        <h2>Återuppta en sparad session <span class="card-tag">från snapshot</span></h2>
+        <form id="importSnapshotForm" class="form-stack">
+          <label class="form-label" for="inputSnapshotFile">Snapshot-fil (JSON)</label>
+          <input type="file" id="inputSnapshotFile" class="form-input" accept="application/json,.json" required />
+          <label class="form-label" style="display: flex; align-items: center; gap: 8px; font-weight: 400">
+            <input type="checkbox" id="inputIncludeVotes" />
+            Importera även tidigare röster
+          </label>
+          <button type="submit" class="btn btn-outline btn-large btn-block">Importera &amp; starta ny session</button>
+        </form>
+      </section>
+
       <!-- About the service & data handling -->
       <section class="card landing-card landing-card-muted" id="aboutSection">
         <h2>Om tjänsten <span class="card-tag">och din data</span></h2>
@@ -541,6 +555,9 @@
               </button>
               <button type="button" class="btn btn-secondary btn-sm" id="btnExportCsv">
                 Excel (CSV)
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" id="btnExportSnapshot" title="Spara hela sessionen som en JSON-fil som kan importeras senare">
+                Snapshot (JSON)
               </button>
             </div>
           </div>

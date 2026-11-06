@@ -15,11 +15,19 @@ import riskmatris.handover as _handover
 import riskmatris.models as _models
 import riskmatris.rate_limit as _rate_limit
 import riskmatris.session as _session
+import riskmatris.snapshot as _snapshot
 import riskmatris.state as _state
 import riskmatris.utils as _utils
 import riskmatris.ws_manager as _ws_manager
 import riskmatris.ws_tickets as _ws_tickets
 from riskmatris import app  # noqa: F401
+
+# NOTE: every name that _AppModule.__setattr__ syncs to a submodule must also
+# be imported here (i.e. exist in this module's real namespace). Otherwise
+# monkeypatch.undo() restores it via delattr, which does NOT propagate to the
+# submodule – the patched value would leak into riskmatris.config for the rest
+# of the test session (this bit MAX_SNAPSHOT_BYTES once, causing order-
+# dependent 413s in tests/test_snapshot.py).
 from riskmatris.config import (  # noqa: F401
     CONSEQUENCE_LABELS,
     DB_PATH,
@@ -27,6 +35,7 @@ from riskmatris.config import (  # noqa: F401
     MAX_CLIENT_ID_LENGTH,
     MAX_LABEL_LENGTH,
     MAX_QR_URL_LENGTH,
+    MAX_SNAPSHOT_BYTES,
     MAX_TITLE_LENGTH,
     PROBABILITY_LABELS,
     SESSION_CLEANUP_INTERVAL,
@@ -80,6 +89,7 @@ from riskmatris.session import (  # noqa: F401
     generate_session_id,
     get_session_threshold,
 )
+from riskmatris.snapshot import SnapshotFile, build_snapshot, risks_from_snapshot  # noqa: F401
 from riskmatris.state import AppState, default_state, get_app_state  # noqa: F401
 from riskmatris.utils import (  # noqa: F401
     _safe_int,
@@ -116,6 +126,8 @@ class _AppModule(types.ModuleType):
             return getattr(_state, name)
         if hasattr(_session, name):
             return getattr(_session, name)
+        if hasattr(_snapshot, name):
+            return getattr(_snapshot, name)
         if hasattr(_utils, name):
             return getattr(_utils, name)
         if hasattr(_ws_manager, name):
@@ -156,6 +168,7 @@ class _AppModule(types.ModuleType):
             "DB_PATH",
             "SESSION_TTL_HOURS",
             "SESSION_TTL_SECONDS",
+            "MAX_SNAPSHOT_BYTES",
         ):
             setattr(_config, name, value)
         if name in ("SESSIONS", "DB_PATH"):
