@@ -287,6 +287,15 @@
   height: auto;
 }
 
+.qr-box,
+.qr-box-large {
+  /* QR codes must sit on a white background (with quiet zone) in both
+     themes, otherwise the black modules are invisible in dark mode */
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px;
+}
+
 .qr-box {
   width: 148px;
 }

@@ -83,9 +83,8 @@
 [data-theme="dark"] .matrix-masked-banner {
   background: #10182c;
 }
-[data-theme="dark"] .qr-preview-wrapper {
-  background: #0b1120;
-}
+/* QR codes stay on white in both themes (scanners need the quiet zone) –
+   .qr-preview-wrapper keeps its light background on purpose */
 [data-theme="dark"] .view-tabs,
 [data-theme="dark"] .matrix-axis-header,
 [data-theme="dark"] .risk-summary-table tbody tr:hover {
