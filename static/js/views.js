@@ -203,7 +203,10 @@ export function handleSessionState(newState) {
     if (isAdmin) {
       sendWsAction({ action: "select_risk", number: riskNumber });
     }
-    switchView("presentView");
+    // Selecting a risk from the admin view must keep the admin in it (issue #18)
+    if (state.currentView !== "adminView") {
+      switchView("presentView");
+    }
   };
 
   const onSetFinalCell = (prob, cons, isLocked) => {

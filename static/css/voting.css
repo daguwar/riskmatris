@@ -116,6 +116,43 @@
   border-color: var(--red-border);
 }
 
+/* Dark mode (issue #19): the translucent level colors are hard to tell apart
+   on dark surfaces. Redefine the level variables ON the voting buttons only
+   (matrix cells, pills etc. keep the softer palette): stronger backgrounds,
+   bright saturated borders, and a colored number per level. Hover and
+   selected states are untouched (they use their own rules). */
+[data-theme="dark"] .vote-option-btn {
+  --green-bg: rgba(74, 222, 128, 0.28);
+  --green-border: #4ade80;
+  --yellow-bg: rgba(250, 204, 21, 0.26);
+  --yellow-border: #facc15;
+  --orange-bg: rgba(251, 146, 60, 0.28);
+  --orange-border: #fb923c;
+  --red-bg: rgba(248, 113, 113, 0.28);
+  --red-border: #f87171;
+  border-width: 2px;
+}
+
+[data-theme="dark"] .vote-option-btn:not(.selected)[data-prob="1"],
+[data-theme="dark"] .vote-option-btn:not(.selected)[data-cons="1"] {
+  color: var(--green-text);
+}
+
+[data-theme="dark"] .vote-option-btn:not(.selected)[data-prob="2"],
+[data-theme="dark"] .vote-option-btn:not(.selected)[data-cons="2"] {
+  color: var(--yellow-text);
+}
+
+[data-theme="dark"] .vote-option-btn:not(.selected)[data-prob="3"],
+[data-theme="dark"] .vote-option-btn:not(.selected)[data-cons="3"] {
+  color: var(--orange-text);
+}
+
+[data-theme="dark"] .vote-option-btn:not(.selected)[data-prob="4"],
+[data-theme="dark"] .vote-option-btn:not(.selected)[data-cons="4"] {
+  color: var(--red-text);
+}
+
 .vote-option-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
