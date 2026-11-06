@@ -98,5 +98,8 @@ export function initDom() {
 
   dom.btnTogglePresentQr = document.getElementById("btnTogglePresentQr");
   dom.btnHandoverAdmin = document.getElementById("btnHandoverAdmin");
+  dom.handoverUrlGroup = document.getElementById("handoverUrlGroup");
+  dom.handoverUrlInput = document.getElementById("handoverUrlInput");
+  dom.btnCopyHandoverUrl = document.getElementById("btnCopyHandoverUrl");
 }
 

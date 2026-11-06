@@ -321,6 +321,8 @@ export function bindSessionEvents() {
   // QR modal: manual open from top bar / share card / presentation view button
   const openQrManually = () => {
     state.qrModalFromRemote = false;
+    state.showingHandoverQr = false;
+    dom.handoverUrlGroup.classList.add("hidden");
     openQrModal();
   };
   document.getElementById("btnExpandQr").addEventListener("click", openQrManually);
@@ -335,6 +337,7 @@ export function bindSessionEvents() {
     const wasRemote = state.qrModalFromRemote;
     state.qrModalFromRemote = false;
     state.showingHandoverQr = false;
+    dom.handoverUrlGroup.classList.add("hidden");
     closeQrModal();
     if (wasRemote && state.sessionState && state.sessionState.qr_visible) {
       sendWsAction({ action: "set_qr_visible", visible: false });
@@ -371,10 +374,24 @@ export function bindSessionEvents() {
       dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för överlämning av admin" />`;
       dom.modalSessionCode.textContent = state.currentSessionId;
       dom.modalShareUrl.textContent = `Skanna från den nya enheten inom ${Math.round(data.expires_in / 60)} min – koden kan bara användas en gång.`;
+      dom.handoverUrlInput.value = handoverUrl;
+      dom.handoverUrlGroup.classList.remove("hidden");
       openQrModal();
     } catch (err) {
       alert(err.message);
     }
+  });
+
+  // Copy the handover link (for computer-to-computer transfer)
+  dom.btnCopyHandoverUrl.addEventListener("click", async () => {
+    const ok = await copyTextToClipboard(dom.handoverUrlInput.value);
+    const old = dom.btnCopyHandoverUrl.textContent;
+    dom.btnCopyHandoverUrl.textContent = ok ? "Kopierad!" : "Kunde inte kopiera";
+    if (!ok) {
+      dom.handoverUrlInput.focus();
+      dom.handoverUrlInput.select();
+    }
+    setTimeout(() => (dom.btnCopyHandoverUrl.textContent = old), 1500);
   });
 
   // Admin: show/hide the QR modal in the session's presentation views
