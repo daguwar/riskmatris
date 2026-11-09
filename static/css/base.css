@@ -210,6 +210,8 @@ button {
 .summary-risk-chip:focus {
   outline: 3px solid #4f46e5;
   outline-offset: 2px;
+  /* double indicator (outline + ring) so the focus state is unmistakable */
+  box-shadow: 0 0 0 5px rgba(79, 70, 229, 0.25);
 }
 
 [data-theme="dark"] .btn:focus,
@@ -222,6 +224,7 @@ button {
 [data-theme="dark"] .qr-preview-wrapper:focus,
 [data-theme="dark"] .summary-risk-chip:focus {
   outline-color: #818cf8;
+  box-shadow: 0 0 0 5px rgba(129, 140, 248, 0.3);
 }
 
 /* WCAG 2.4.1 / 2.4.7 helpers */
