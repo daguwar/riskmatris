@@ -11,14 +11,18 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from riskmatris.config import MAX_CLIENT_ID_LENGTH, MAX_LABEL_LENGTH
+from riskmatris.config import (
+    MAX_CLIENT_ID_LENGTH,
+    MAX_LABEL_LENGTH,
+    MAX_RISKS_PER_SESSION,
+    MAX_VOTES_PER_RISK,
+)
 from riskmatris.session import create_new_risk
 from riskmatris.utils import sanitize_user_text
 
 SNAPSHOT_FORMAT = "riskmatris-snapshot"
 SNAPSHOT_VERSION = 1
-MAX_RISKS_PER_SNAPSHOT = 100
-MAX_VOTES_PER_RISK = 500
+MAX_RISKS_PER_SNAPSHOT = MAX_RISKS_PER_SESSION
 
 
 class SnapshotVote(BaseModel):
@@ -50,17 +54,26 @@ class SnapshotFile(BaseModel):
     risks: list[SnapshotRisk] = Field(default_factory=list, max_length=MAX_RISKS_PER_SNAPSHOT)
 
 
-def build_snapshot(session: dict[str, Any]) -> dict[str, Any]:
-    """Builds the exportable snapshot dict for a session (never contains the admin token)."""
+def build_snapshot(session: dict[str, Any], include_votes: bool = True) -> dict[str, Any]:
+    """Builds the exportable snapshot dict for a session (never contains the admin token).
+
+    Raw votes (with client IDs) are only included when ``include_votes`` is set –
+    the export endpoint passes the admin flag, so unauthenticated requests can
+    never read individual votes (audit 2026-11 SEC-01).
+    """
     risks = []
     for r in session.get("risks", []):
-        votes = {
-            sanitize_user_text(cid, MAX_CLIENT_ID_LENGTH): {
-                "probability": v["probability"],
-                "consequence": v["consequence"],
+        votes = (
+            {
+                sanitize_user_text(cid, MAX_CLIENT_ID_LENGTH): {
+                    "probability": v["probability"],
+                    "consequence": v["consequence"],
+                }
+                for cid, v in list(r.get("votes", {}).items())[:MAX_VOTES_PER_RISK]
             }
-            for cid, v in list(r.get("votes", {}).items())[:MAX_VOTES_PER_RISK]
-        }
+            if include_votes
+            else {}
+        )
         risks.append(
             {
                 "number": r["number"],

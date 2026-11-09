@@ -57,9 +57,30 @@ class TestSnapshotExport:
         assert data["title"] == "Test"
         assert data["risks"][0]["locked"] is True
         assert data["risks"][0]["final_probability"] == 3
-        assert data["risks"][0]["votes"]["c_abc"]["probability"] == 3
         assert "admin_token" not in json.dumps(data)
         assert "supersecret" not in json.dumps(data)
+
+    def test_export_without_admin_token_strips_votes(self, add_session, test_client):
+        """SEC-01: unauthenticated snapshot export must not contain raw votes
+        (they reveal individual votes and client IDs before the threshold)."""
+        sid = "SNAP02"
+        session = add_session(sid, admin_token="supersecret")
+        session["risks"][0]["votes"] = {"c_abc": {"probability": 3, "consequence": 4, "updated_at": 0}}
+
+        resp = test_client.get(f"/api/sessions/{sid}/snapshot.json")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["risks"][0]["votes"] == {}
+        assert "c_abc" not in json.dumps(data)
+
+    def test_export_with_admin_token_includes_votes(self, add_session, test_client):
+        sid = "SNAP03"
+        session = add_session(sid, admin_token="supersecret")
+        session["risks"][0]["votes"] = {"c_abc": {"probability": 3, "consequence": 4, "updated_at": 0}}
+
+        resp = test_client.get(f"/api/sessions/{sid}/snapshot.json", headers={"X-Admin-Token": "supersecret"})
+        assert resp.status_code == 200
+        assert resp.json()["risks"][0]["votes"]["c_abc"]["probability"] == 3
 
     def test_export_unknown_session_404(self, test_client):
         assert test_client.get("/api/sessions/NOPE00/snapshot.json").status_code == 404

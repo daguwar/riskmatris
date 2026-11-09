@@ -205,6 +205,42 @@ async def test_handle_next_risk(test_session, mock_admin_conn):
 
 
 @pytest.mark.asyncio
+async def test_next_risk_capped_at_max(test_session, mock_admin_conn, monkeypatch):
+    """SEC-02: risks per session are capped (DoS/resource exhaustion)."""
+    import app as app_module
+
+    monkeypatch.setattr(app_module, "MAX_RISKS_PER_SESSION", 2)
+    test_session["risks"].append(create_new_risk(2, "Risk 2"))
+    active_risk = test_session["risks"][0]
+    msg = {"action": "next_risk", "label": "", "auto_lock": False}
+    res = await handle_next_risk(test_session, active_risk, msg, mock_admin_conn)
+    assert res is False
+    assert len(test_session["risks"]) == 2
+    mock_admin_conn.websocket.send_json.assert_awaited_with({"type": "error", "message": "max_risks_reached"})
+
+
+@pytest.mark.asyncio
+async def test_vote_capped_at_max(test_session, mock_conn, monkeypatch):
+    """SEC-03: votes per risk are capped; existing voters can still re-vote."""
+    import app as app_module
+
+    monkeypatch.setattr(app_module, "MAX_VOTES_PER_RISK", 1)
+    active_risk = test_session["risks"][0]
+    active_risk["votes"] = {"someone_else": {"probability": 1, "consequence": 1, "updated_at": 0}}
+    msg = {"action": "vote", "probability": 3, "consequence": 2}
+    res = await handle_vote(test_session, active_risk, msg, mock_conn)
+    assert res is False
+    assert "test_client" not in active_risk["votes"]
+    mock_conn.websocket.send_json.assert_awaited_with({"type": "error", "message": "max_votes_reached"})
+
+    # An existing voter may still change their vote at the cap
+    active_risk["votes"]["test_client"] = {"probability": 1, "consequence": 1, "updated_at": 0}
+    res = await handle_vote(test_session, active_risk, msg, mock_conn)
+    assert res is True
+    assert active_risk["votes"]["test_client"]["probability"] == 3
+
+
+@pytest.mark.asyncio
 async def test_handle_select_risk(test_session, mock_admin_conn):
     active_risk = test_session["risks"][0]
     # Add a second risk first

@@ -88,9 +88,15 @@ def cleanup_expired_sessions(sessions: dict[str, dict[str, Any]] | None = None) 
         logger.info("Removed %d expired sessions: %s", len(expired_ids), expired_ids)
 
 
-def save_session_to_db(session: dict[str, Any]) -> None:
+def _session_payload(session: dict[str, Any]) -> str:
+    """Sets updated_at and serializes the session to JSON (caller's thread)."""
     session["updated_at"] = time.time()
-    payload = json.dumps(session, ensure_ascii=False)
+    return json.dumps(session, ensure_ascii=False)
+
+
+def _write_session_record(
+    session_id: str, admin_token: str, created_at: float, updated_at: float, payload: str
+) -> None:
     with _connect() as conn:
         conn.execute(
             """
@@ -100,15 +106,16 @@ def save_session_to_db(session: dict[str, Any]) -> None:
                 updated_at = excluded.updated_at,
                 data_json = excluded.data_json
             """,
-            (
-                session["session_id"],
-                session["admin_token"],
-                session["created_at"],
-                session["updated_at"],
-                payload,
-            ),
+            (session_id, admin_token, created_at, updated_at, payload),
         )
         conn.commit()
+
+
+def save_session_to_db(session: dict[str, Any]) -> None:
+    payload = _session_payload(session)
+    _write_session_record(
+        session["session_id"], session["admin_token"], session["created_at"], session["updated_at"], payload
+    )
 
 
 def load_sessions_from_db() -> dict[str, dict[str, Any]]:
@@ -133,7 +140,18 @@ def load_sessions_from_db() -> dict[str, dict[str, Any]]:
 
 
 async def save_session_to_db_async(session: dict[str, Any]) -> None:
-    await anyio.to_thread.run_sync(save_session_to_db, session)
+    # Serialize on the event loop: the session dict can be mutated concurrently,
+    # and json.dumps inside a worker thread could raise "dictionary changed size
+    # during iteration" (audit 2026-11 SEC-07). Only the disk write goes to the pool.
+    payload = _session_payload(session)
+    await anyio.to_thread.run_sync(
+        _write_session_record,
+        session["session_id"],
+        session["admin_token"],
+        session["created_at"],
+        session["updated_at"],
+        payload,
+    )
 
 
 async def cleanup_expired_sessions_async(sessions: dict[str, dict[str, Any]] | None = None) -> None:

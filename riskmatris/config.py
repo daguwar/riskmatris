@@ -117,6 +117,10 @@ SESSION_READ_WINDOW_SECONDS = _parse_env_int("RISKMATRIS_SESSION_READ_WINDOW_SEC
 # Length of generated session codes. 8 chars from a 32-char alphabet = 40 bits
 # (6 chars = only 30 bits). Still fits the manual join field and the QR code.
 SESSION_CODE_LENGTH = _parse_env_int("RISKMATRIS_SESSION_CODE_LENGTH", 8, min_value=6, max_value=16)
+# Per-session resource caps (audit 2026-11 SEC-02/SEC-03): bound memory,
+# broadcast payload size and DB write amplification
+MAX_RISKS_PER_SESSION = _parse_env_int("RISKMATRIS_MAX_RISKS_PER_SESSION", 100, min_value=1, max_value=1000)
+MAX_VOTES_PER_RISK = _parse_env_int("RISKMATRIS_MAX_VOTES_PER_RISK", 500, min_value=1, max_value=100_000)
 WS_MAX_CONNECTIONS_PER_SESSION = _parse_env_int("RISKMATRIS_WS_MAX_CONNECTIONS", 200, min_value=2)
 # Per-IP and global connection caps: without them
 # one IP could occupy all per-session slots with throwaway connections.

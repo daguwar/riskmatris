@@ -248,5 +248,7 @@
   "server.empty_title": "Titel får inte vara tom.",
   "server.invalid_threshold": "Tröskelvärdet måste vara ett heltal 1–50.",
   "server.too_many_messages": "För många meddelanden – sakta ner takten.",
-  "server.invalid_lang": "Ogiltigt språk."
+  "server.invalid_lang": "Ogiltigt språk.",
+  "server.max_risks_reached": "Max antal risker per session har nåtts.",
+  "server.max_votes_reached": "Max antal röster för denna risk har nåtts."
 }

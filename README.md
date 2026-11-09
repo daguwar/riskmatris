@@ -105,6 +105,8 @@ Other optional settings (see `riskmatris/config.py` for the full list):
 
 Open the app via your domain (`https://riskmatris.example.com`). The share link and QR code then point to the right address automatically, and WebSockets (`wss://`) work through Traefik without extra configuration. For local debugging on the server you can add `ports: - "127.0.0.1:8000:8000"` to the compose file (binding to localhost only).
 
+**Security note:** `FORWARDED_ALLOW_IPS=*` in `docker-compose.traefik.yml` is only safe because the container port is never published to untrusted networks. If you ever expose port 8000 directly (do not do this in production), remove that variable or clients can spoof `X-Forwarded-For` and bypass the per-IP rate limits.
+
 ---
 
 ## Development & CI

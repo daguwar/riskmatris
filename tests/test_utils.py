@@ -218,6 +218,8 @@ class TestSanitizeCsvCell:
             "@SUM(A1:A9)",
             "\t=1+1",
             "\r=1+1",
+            " =SUM(A1)",  # SEC-05: leading whitespace must not bypass the check
+            "  -2+3",
         ],
     )
     def test_formula_prefixes_get_apostrophe(self, value):
