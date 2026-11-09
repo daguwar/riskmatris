@@ -373,6 +373,26 @@ export function bindSessionEvents() {
     }
   });
 
+  // WCAG 2.4.11 / 2.1.2: while the modal is open, keep Tab focus inside the
+  // dialog (focus trap) so keyboard users never land on content covered by
+  // the backdrop.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab" || dom.qrModal.classList.contains("hidden")) return;
+    const focusables = dom.qrModal.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
+
   // Closing the QR modal hides it locally; if it was opened by the remote
   // presentation-QR toggle (admin view), also tell the server so the modal
   // closes in every connected presentation window.
