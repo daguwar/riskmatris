@@ -23,7 +23,7 @@ from riskmatris.ws_actions import (
     send_ws_error,
 )
 from riskmatris.ws_manager import ConnectionInfo
-from riskmatris.ws_messages import format_validation_error, parse_ws_message
+from riskmatris.ws_messages import parse_ws_message
 
 router = APIRouter()
 
@@ -210,26 +210,26 @@ async def websocket_endpoint(
                     client_id,
                     sid,
                 )
-                await send_ws_error(websocket, "För många meddelanden – sakta ner takten.")
+                await send_ws_error(websocket, "too_many_messages")
                 continue
 
             if len(raw.encode("utf-8")) > WS_MAX_MESSAGE_BYTES:
-                await send_ws_error(websocket, "Meddelandet är för stort.")
+                await send_ws_error(websocket, "message_too_large")
                 continue
 
             try:
                 msg = json.loads(raw)
             except Exception:
-                await send_ws_error(websocket, "Ogiltigt JSON-meddelande.")
+                await send_ws_error(websocket, "invalid_json")
                 continue
 
             if not isinstance(msg, dict):
-                await send_ws_error(websocket, "Meddelandet måste vara ett JSON-objekt.")
+                await send_ws_error(websocket, "not_json_object")
                 continue
 
             action = msg.get("action")
             if not isinstance(action, str):
-                await send_ws_error(websocket, "Saknar giltig 'action'.")
+                await send_ws_error(websocket, "missing_action")
                 continue
 
             # Validate the message shape against the Pydantic model for this
@@ -237,8 +237,8 @@ async def websocket_endpoint(
             # defensively, but this gives early, clear validation errors.
             try:
                 parse_ws_message(action, msg)
-            except ValidationError as exc:
-                await send_ws_error(websocket, format_validation_error(exc))
+            except ValidationError:
+                await send_ws_error(websocket, "validation_error")
                 continue
 
             active_num = session["active_risk_number"]
@@ -256,10 +256,10 @@ async def websocket_endpoint(
                 if admin_handler:
                     should_broadcast = await admin_handler(session, active_risk, msg, conn, state)
                 else:
-                    await send_ws_error(websocket, f"Okänd admin-action: {action}")
+                    await send_ws_error(websocket, "unknown_admin_action")
                     should_broadcast = False
             else:
-                await send_ws_error(websocket, "Du saknar behörighet för denna åtgärd.")
+                await send_ws_error(websocket, "no_permission")
                 should_broadcast = False
 
             if should_broadcast:

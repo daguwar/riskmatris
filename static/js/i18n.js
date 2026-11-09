@@ -21,6 +21,10 @@ export function getLang() {
   return lang;
 }
 
+export function has(key) {
+  return Object.prototype.hasOwnProperty.call(dict, key);
+}
+
 export function t(key, params) {
   let entry = Object.prototype.hasOwnProperty.call(dict, key) ? dict[key] : key;
   if (params && typeof params.count === "number" && entry && typeof entry === "object" && !Array.isArray(entry)) {

@@ -59,11 +59,11 @@ class TestParseWsMessage:
     def test_unknown_action_returns_none(self):
         assert parse_ws_message("not_an_action", {"action": "not_an_action"}) is None
 
-    def test_format_validation_error_mentions_field(self):
+    def test_format_validation_error_returns_code(self):
+        # The server sends error codes; the client translates them (i18n).
+        # Field-level detail stays server-side.
         try:
             parse_ws_message("vote", {"action": "vote", "probability": 9, "consequence": 2})
             raise AssertionError("expected ValidationError")
         except ValidationError as exc:
-            text = format_validation_error(exc)
-            assert "probability" in text
-            assert text.startswith("Ogiltigt meddelande")
+            assert format_validation_error(exc) == "validation_error"

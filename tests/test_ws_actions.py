@@ -103,7 +103,7 @@ async def test_handle_vote_invalid_bounds(test_session, mock_conn):
 
     assert result is False
     mock_conn.websocket.send_json.assert_awaited_once_with(
-        {"type": "error", "message": "Sannolikhet och Konsekvens måste vara heltal 1–4."}
+        {"type": "error", "message": "invalid_values"}  # error code, client translates (i18n)
     )
 
 
@@ -116,7 +116,7 @@ async def test_handle_vote_locked_risk(test_session, mock_conn):
 
     assert result is False
     mock_conn.websocket.send_json.assert_awaited_once_with(
-        {"type": "error", "message": "Denna risk är låst – röstning ej möjlig."}
+        {"type": "error", "message": "risk_locked"}  # error code, client translates (i18n)
     )
 
 

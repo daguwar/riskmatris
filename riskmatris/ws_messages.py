@@ -120,8 +120,5 @@ def parse_ws_message(action: str, raw: dict) -> BaseModel | None:
 
 def format_validation_error(exc: ValidationError) -> str:
     """Renders a ValidationError as a compact, human-readable string."""
-    parts = []
-    for err in exc.errors():
-        loc = ".".join(str(x) for x in err["loc"] if x != "action")
-        parts.append(f"{loc or 'meddelande'}: {err['msg']}")
-    return "Ogiltigt meddelande – " + "; ".join(parts)
+    # The client translates the code; field-level detail stays server-side.
+    return "validation_error"

@@ -13,13 +13,12 @@ from pydantic import ValidationError
 import riskmatris.config as config
 import riskmatris.db as db
 from riskmatris.config import (
-    CONSEQUENCE_LABELS,
     MAX_CLIENT_ID_LENGTH,
     MAX_QR_URL_LENGTH,
     MAX_TITLE_LENGTH,
-    PROBABILITY_LABELS,
     logger,
 )
+from riskmatris.i18n import SUPPORTED_LANGS, csv_texts, level_key_for_score
 from riskmatris.models import (
     ConsumeHandoverRequest,
     CreateSessionRequest,
@@ -53,7 +52,7 @@ def _enforce_read_rate_limit(request: Request, state: AppState) -> None:
     client_ip = request.client.host if request.client else "unknown"
     if not state.check_session_read_rate(client_ip):
         logger.warning("Read rate limit hit for client %s on %s", client_ip, request.url.path)
-        raise HTTPException(status_code=429, detail="För många förfrågningar. Försök igen om en stund.")
+        raise HTTPException(status_code=429, detail="too_many_requests")
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -77,7 +76,7 @@ async def create_session(
     client_ip = request.client.host if request.client else "unknown"
     if not state.check_session_create_rate(client_ip):
         logger.warning("Session creation rate limit hit for client %s", client_ip)
-        raise HTTPException(status_code=429, detail="För många sessioner skapade. Försök igen om en stund.")
+        raise HTTPException(status_code=429, detail="too_many_sessions")
     await state.cleanup_expired_sessions_async()
     session_id = generate_session_id(state.sessions)
     admin_token = secrets.token_urlsafe(24)
@@ -119,7 +118,7 @@ async def get_session_info(
     sid = session_id.strip().upper()
     session = state.sessions.get(sid)
     if not session:
-        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+        raise HTTPException(status_code=404, detail="session_not_found")
     # Only the X-Admin-Token header is accepted – a token in the query string
     # would leak into proxy logs, browser history and the Referer header
     token = x_admin_token
@@ -150,9 +149,9 @@ async def get_ws_ticket(
     sid = session_id.strip().upper()
     session = state.sessions.get(sid)
     if not session:
-        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+        raise HTTPException(status_code=404, detail="session_not_found")
     if not x_admin_token or not secrets.compare_digest(x_admin_token, session["admin_token"]):
-        raise HTTPException(status_code=401, detail="Ogiltig administratörs-token.")
+        raise HTTPException(status_code=401, detail="invalid_admin_token")
     return {"ticket": state.create_ws_ticket(sid), "expires_in": config.WS_TICKET_TTL_SECONDS}
 
 
@@ -169,9 +168,9 @@ async def create_admin_handover(
     sid = session_id.strip().upper()
     session = state.sessions.get(sid)
     if not session:
-        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+        raise HTTPException(status_code=404, detail="session_not_found")
     if not x_admin_token or not secrets.compare_digest(x_admin_token, session["admin_token"]):
-        raise HTTPException(status_code=401, detail="Ogiltig administratörs-token.")
+        raise HTTPException(status_code=401, detail="invalid_admin_token")
     return {"ticket": state.create_handover_token(sid), "expires_in": config.ADMIN_HANDOVER_TTL_SECONDS}
 
 
@@ -191,9 +190,9 @@ async def consume_handover(
     sid = session_id.strip().upper()
     session = state.sessions.get(sid)
     if not session:
-        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+        raise HTTPException(status_code=404, detail="session_not_found")
     if not state.consume_handover_token(req.token, sid):
-        raise HTTPException(status_code=401, detail="Ogiltig eller utgången överlämningskod.")
+        raise HTTPException(status_code=401, detail="invalid_handover")
     return {"admin_token": session["admin_token"]}
 
 
@@ -207,11 +206,11 @@ async def get_session_qr_svg(
     _enforce_read_rate_limit(request, state)
     sid = session_id.strip().upper()
     if sid not in state.sessions:
-        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+        raise HTTPException(status_code=404, detail="session_not_found")
     # Cap the URL: a huge value would produce an enormous QR code (CPU/memory)
     # in a fully public endpoint
     if len(url) > MAX_QR_URL_LENGTH:
-        raise HTTPException(status_code=400, detail="URL:en är för lång.")
+        raise HTTPException(status_code=400, detail="url_too_long")
     try:
         import qrcode
         import qrcode.image.svg
@@ -251,7 +250,7 @@ async def export_session_snapshot(
     sid = session_id.strip().upper()
     session = state.sessions.get(sid)
     if not session:
-        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+        raise HTTPException(status_code=404, detail="session_not_found")
     payload = json.dumps(build_snapshot(session), ensure_ascii=False)
     return Response(
         content=payload,
@@ -274,18 +273,18 @@ async def import_session_snapshot(
     """
     client_ip = request.client.host if request.client else "unknown"
     if not state.check_session_create_rate(client_ip):
-        raise HTTPException(status_code=429, detail="För många sessioner skapade. Försök igen om en stund.")
+        raise HTTPException(status_code=429, detail="too_many_sessions")
     body = await request.body()
     if len(body) > config.MAX_SNAPSHOT_BYTES:
-        raise HTTPException(status_code=413, detail="Snapshot-filen är för stor.")
+        raise HTTPException(status_code=413, detail="snapshot_too_large")
     try:
         data = json.loads(body)
     except Exception:
-        raise HTTPException(status_code=400, detail="Ogiltig JSON i snapshot-filen.")
+        raise HTTPException(status_code=400, detail="invalid_snapshot_json")
     try:
         snap = SnapshotFile.model_validate(data)
-    except ValidationError as exc:
-        raise HTTPException(status_code=400, detail=f"Ogiltig snapshot-fil: {exc.errors()[0]['msg']}")
+    except ValidationError:
+        raise HTTPException(status_code=400, detail="invalid_snapshot")
 
     session_id = generate_session_id(state.sessions)
     admin_token = secrets.token_urlsafe(24)
@@ -319,13 +318,17 @@ async def import_session_snapshot(
 async def export_session_csv(
     session_id: str,
     request: Request,
+    lang: str = Query(default="sv"),
     state: AppState = Depends(get_app_state),
 ):
     _enforce_read_rate_limit(request, state)
     sid = session_id.strip().upper()
     session = state.sessions.get(sid)
     if not session:
-        raise HTTPException(status_code=404, detail="Sessionen hittades inte.")
+        raise HTTPException(status_code=404, detail="session_not_found")
+    if lang not in SUPPORTED_LANGS:
+        raise HTTPException(status_code=400, detail="invalid_lang")
+    texts = csv_texts(lang)
 
     threshold = get_session_threshold(session)
     output = io.StringIO()
@@ -339,36 +342,24 @@ async def export_session_csv(
         # evaluated as a formula when the file is opened in Excel/LibreOffice.
         writer.writerow([sanitize_csv_cell(c) for c in cells])
 
-    write_row(
-        [
-            "Risk #",
-            "Beskrivning / Etikett",
-            "Status",
-            "Antal röster",
-            "Medel Sannolikhet",
-            "Medel Konsekvens",
-            "Sannolikhet (1-4)",
-            "Sannolikhet (Text)",
-            "Konsekvens (1-4)",
-            "Konsekvens (Text)",
-            "Riskvärde (1-16)",
-            "Risknivå",
-            "Röstfördelning (Sannolikhet x Konsekvens: Antal)",
-        ]
-    )
+    write_row(list(texts["headers"]))
 
     for r in session["risks"]:
         stats = compute_risk_stats(r, threshold)
         prob = stats["effective_probability"]
         cons = stats["effective_consequence"]
         score = stats["score"]
-        level = stats["level"] or ""
-        status_str = "Låst i sammanställning" if r["locked"] else ("Öppen / Visad" if stats["revealed"] else "Ej visad")
+        level = texts["levels"][level_key_for_score(score)] if score else ""
+        status_str = (
+            texts["status_locked"]
+            if r["locked"]
+            else (texts["status_open"] if stats["revealed"] else texts["status_hidden"])
+        )
 
         dist_parts = []
         for cell_key, count in sorted(stats["cell_counts"].items()):
             sp, sc = cell_key.split("_")
-            dist_parts.append(f"S{sp}xK{sc}: {count} st")
+            dist_parts.append(texts["distribution"].format(p=sp, c=sc, count=count))
 
         write_row(
             [
@@ -379,9 +370,9 @@ async def export_session_csv(
                 str(stats["avg_probability"]).replace(".", ",") if stats["avg_probability"] is not None else "",
                 str(stats["avg_consequence"]).replace(".", ",") if stats["avg_consequence"] is not None else "",
                 prob or "",
-                PROBABILITY_LABELS.get(prob, "") if prob else "",
+                texts["prob_labels"].get(prob, "") if prob else "",
                 cons or "",
-                CONSEQUENCE_LABELS.get(cons, "") if cons else "",
+                texts["cons_labels"].get(cons, "") if cons else "",
                 score or "",
                 level,
                 ", ".join(dist_parts),

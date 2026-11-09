@@ -1,5 +1,5 @@
 import { dom } from "./dom.js";
-import { t } from "./i18n.js";
+import { has, t } from "./i18n.js";
 import { exportSummaryMatrixAsPng } from "./export-png.js";
 import { renderAdminVotingControls, renderVotingControls } from "./render/voting.js";
 import { state } from "./state.js";
@@ -23,7 +23,11 @@ import { connectWebSocket, sendWsAction } from "./ws.js";
 async function readErrorDetail(res, fallback) {
   try {
     const data = await res.json();
-    if (data && typeof data.detail === "string" && data.detail) return data.detail;
+    if (data && typeof data.detail === "string" && data.detail) {
+      // The server sends error codes – translate them; pass through anything else
+      const key = `server.${data.detail}`;
+      return has(key) ? t(key) : data.detail;
+    }
   } catch (_) {}
   return `${fallback} (HTTP ${res.status})`;
 }

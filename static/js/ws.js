@@ -1,4 +1,5 @@
 import { dom } from "./dom.js";
+import { has, t } from "./i18n.js";
 import { state } from "./state.js";
 import { getAdminToken, getClientId } from "./utils.js";
 
@@ -14,7 +15,9 @@ export function showWsError(message) {
     if (main) main.insertBefore(banner, main.firstChild);
     else document.body.appendChild(banner);
   }
-  banner.textContent = message;
+  // The server sends error codes – translate them; pass through anything else
+  const key = `server.${message}`;
+  banner.textContent = has(key) ? t(key) : message;
   banner.classList.remove("hidden");
   if (wsErrorTimer) clearTimeout(wsErrorTimer);
   wsErrorTimer = setTimeout(() => banner.classList.add("hidden"), 4000);

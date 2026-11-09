@@ -47,10 +47,10 @@ async def handle_vote(
     prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4)
     cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=4)
     if prob is None or cons is None:
-        await send_ws_error(conn.websocket, "Sannolikhet och Konsekvens måste vara heltal 1–4.")
+        await send_ws_error(conn.websocket, "invalid_values")
         return False
     if active_risk["locked"]:
-        await send_ws_error(conn.websocket, "Denna risk är låst – röstning ej möjlig.")
+        await send_ws_error(conn.websocket, "risk_locked")
         return False
 
     active_risk["votes"][conn.client_id] = {
@@ -104,7 +104,7 @@ async def handle_set_label(
     active_num = session["active_risk_number"]
     risk_num = _safe_int(msg, "number", active_num, min_val=1, max_val=9999)
     if risk_num is None:
-        await send_ws_error(conn.websocket, "Ogiltigt risknummer.")
+        await send_ws_error(conn.websocket, "invalid_risk_number")
         return False
     label = sanitize_user_text(str(msg.get("label", "")), MAX_LABEL_LENGTH)
     for r in session["risks"]:
@@ -128,7 +128,7 @@ async def handle_set_title(
         session["title"] = title
         await db.save_session_to_db_async(session)
         return True
-    await send_ws_error(conn.websocket, "Titel får inte vara tom.")
+    await send_ws_error(conn.websocket, "empty_title")
     return False
 
 
@@ -142,7 +142,7 @@ async def handle_set_threshold(
     """Sets the vote threshold for automatic revealing."""
     new_t = _safe_int(msg, "threshold", 4, min_val=1, max_val=50)
     if new_t is None:
-        await send_ws_error(conn.websocket, "Tröskelvärdet måste vara ett heltal 1–50.")
+        await send_ws_error(conn.websocket, "invalid_threshold")
         return False
     session["threshold"] = new_t
     eff_thresh = get_session_threshold(session)
@@ -175,7 +175,7 @@ async def handle_lock_risk(
         else (stats["effective_consequence"] or 2)
     )
     if prob is None or cons is None:
-        await send_ws_error(conn.websocket, "Sannolikhet och Konsekvens måste vara heltal 1–4.")
+        await send_ws_error(conn.websocket, "invalid_values")
         return False
 
     active_risk["final_probability"] = prob
@@ -218,7 +218,7 @@ async def handle_set_final_cell(
     prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4)
     cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=4)
     if prob is None or cons is None:
-        await send_ws_error(conn.websocket, "Sannolikhet och Konsekvens måste vara heltal 1–4.")
+        await send_ws_error(conn.websocket, "invalid_values")
         return False
     active_risk["final_probability"] = prob
     active_risk["final_consequence"] = cons
@@ -271,13 +271,13 @@ async def handle_select_risk(
     """Switches the active risk to the specified number."""
     target_num = _safe_int(msg, "number", 1, min_val=1, max_val=9999)
     if target_num is None:
-        await send_ws_error(conn.websocket, "Ogiltigt risknummer.")
+        await send_ws_error(conn.websocket, "invalid_risk_number")
         return False
     if any(r["number"] == target_num for r in session["risks"]):
         session["active_risk_number"] = target_num
         await db.save_session_to_db_async(session)
         return True
-    await send_ws_error(conn.websocket, f"Risk #{target_num} finns inte.")
+    await send_ws_error(conn.websocket, "risk_not_found")
     return False
 
 
@@ -309,7 +309,7 @@ async def handle_delete_risk(
     active_num = session["active_risk_number"]
     target_num = _safe_int(msg, "number", active_num, min_val=1, max_val=9999)
     if target_num is None:
-        await send_ws_error(conn.websocket, "Ogiltigt risknummer.")
+        await send_ws_error(conn.websocket, "invalid_risk_number")
         return False
     if len(session["risks"]) > 1:
         session["risks"] = [r for r in session["risks"] if r["number"] != target_num]
@@ -317,7 +317,7 @@ async def handle_delete_risk(
             session["active_risk_number"] = session["risks"][-1]["number"]
         await db.save_session_to_db_async(session)
         return True
-    await send_ws_error(conn.websocket, "Kan inte ta bort den enda risken.")
+    await send_ws_error(conn.websocket, "cannot_delete_only_risk")
     return False
 
 
