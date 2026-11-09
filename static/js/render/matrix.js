@@ -126,7 +126,13 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
         cell.tabIndex = 0;
         cell.setAttribute("role", "button");
         const votesText = cellVotes > 0 ? `, ${cellVotes} ${cellVotes === 1 ? "röst" : "röster"}` : "";
-        cell.setAttribute("aria-label", `Riskvärde ${meta.score} (${meta.level})${votesText} – ${actionLabel}`);
+        const targetText = isEffectiveTarget
+          ? `, ${risk.locked ? `Låst #${risk.number}` : risk.final_probability ? `Vald #${risk.number}` : `Förslag #${risk.number}`}`
+          : "";
+        cell.setAttribute(
+          "aria-label",
+          `Riskvärde ${meta.score} (${meta.level})${votesText}${targetText} – ${actionLabel}`
+        );
         cell.addEventListener("click", () => {
           onSetFinalCell(prob, cons, risk.locked);
         });
