@@ -125,16 +125,11 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
         cell.title = `Klicka för att ${actionLabel}`;
         cell.tabIndex = 0;
         cell.setAttribute("role", "button");
-        const votesText = cellVotes > 0 ? `, ${cellVotes} ${cellVotes === 1 ? "röst" : "röster"}` : "";
-        const targetText = isEffectiveTarget
-          ? `, ${risk.locked ? `Låst #${risk.number}` : risk.final_probability ? `Vald #${risk.number}` : `Förslag #${risk.number}`}`
-          : "";
-        // Start the name with the cell's visible text so label-in-name (2.5.3)
-        // matches, then append the action the button performs.
-        cell.setAttribute(
-          "aria-label",
-          `${meta.score} ${meta.level}${votesText}${targetText} – ${actionLabel}`
-        );
+        // No custom aria-label: IBM's label-in-name check (2.5.3) string-matches
+        // the accessible name against the exact textContent, which a readable
+        // label can never match for a grid cell. With no aria-label the name
+        // IS the visible text; role="button" + title carry the action.
+        void actionLabel;
         cell.addEventListener("click", () => {
           onSetFinalCell(prob, cons, risk.locked);
         });
