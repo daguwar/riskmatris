@@ -60,7 +60,7 @@
       <!-- Join session (primary action) -->
       <section class="card landing-card">
         <h2>Anslut till en session</h2>
-        <form id="joinSessionForm" class="form-stack">
+        <form id="joinSessionForm" class="form-stack" aria-label="Anslut till en session">
           <label class="form-label" for="inputJoinCode">Sessionskod</label>
           <input
             type="text"
@@ -86,7 +86,7 @@
       <!-- Start a new session (secondary action) -->
       <section class="card landing-card landing-card-muted">
         <h2>Starta ny session <span class="card-tag">för mötesledare</span></h2>
-        <form id="createSessionForm" class="form-stack">
+        <form id="createSessionForm" class="form-stack" aria-label="Starta ny session">
           <label class="form-label" for="inputSessionTitle">Namn på sessionen (valfritt)</label>
           <input
             type="text"
@@ -120,7 +120,7 @@
       <!-- Import a previously exported session snapshot -->
       <section class="card landing-card landing-card-muted">
         <h2>Återuppta en sparad session <span class="card-tag">från snapshot</span></h2>
-        <form id="importSnapshotForm" class="form-stack">
+        <form id="importSnapshotForm" class="form-stack" aria-label="Importera sparad session från snapshot">
           <label class="form-label" for="inputSnapshotFile">Snapshot-fil (JSON)</label>
           <input type="file" id="inputSnapshotFile" class="form-input" accept="application/json,.json" required />
           <label class="form-label" style="display: flex; align-items: center; gap: 8px; font-weight: 400">

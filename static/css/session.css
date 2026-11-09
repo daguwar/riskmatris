@@ -447,7 +447,6 @@
 }
 
 .risk-label-input:focus {
-  outline: none;
   border-color: var(--accent);
   background: var(--surface);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
