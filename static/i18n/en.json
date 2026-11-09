@@ -248,5 +248,7 @@
   "server.empty_title": "The title must not be empty.",
   "server.invalid_threshold": "The threshold must be an integer 1–50.",
   "server.too_many_messages": "Too many messages – please slow down.",
-  "server.invalid_lang": "Invalid language."
+  "server.invalid_lang": "Invalid language.",
+  "server.max_risks_reached": "The maximum number of risks per session has been reached.",
+  "server.max_votes_reached": "The maximum number of votes for this risk has been reached."
 }

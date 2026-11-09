@@ -239,19 +239,24 @@ async def get_session_qr_svg(
 async def export_session_snapshot(
     session_id: str,
     request: Request,
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
     state: AppState = Depends(get_app_state),
 ):
-    """Exports the full session state as a JSON snapshot (issue #15).
+    """Exports the session state as a JSON snapshot (issue #15).
 
-    Same visibility as the CSV export: anyone with the session code. The file
-    never contains the admin token.
+    Anyone with the session code can export the structure (risks, labels,
+    locked placements) – but raw votes (with client IDs) are only included for
+    authenticated admins, so an active session's individual votes are never
+    exposed publicly (audit 2026-11 SEC-01). The file never contains the
+    admin token.
     """
     _enforce_read_rate_limit(request, state)
     sid = session_id.strip().upper()
     session = state.sessions.get(sid)
     if not session:
         raise HTTPException(status_code=404, detail="session_not_found")
-    payload = json.dumps(build_snapshot(session), ensure_ascii=False)
+    is_admin = bool(x_admin_token and secrets.compare_digest(x_admin_token, session["admin_token"]))
+    payload = json.dumps(build_snapshot(session, include_votes=is_admin), ensure_ascii=False)
     return Response(
         content=payload,
         media_type="application/json",

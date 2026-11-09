@@ -66,6 +66,14 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "Too many messages – please slow down.",
     },
     "invalid_lang": {"sv": "Ogiltigt språk.", "en": "Invalid language."},
+    "max_risks_reached": {
+        "sv": "Max antal risker per session har nåtts.",
+        "en": "The maximum number of risks per session has been reached.",
+    },
+    "max_votes_reached": {
+        "sv": "Max antal röster för denna risk har nåtts.",
+        "en": "The maximum number of votes for this risk has been reached.",
+    },
 }
 
 

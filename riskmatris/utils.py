@@ -30,7 +30,9 @@ def sanitize_csv_cell(value: Any) -> str:
     is not displayed by the spreadsheet application.
     """
     text = "" if value is None else str(value)
-    if text[:1] in CSV_FORMULA_PREFIXES:
+    # Spreadsheet apps ignore leading whitespace before evaluating a formula
+    # prefix, so inspect the first non-space character (audit 2026-11 SEC-05)
+    if text.lstrip()[:1] in CSV_FORMULA_PREFIXES:
         return "'" + text
     return text
 

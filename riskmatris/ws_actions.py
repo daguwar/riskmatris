@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from fastapi import WebSocket
 
+import riskmatris.config as config
 import riskmatris.db as db
 from riskmatris.config import MAX_LABEL_LENGTH, MAX_TITLE_LENGTH, logger
 from riskmatris.session import compute_risk_stats, create_new_risk, get_session_threshold
@@ -53,6 +54,12 @@ async def handle_vote(
         await send_ws_error(conn.websocket, "risk_locked")
         return False
 
+    # Cap the vote collection per risk (audit 2026-11 SEC-03): without this,
+    # sequential reconnects with fresh client_ids could inflate memory unboundedly
+    max_votes = getattr(config, "MAX_VOTES_PER_RISK", 500)
+    if conn.client_id not in active_risk["votes"] and len(active_risk["votes"]) >= max_votes:
+        await send_ws_error(conn.websocket, "max_votes_reached")
+        return False
     active_risk["votes"][conn.client_id] = {
         "probability": prob,
         "consequence": cons,
@@ -244,6 +251,13 @@ async def handle_next_risk(
         active_risk["final_consequence"] = stats["effective_consequence"]
         active_risk["revealed"] = True
         active_risk["locked"] = True
+
+    # Cap the number of risks per session (audit 2026-11 SEC-02): bounds memory,
+    # broadcast payload size and DB write amplification
+    max_risks = getattr(config, "MAX_RISKS_PER_SESSION", 100)
+    if len(session["risks"]) >= max_risks:
+        await send_ws_error(conn.websocket, "max_risks_reached")
+        return False
 
     max_num = max(r["number"] for r in session["risks"])
     next_num = max_num + 1
