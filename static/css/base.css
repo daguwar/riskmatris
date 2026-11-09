@@ -9,7 +9,8 @@
   --text: #0f172a;
   /* WCAG AA on the #f4f6fa background: #64748b is only 4.39:1 – these pass 4.5:1+ */
   --text-muted: #5b6b84;
-  --text-faint: #6b7280;
+  /* #6b7280 measured 4.46:1 on #f4f6fa – needs to be a bit darker for 4.5:1 */
+  --text-faint: #646e80;
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
   --accent: #4f46e5;
@@ -189,6 +190,21 @@ button {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* Explicit, strong focus indicator for the main interactive components
+   (WCAG 2.4.7) – some audit tools don't recognize the generic :focus rule */
+.btn:focus,
+.theme-toggle:focus,
+.tab-btn:focus,
+.vote-option-btn:focus,
+.risk-list-item:focus,
+.session-code-pill:focus,
+.btn-close-modal:focus,
+.qr-preview-wrapper:focus,
+.summary-risk-chip:focus {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* WCAG 2.4.1 / 2.4.7 helpers */
