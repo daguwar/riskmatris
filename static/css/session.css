@@ -73,7 +73,7 @@
   margin-bottom: 14px;
 }
 
-.summary-table-head h3 {
+.summary-table-head h2 {
   margin: 0;
 }
 
@@ -175,7 +175,8 @@
 }
 
 .risk-list-item.active .risk-item-num {
-  color: rgba(255, 255, 255, 0.85);
+  /* WCAG 1.4.3: 0.85 white on the accent fill is only ~4.3:1 */
+  color: #fff;
 }
 
 .risk-item-label {
@@ -191,7 +192,7 @@
 }
 
 .risk-list-item.active .small-muted {
-  color: rgba(255, 255, 255, 0.75);
+  color: #fff;
 }
 
 .mini-score-pill {

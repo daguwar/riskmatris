@@ -174,7 +174,7 @@
   color: var(--text-muted);
 }
 
-.session-code-pill strong {
+.session-code-pill .code-value {
   font-family: var(--font-mono);
   font-size: 0.95rem;
   letter-spacing: 0.12em;

@@ -42,7 +42,7 @@
         </div>
         <button type="button" class="session-code-pill" id="topSessionCodeBox" title="Visa QR-kod och delningslänk">
           <span class="code-label">Kod</span>
-          <strong id="headerSessionCode">------</strong>
+          <span class="code-value" id="headerSessionCode">------</span>
         </button>
       </div>
       <button type="button" class="theme-toggle" id="btnThemeToggle" title="Växla mörkt/ljust tema"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg><span class="visually-hidden">Växla färgtema</span></button>
@@ -320,7 +320,7 @@
           <div class="card matrix-section-card">
             <div class="matrix-card-top">
               <div>
-                <h3 id="activeMatrixHeading">Resultatmatris för Risk #1</h3>
+                <h2 id="activeMatrixHeading">Resultatmatris för Risk #1</h2>
                 <p class="matrix-subtitle" id="activeMatrixSubtitle">
                   Resultatet visas automatiskt när tillräckligt många röster har kommit in.
                 </p>
@@ -382,7 +382,7 @@
           <div class="card matrix-section-card">
             <div class="matrix-card-top">
               <div>
-                <h3>Sammanställningsmatris</h3>
+                <h2>Sammanställningsmatris</h2>
                 <p class="matrix-subtitle">
                   Alla bedömda risker (#1, #2, #3...) i samma 4&times;4-matris. Klicka på en riskbricka för att visa dess röstdetaljer.
                 </p>
@@ -424,7 +424,7 @@
               </div>
             </div>
             <div class="admin-toolbar-group hidden" id="adminSettingsCard">
-              <span class="small-caps">Tröskel</span>
+              <label class="small-caps" for="adminThresholdInput">Tröskel</label>
               <div class="threshold-control-row">
                 <input type="number" id="adminThresholdInput" class="form-input form-input-sm" min="1" max="50" value="4" />
                 <span class="small-muted" id="thresholdInfo"></span>
@@ -568,7 +568,7 @@
         <!-- Table overview of all risks + export -->
         <div class="card summary-table-card">
           <div class="summary-table-head">
-            <h3>Tabellöversikt över risker</h3>
+            <h2>Tabellöversikt över risker</h2>
             <div class="export-buttons-row">
               <button type="button" class="btn btn-primary btn-sm" id="btnExportPng">
                 PNG-bild (PowerPoint)
