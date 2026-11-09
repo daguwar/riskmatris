@@ -4,15 +4,23 @@
 
 import { initDom } from "./js/dom.js";
 import { bindLandingEvents, bindSessionEvents, consumeHandoverToken, enterSession, renderRecentSessions } from "./js/events.js";
+import { initI18n } from "./js/i18n.js";
 import { state } from "./js/state.js";
 import { initTheme } from "./js/theme.js";
+import { handleSessionState } from "./js/views.js";
 
 async function init() {
+  await initI18n();
   initDom();
   initTheme();
   bindLandingEvents();
   bindSessionEvents();
   renderRecentSessions();
+  // Re-render dynamic content when the language changes
+  window.addEventListener("langchange", () => {
+    if (state.sessionState) handleSessionState(state.sessionState);
+    renderRecentSessions();
+  });
 
   const pathMatch = window.location.pathname.match(/^\/s\/([A-Za-z0-9]+)/);
   if (pathMatch) {

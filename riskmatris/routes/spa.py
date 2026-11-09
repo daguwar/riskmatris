@@ -25,7 +25,7 @@ def get_static_version() -> str:
     hasher = hashlib.sha256()
     for root, _, files in sorted(os.walk("static")):
         for name in sorted(files):
-            if name.endswith((".js", ".css")):
+            if name.endswith((".js", ".css", ".json")):
                 file_path = os.path.join(root, name)
                 with open(file_path, "rb") as f:
                     hasher.update(f.read())
