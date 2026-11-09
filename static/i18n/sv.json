@@ -132,5 +132,7 @@
   "modal.handoverCopy": "Kopiera länk",
   "modal.customHostLabel": "Nätverksadress i QR-koden (ändra om servern nås via ett annat domännamn/IP):",
   "modal.customHostApply": "Uppdatera QR",
-  "landing.divider": "eller"
+  "landing.divider": "eller",
+  "nav.themeToggleToLight": "Växla till ljust tema",
+  "nav.themeToggleToDark": "Växla till mörkt tema"
 }

@@ -132,5 +132,7 @@
   "modal.handoverCopy": "Copy link",
   "modal.customHostLabel": "Network address in the QR code (change if the server is reached via another domain name/IP):",
   "modal.customHostApply": "Update QR",
-  "landing.divider": "or"
+  "landing.divider": "or",
+  "nav.themeToggleToLight": "Switch to light theme",
+  "nav.themeToggleToDark": "Switch to dark theme"
 }

@@ -4,6 +4,7 @@
  */
 
 import { dom } from "./dom.js";
+import { t } from "./i18n.js";
 
 const THEME_KEY = "riskmatris_theme";
 
@@ -17,9 +18,10 @@ const ICONS = {
 export function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   if (dom.btnThemeToggle) {
-    dom.btnThemeToggle.innerHTML = ICONS[theme] || ICONS.light;
-    dom.btnThemeToggle.title = theme === "dark" ? "Växla till ljust tema" : "Växla till mörkt tema";
-    dom.btnThemeToggle.setAttribute("aria-label", dom.btnThemeToggle.title);
+    const label = t(theme === "dark" ? "nav.themeToggleToLight" : "nav.themeToggleToDark");
+    dom.btnThemeToggle.innerHTML = (ICONS[theme] || ICONS.light) + `<span class="visually-hidden">${label}</span>`;
+    dom.btnThemeToggle.title = label;
+    dom.btnThemeToggle.setAttribute("aria-label", label);
   }
 }
 
@@ -41,5 +43,10 @@ export function initTheme() {
     if (!localStorage.getItem(THEME_KEY)) {
       applyTheme(e.matches ? "dark" : "light");
     }
+  });
+
+  // Re-translate the toggle when the language changes
+  window.addEventListener("langchange", () => {
+    applyTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
   });
 }
