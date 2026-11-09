@@ -1,5 +1,5 @@
 import { dom } from "./dom.js";
-import { has, t } from "./i18n.js";
+import { getLang, has, t } from "./i18n.js";
 import { exportSummaryMatrixAsPng } from "./export-png.js";
 import { renderAdminVotingControls, renderVotingControls } from "./render/voting.js";
 import { state } from "./state.js";
@@ -482,7 +482,7 @@ export function bindSessionEvents() {
   // Export CSV
   document.getElementById("btnExportCsv").addEventListener("click", () => {
     if (!state.currentSessionId) return;
-    window.location.href = `/api/sessions/${state.currentSessionId}/export.csv`;
+    window.location.href = `/api/sessions/${state.currentSessionId}/export.csv?lang=${getLang()}`;
   });
 
   // Export PNG

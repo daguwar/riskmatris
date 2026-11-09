@@ -96,7 +96,7 @@
   "admin.labelLabel": "Label for risk #",
   "admin.labelPlaceholder": "Optional label (e.g. from PowerPoint)...",
   "admin.labelHint": "The text can be retrieved by anyone with the session code. Do not enter sensitive data.",
-  "admin.selfVote": "Vote yourself on this risk",
+  "admin.selfVote": "Cast your own vote on this risk",
   "admin.reset": "Reset",
   "admin.resetTitle": "Reset the votes for this risk",
   "admin.lock": "Lock placement",
