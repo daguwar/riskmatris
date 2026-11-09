@@ -137,20 +137,5 @@ MAX_CLIENT_ID_LENGTH = 64
 MAX_QR_URL_LENGTH = 1000
 MAX_SNAPSHOT_BYTES = _parse_env_int("RISKMATRIS_MAX_SNAPSHOT_BYTES", 1_000_000, min_value=1024, max_value=10_000_000)
 
-# ---------------------------------------------------------------------------
-# Risk labels (Swedish)
-# ---------------------------------------------------------------------------
-
-PROBABILITY_LABELS = {
-    1: "Osannolik",
-    2: "Möjlig",
-    3: "Sannolik",
-    4: "Mycket sannolik",
-}
-
-CONSEQUENCE_LABELS = {
-    1: "Försumbar",
-    2: "Måttlig",
-    3: "Allvarlig",
-    4: "Mycket allvarlig",
-}
+# Note: user-facing P/C and risk-level labels live in the i18n dictionaries
+# (static/i18n/*.json client-side, riskmatris/i18n.py for CSV) since issue #9.

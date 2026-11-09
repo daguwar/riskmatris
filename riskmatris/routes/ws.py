@@ -102,13 +102,13 @@ async def websocket_endpoint(
     # enumerable by scripted connects.
     if not state.check_session_read_rate(client_ip):
         logger.warning("WebSocket: rate limit hit for client %s (connect to session %s)", client_ip, sid)
-        await websocket.close(code=1013, reason="För många anslutningsförsök – försök igen om en stund")
+        await websocket.close(code=1013, reason="Too many connection attempts – try again later")
         return
 
     session = state.sessions.get(sid)
     if not session:
         logger.warning("WebSocket: session %s not found – connection denied", sid)
-        await websocket.close(code=4004, reason="Sessionen finns inte")
+        await websocket.close(code=4004, reason="Session not found")
         return
 
     # Cross-site WebSocket hijacking: a foreign Origin must never reach the
@@ -121,7 +121,7 @@ async def websocket_endpoint(
             origin,
             client_ip,
         )
-        await websocket.close(code=1008, reason="Origin är inte tillåten")
+        await websocket.close(code=1008, reason="Origin not allowed")
         return
 
     if state.manager.get_connection_count(sid) >= WS_MAX_CONNECTIONS_PER_SESSION:
@@ -131,7 +131,7 @@ async def websocket_endpoint(
             WS_MAX_CONNECTIONS_PER_SESSION,
             client_id,
         )
-        await websocket.close(code=1013, reason="Sessionsgränsen för anslutningar är nådd")
+        await websocket.close(code=1013, reason="Session connection limit reached")
         return
 
     # Per-IP and global connection caps: without
@@ -144,7 +144,7 @@ async def websocket_endpoint(
             per_ip_cap,
             client_ip,
         )
-        await websocket.close(code=1013, reason="För många anslutningar från denna adress")
+        await websocket.close(code=1013, reason="Too many connections from this address")
         return
     total_cap = getattr(config, "WS_MAX_CONNECTIONS_TOTAL", 1000)
     if state.manager.total_connection_count() >= total_cap:
@@ -153,7 +153,7 @@ async def websocket_endpoint(
             total_cap,
             client_ip,
         )
-        await websocket.close(code=1013, reason="Serverns totala anslutningsgräns är nådd")
+        await websocket.close(code=1013, reason="Global connection limit reached")
         return
 
     # Admins authenticate with a one-time ticket instead of the long-lived

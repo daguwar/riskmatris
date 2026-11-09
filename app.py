@@ -29,7 +29,6 @@ from riskmatris import app  # noqa: F401
 # of the test session (this bit MAX_SNAPSHOT_BYTES once, causing order-
 # dependent 413s in tests/test_snapshot.py).
 from riskmatris.config import (  # noqa: F401
-    CONSEQUENCE_LABELS,
     DB_PATH,
     ENABLE_DOCS,
     MAX_CLIENT_ID_LENGTH,
@@ -37,7 +36,6 @@ from riskmatris.config import (  # noqa: F401
     MAX_QR_URL_LENGTH,
     MAX_SNAPSHOT_BYTES,
     MAX_TITLE_LENGTH,
-    PROBABILITY_LABELS,
     SESSION_CLEANUP_INTERVAL,
     SESSION_CODE_LENGTH,
     SESSION_CREATE_LIMIT,
