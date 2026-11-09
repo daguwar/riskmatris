@@ -73,7 +73,7 @@
   margin-bottom: 14px;
 }
 
-.summary-table-head h3 {
+.summary-table-head h2 {
   margin: 0;
 }
 
@@ -153,12 +153,12 @@
 
 .risk-list-item:hover {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .risk-list-item.active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
   color: #fff;
 }
 
@@ -175,7 +175,8 @@
 }
 
 .risk-list-item.active .risk-item-num {
-  color: rgba(255, 255, 255, 0.85);
+  /* WCAG 1.4.3: 0.85 white on the accent fill is only ~4.3:1 */
+  color: #fff;
 }
 
 .risk-item-label {
@@ -191,7 +192,7 @@
 }
 
 .risk-list-item.active .small-muted {
-  color: rgba(255, 255, 255, 0.75);
+  color: #fff;
 }
 
 .mini-score-pill {
@@ -385,7 +386,7 @@
 .tab-btn.active .tab-count {
   background: var(--accent-soft);
   border-color: transparent;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* --------------------------------------------------------------------------
@@ -409,7 +410,7 @@
   font-family: var(--font-mono);
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-soft);
   border-radius: 999px;
   padding: 6px 13px;
@@ -447,7 +448,6 @@
 }
 
 .risk-label-input:focus {
-  outline: none;
   border-color: var(--accent);
   background: var(--surface);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);

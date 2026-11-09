@@ -22,6 +22,10 @@ export function renderActiveRiskHeader(risk, threshold, isAdmin) {
 
   const pct = threshold > 0 ? Math.min(100, Math.round((vCount / threshold) * 100)) : 100;
   dom.voteProgressBar.style.width = `${pct}%`;
+  // WCAG 1.3.1: expose the progress bar to assistive technology
+  dom.voteProgressBar.setAttribute("aria-valuemax", String(threshold));
+  dom.voteProgressBar.setAttribute("aria-valuenow", String(Math.min(vCount, threshold)));
+  dom.voteProgressBar.setAttribute("aria-valuetext", `${Math.min(vCount, threshold)} av ${threshold} svar`);
 
   if (isAdmin) {
     dom.btnRevealNow.classList.toggle("hidden", Boolean(risk.revealed));

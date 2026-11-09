@@ -57,7 +57,7 @@
 }
 
 .stat-chip-highlight .stat-label {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Empty state before the threshold is reached */
@@ -217,6 +217,15 @@
   transition: box-shadow 0.15s ease, transform 0.1s ease;
 }
 
+.matrix-cell.admin-clickable:focus {
+  outline: 3px solid #4f46e5;
+  outline-offset: -3px;
+}
+
+[data-theme="dark"] .matrix-cell.admin-clickable:focus {
+  outline-color: #818cf8;
+}
+
 .matrix-cell.admin-clickable:hover {
   box-shadow: 0 0 0 2px var(--accent);
   transform: translateY(-1px);
@@ -255,7 +264,7 @@
 }
 
 .cell-target-badge.badge-suggested {
-  background: var(--accent);
+  background: var(--accent-strong);
 }
 
 .cell-votes-area {
@@ -290,13 +299,20 @@
   padding: 2px 9px;
 }
 
+/* Dark mode: the pill stays light, so the inherited light level-text color
+   fails contrast (1.15:1) – use dark text on the light pill (WCAG 1.4.3) */
+[data-theme="dark"] .vote-count-pill {
+  color: #0f172a;
+}
+
 .cell-bottom-row {
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   text-align: center;
-  opacity: 0.75;
+  /* no opacity here: dimming the level text drops it below 4.5:1 on the
+     pastel cell backgrounds (WCAG 1.4.3) */
 }
 
 .summary-risk-chips {

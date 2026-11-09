@@ -22,7 +22,7 @@
   gap: 6px;
   font-size: 0.78rem;
   font-weight: 650;
-  color: var(--success);
+  color: var(--success-text);
   background: var(--green-bg);
   border-radius: 999px;
   padding: 5px 12px;
@@ -152,8 +152,8 @@
    see in both themes (issue #19 follow-up). Now: solid accent fill, white
    number, thicker border, outer ring and a slight lift. */
 .vote-option-btn.selected {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
   border-width: 2px;
   color: #fff;
   transform: translateY(-1px);

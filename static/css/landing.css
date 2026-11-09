@@ -93,7 +93,7 @@
 }
 
 .about-list a {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .recent-sessions {
@@ -128,7 +128,7 @@
 }
 
 .recent-chip:hover {
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: var(--accent);
 }
 

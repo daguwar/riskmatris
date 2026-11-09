@@ -67,7 +67,7 @@
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-soft);
   border-radius: 6px;
   padding: 2px 6px;
@@ -174,7 +174,7 @@
   color: var(--text-muted);
 }
 
-.session-code-pill strong {
+.session-code-pill .code-value {
   font-family: var(--font-mono);
   font-size: 0.95rem;
   letter-spacing: 0.12em;
