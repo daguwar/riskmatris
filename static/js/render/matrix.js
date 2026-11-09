@@ -119,17 +119,15 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
 
       if (isAdmin) {
         // WCAG 2.1 AA: clickable cells must also be keyboard operable.
-        // The aria-label starts with the cell's visible text (score + level)
-        // so label-in-name (2.5.3) is satisfied.
+        // No custom aria-label on purpose: IBM's label-in-name check (2.5.3)
+        // string-matches the accessible name against the exact textContent,
+        // which a readable label can never match for a grid cell. With no
+        // aria-label the name IS the visible text; role="button" + title
+        // carry the action.
         const actionLabel = `placera Risk #${risk.number} i S=${prob} (${PROB_LABELS[prob]}), K=${cons} (${CONS_LABELS[cons]})`;
         cell.title = `Klicka för att ${actionLabel}`;
         cell.tabIndex = 0;
         cell.setAttribute("role", "button");
-        // No custom aria-label: IBM's label-in-name check (2.5.3) string-matches
-        // the accessible name against the exact textContent, which a readable
-        // label can never match for a grid cell. With no aria-label the name
-        // IS the visible text; role="button" + title carry the action.
-        void actionLabel;
         cell.addEventListener("click", () => {
           onSetFinalCell(prob, cons, risk.locked);
         });
