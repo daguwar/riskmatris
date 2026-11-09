@@ -125,7 +125,8 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
         cell.title = `Klicka för att ${actionLabel}`;
         cell.tabIndex = 0;
         cell.setAttribute("role", "button");
-        cell.setAttribute("aria-label", `Riskvärde ${meta.score} (${meta.level}) – ${actionLabel}`);
+        const votesText = cellVotes > 0 ? `, ${cellVotes} ${cellVotes === 1 ? "röst" : "röster"}` : "";
+        cell.setAttribute("aria-label", `Riskvärde ${meta.score} (${meta.level})${votesText} – ${actionLabel}`);
         cell.addEventListener("click", () => {
           onSetFinalCell(prob, cons, risk.locked);
         });
