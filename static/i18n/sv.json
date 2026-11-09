@@ -6,7 +6,6 @@
   "nav.themeToggleTitle": "Växla mörkt/ljust tema",
   "nav.themeToggleLabel": "Växla färgtema",
   "nav.langLabel": "Språk",
-
   "landing.heroTitle": "Riskbedömning i realtid",
   "landing.heroSub": "Skriv in koden du fått av mötesledaren och rösta anonymt – direkt i mobilen.",
   "join.title": "Anslut till en session",
@@ -44,12 +43,10 @@
   "selfhost.body1b": ".",
   "selfhost.body2a": "Har du förslag, synpunkter eller har hittat en bugg? Skriv gärna en rad i",
   "selfhost.body2b": ".",
-
   "session.hiddenH1": "Riskmatris Live – pågående session",
   "tabs.vote": "Rösta",
   "tabs.present": "Presentation",
   "tabs.admin": "Administration",
-
   "vote.riskLabelDefault": "Bedöm Sannolikhet och Konsekvens",
   "vote.statusOpen": "Öppen för röstning",
   "vote.progressAria": "Röstningsförlopp",
@@ -79,7 +76,6 @@
   "vote.cons3.full": "Konsekvens 3 – Allvarlig",
   "vote.cons4.full": "Konsekvens 4 – Mycket allvarlig",
   "vote.footerHint": "Välj både Sannolikhet (1–4) och Konsekvens (1–4) ovan.",
-
   "present.tabActive": "Aktuell risk",
   "present.tabSummary": "Sammanställning",
   "present.btnQr": "Visa QR-kod",
@@ -94,7 +90,6 @@
   "legend.veryHigh": "12–16 Mycket hög",
   "summary.matrixTitle": "Sammanställningsmatris",
   "summary.matrixSub": "Alla bedömda risker (#1, #2, #3...) i samma 4×4-matris. Klicka på en riskbricka för att visa dess röstdetaljer.",
-
   "admin.thresholdLabel": "Tröskel",
   "admin.titleLabel": "Sessionstitel",
   "admin.titlePlaceholder": "Namn på sessionen...",
@@ -106,7 +101,6 @@
   "admin.resetTitle": "Nollställ rösterna för denna risk",
   "admin.lock": "Lås placering",
   "admin.next": "Nästa →",
-
   "share.title": "Dela sessionen",
   "share.expandQr": "Förstora QR",
   "share.qrPreviewTitle": "Klicka för att förstora QR-koden",
@@ -116,7 +110,6 @@
   "share.handoverTitle": "Visa en QR-kod som överför admin-rätten till en annan enhet",
   "share.urlAria": "Delningslänk till sessionen",
   "share.copy": "Kopiera",
-
   "table.title": "Tabellöversikt över risker",
   "export.png": "PNG-bild (PowerPoint)",
   "export.csv": "Excel (CSV)",
@@ -131,7 +124,6 @@
   "table.colScore": "Riskvärde",
   "table.colLevel": "Risknivå",
   "table.colStatus": "Status",
-
   "modal.title": "Skanna för att delta",
   "modal.closeTitle": "Stäng",
   "modal.closeAria": "Stäng dialogruta",
@@ -139,5 +131,6 @@
   "modal.handoverUrlAria": "Överföringslänk för admin-rätt",
   "modal.handoverCopy": "Kopiera länk",
   "modal.customHostLabel": "Nätverksadress i QR-koden (ändra om servern nås via ett annat domännamn/IP):",
-  "modal.customHostApply": "Uppdatera QR"
+  "modal.customHostApply": "Uppdatera QR",
+  "landing.divider": "eller"
 }

@@ -6,7 +6,6 @@
   "nav.themeToggleTitle": "Toggle dark/light theme",
   "nav.themeToggleLabel": "Toggle colour theme",
   "nav.langLabel": "Language",
-
   "landing.heroTitle": "Real-time risk assessment",
   "landing.heroSub": "Enter the code you received from the facilitator and vote anonymously – straight from your phone.",
   "join.title": "Join a session",
@@ -44,12 +43,10 @@
   "selfhost.body1b": ".",
   "selfhost.body2a": "Have suggestions, feedback or found a bug? Please write a line in",
   "selfhost.body2b": ".",
-
   "session.hiddenH1": "Riskmatris Live – ongoing session",
   "tabs.vote": "Vote",
   "tabs.present": "Presentation",
   "tabs.admin": "Admin",
-
   "vote.riskLabelDefault": "Assess Probability and Consequence",
   "vote.statusOpen": "Open for voting",
   "vote.progressAria": "Voting progress",
@@ -79,7 +76,6 @@
   "vote.cons3.full": "Consequence 3 – Serious",
   "vote.cons4.full": "Consequence 4 – Very serious",
   "vote.footerHint": "Choose both Probability (1–4) and Consequence (1–4) above.",
-
   "present.tabActive": "Current risk",
   "present.tabSummary": "Summary",
   "present.btnQr": "Show QR code",
@@ -94,7 +90,6 @@
   "legend.veryHigh": "12–16 Very high",
   "summary.matrixTitle": "Summary matrix",
   "summary.matrixSub": "All assessed risks (#1, #2, #3...) in the same 4×4 matrix. Click a risk chip to see its vote details.",
-
   "admin.thresholdLabel": "Threshold",
   "admin.titleLabel": "Session title",
   "admin.titlePlaceholder": "Session name...",
@@ -106,7 +101,6 @@
   "admin.resetTitle": "Reset the votes for this risk",
   "admin.lock": "Lock placement",
   "admin.next": "Next →",
-
   "share.title": "Share the session",
   "share.expandQr": "Enlarge QR",
   "share.qrPreviewTitle": "Click to enlarge the QR code",
@@ -116,7 +110,6 @@
   "share.handoverTitle": "Show a QR code that transfers admin rights to another device",
   "share.urlAria": "Share link for the session",
   "share.copy": "Copy",
-
   "table.title": "Risk table overview",
   "export.png": "PNG image (PowerPoint)",
   "export.csv": "Excel (CSV)",
@@ -131,7 +124,6 @@
   "table.colScore": "Risk score",
   "table.colLevel": "Risk level",
   "table.colStatus": "Status",
-
   "modal.title": "Scan to join",
   "modal.closeTitle": "Close",
   "modal.closeAria": "Close dialog",
@@ -139,5 +131,6 @@
   "modal.handoverUrlAria": "Admin transfer link",
   "modal.handoverCopy": "Copy link",
   "modal.customHostLabel": "Network address in the QR code (change if the server is reached via another domain name/IP):",
-  "modal.customHostApply": "Update QR"
+  "modal.customHostApply": "Update QR",
+  "landing.divider": "or"
 }
