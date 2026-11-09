@@ -218,5 +218,8 @@
   "export.legendLow": "1–2 Låg risk",
   "export.legendMedium": "3–6 Medelrisk",
   "export.legendHigh": "8–9 Hög risk",
-  "export.legendVeryHigh": "12–16 Mycket hög risk"
+  "export.legendVeryHigh": "12–16 Mycket hög risk",
+  "admin.revealNow": "Visa resultat nu",
+  "present.axisY": "Konsekvens ↑",
+  "present.axisX": "Sannolikhet →"
 }

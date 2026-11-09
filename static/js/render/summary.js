@@ -66,7 +66,7 @@ export function renderSummaryMatrix(risks, isAdmin, onSelectRisk) {
 
   const corner = document.createElement("div");
   corner.className = "matrix-axis-header corner-cell";
-  corner.innerHTML = `<span>Konsekvens &uarr;</span><span>Sannolikhet &rarr;</span>`;
+  corner.innerHTML = `<span>${t("present.axisY")}</span><span>${t("present.axisX")}</span>`;
   dom.summaryMatrixGrid.appendChild(corner);
 
   for (let prob = 1; prob <= 4; prob++) {

@@ -147,7 +147,7 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
   // Bottom row: X-axis headers (Probability 1 -> 4)
   const corner = document.createElement("div");
   corner.className = "matrix-axis-header corner-cell";
-  corner.innerHTML = `<span>Konsekvens &uarr;</span><span>Sannolikhet &rarr;</span>`;
+  corner.innerHTML = `<span>${t("present.axisY")}</span><span>${t("present.axisX")}</span>`;
   dom.activeMatrixGrid.appendChild(corner);
 
   for (let prob = 1; prob <= 4; prob++) {

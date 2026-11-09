@@ -355,12 +355,12 @@
             <!-- The 4x4 matrix (Consequence Y 4->1, Probability X 1->4) -->
             <div class="matrix-board-wrapper" id="activeMatrixWrapper">
               <div class="matrix-board">
-                <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
+                <div class="matrix-y-axis-title" data-i18n="present.axisY">Konsekvens &uarr;</div>
                 <div class="matrix-main-area">
                   <div class="matrix-grid-4x4" id="activeMatrixGrid">
                     <!-- Generated dynamically by app.js -->
                   </div>
-                  <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
+                  <div class="matrix-x-axis-title" data-i18n="present.axisX">Sannolikhet &rarr;</div>
                 </div>
               </div>
             </div>
@@ -390,12 +390,12 @@
 
             <div class="matrix-board-wrapper">
               <div class="matrix-board">
-                <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
+                <div class="matrix-y-axis-title" data-i18n="present.axisY">Konsekvens &uarr;</div>
                 <div class="matrix-main-area">
                   <div class="matrix-grid-4x4" id="summaryMatrixGrid">
                     <!-- Generated dynamically by app.js -->
                   </div>
-                  <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
+                  <div class="matrix-x-axis-title" data-i18n="present.axisX">Sannolikhet &rarr;</div>
                 </div>
               </div>
             </div>
@@ -464,7 +464,7 @@
               <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote" data-i18n="admin.selfVote">Rösta själv på denna risk</button>
             </div>
             <div class="admin-action-buttons hidden" id="adminRiskActions">
-              <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow">Visa resultat nu</button>
+              <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow" data-i18n="admin.revealNow">Visa resultat nu</button>
               <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" data-i18n="admin.reset" data-i18n-title="admin.resetTitle" title="Nollställ rösterna för denna risk">Nollställ</button>
               <button type="button" class="btn btn-success btn-sm" id="btnLockRisk" data-i18n="admin.lock">Lås placering</button>
               <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext" data-i18n="admin.next">Nästa &rarr;</button>
