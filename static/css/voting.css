@@ -22,7 +22,7 @@
   gap: 6px;
   font-size: 0.78rem;
   font-weight: 650;
-  color: var(--success);
+  color: var(--success-text);
   background: var(--green-bg);
   border-radius: 999px;
   padding: 5px 12px;
