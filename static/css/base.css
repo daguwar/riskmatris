@@ -8,14 +8,22 @@
   --surface: #ffffff;
   --text: #0f172a;
   --text-muted: #64748b;
-  --text-faint: #94a3b8;
+  /* WCAG AA: #94a3b8 on white is only ~2.8:1 – #64748b gives ~4.7:1 */
+  --text-faint: #64748b;
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
   --accent: #4f46e5;
   --accent-hover: #4338ca;
   --accent-soft: #eef2ff;
+  /* Text on light/accent-soft backgrounds and solid accent fills with white
+     text need darker variants than --accent to reach 4.5:1 (WCAG 1.4.3) */
+  --accent-text: #4338ca;
+  --accent-strong: #4338ca;
+  --accent-strong-hover: #3730a3;
   --success: #16a34a;
   --success-hover: #15803d;
+  /* White on --success is only ~3.3:1 – solid green fills need this */
+  --success-strong: #15803d;
   --danger: #dc2626;
 
   --green-bg: #dcfce7;
@@ -47,14 +55,22 @@
   --surface: #131c31;
   --text: #e2e8f0;
   --text-muted: #94a3b8;
-  --text-faint: #64748b;
+  /* WCAG AA: #64748b on dark surfaces is only ~3.4:1 – #94a3b8 gives ~5.9:1 */
+  --text-faint: #94a3b8;
   --border: #243049;
   --border-strong: #334166;
   --accent: #6366f1;
   --accent-hover: #818cf8;
   --accent-soft: rgba(99, 102, 241, 0.18);
+  /* Accent-colored TEXT on dark surfaces needs a lighter variant (~#a5b4fc),
+     while solid accent FILLS with white text need a darker one (#4f46e5,
+     since white on #6366f1 is only ~4.4:1) */
+  --accent-text: #a5b4fc;
+  --accent-strong: #4f46e5;
+  --accent-strong-hover: #4338ca;
   --success: #22c55e;
-  --success-hover: #4ade80;
+  --success-hover: #15803d;
+  --success-strong: #15803d;
   --danger: #ef4444;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -171,5 +187,38 @@ button {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* WCAG 2.4.1 / 2.4.7 helpers */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  z-index: 200;
+  background: var(--accent-strong);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus-visible {
+  top: 12px;
+  outline-color: #fff;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 

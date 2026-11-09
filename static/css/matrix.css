@@ -57,7 +57,7 @@
 }
 
 .stat-chip-highlight .stat-label {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Empty state before the threshold is reached */
@@ -217,6 +217,11 @@
   transition: box-shadow 0.15s ease, transform 0.1s ease;
 }
 
+.matrix-cell.admin-clickable:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
 .matrix-cell.admin-clickable:hover {
   box-shadow: 0 0 0 2px var(--accent);
   transform: translateY(-1px);
@@ -255,7 +260,7 @@
 }
 
 .cell-target-badge.badge-suggested {
-  background: var(--accent);
+  background: var(--accent-strong);
 }
 
 .cell-votes-area {

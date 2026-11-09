@@ -343,16 +343,35 @@ export function bindSessionEvents() {
   });
 
   // QR modal: manual open from top bar / share card / presentation view button
+  // WCAG 2.1 AA: remember the opener so focus can be restored on close, and
+  // move focus into the dialog when it opens.
+  let lastFocusedBeforeModal = null;
   const openQrManually = () => {
     state.qrModalFromRemote = false;
     state.showingHandoverQr = false;
     dom.handoverUrlGroup.classList.add("hidden");
+    lastFocusedBeforeModal = document.activeElement;
     openQrModal();
+    document.getElementById("btnCloseQrModal").focus();
   };
   document.getElementById("btnExpandQr").addEventListener("click", openQrManually);
-  document.getElementById("qrPreviewWrapper").addEventListener("click", openQrManually);
+  const qrPreview = document.getElementById("qrPreviewWrapper");
+  qrPreview.addEventListener("click", openQrManually);
+  qrPreview.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openQrManually();
+    }
+  });
   document.getElementById("topSessionCodeBox").addEventListener("click", openQrManually);
   document.getElementById("btnPresentQr").addEventListener("click", openQrManually);
+
+  // Escape closes the modal (WCAG 2.1.1 keyboard operability)
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !dom.qrModal.classList.contains("hidden")) {
+      closeQr();
+    }
+  });
 
   // Closing the QR modal hides it locally; if it was opened by the remote
   // presentation-QR toggle (admin view), also tell the server so the modal
@@ -363,6 +382,11 @@ export function bindSessionEvents() {
     state.showingHandoverQr = false;
     dom.handoverUrlGroup.classList.add("hidden");
     closeQrModal();
+    // WCAG 2.4.3: return focus to the element that opened the dialog
+    if (lastFocusedBeforeModal && typeof lastFocusedBeforeModal.focus === "function") {
+      lastFocusedBeforeModal.focus();
+    }
+    lastFocusedBeforeModal = null;
     if (wasRemote && state.sessionState && state.sessionState.qr_visible) {
       sendWsAction({ action: "set_qr_visible", visible: false });
     }

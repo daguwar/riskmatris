@@ -118,9 +118,20 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
       cell.appendChild(bottomRow);
 
       if (isAdmin) {
-        cell.title = `Klicka för att placera Risk #${risk.number} i S=${prob} (${PROB_LABELS[prob]}), K=${cons} (${CONS_LABELS[cons]})`;
+        // WCAG 2.1 AA: clickable cells must also be keyboard operable
+        const actionLabel = `placera Risk #${risk.number} i S=${prob} (${PROB_LABELS[prob]}), K=${cons} (${CONS_LABELS[cons]})`;
+        cell.title = `Klicka för att ${actionLabel}`;
+        cell.tabIndex = 0;
+        cell.setAttribute("role", "button");
+        cell.setAttribute("aria-label", actionLabel);
         cell.addEventListener("click", () => {
           onSetFinalCell(prob, cons, risk.locked);
+        });
+        cell.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSetFinalCell(prob, cons, risk.locked);
+          }
         });
       }
 

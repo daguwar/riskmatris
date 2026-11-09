@@ -152,8 +152,8 @@
    see in both themes (issue #19 follow-up). Now: solid accent fill, white
    number, thicker border, outer ring and a slight lift. */
 .vote-option-btn.selected {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
   border-width: 2px;
   color: #fff;
   transform: translateY(-1px);

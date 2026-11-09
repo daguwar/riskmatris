@@ -21,6 +21,7 @@
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
 </head>
 <body>
+  <a href="#mainContent" class="skip-link">Hoppa till huvudinnehåll</a>
   <!-- Top navigation -->
   <header class="topbar">
     <div class="topbar-inner">
@@ -35,8 +36,8 @@
 
       <div class="topbar-right hidden" id="sessionHeaderControls">
         <div class="status-pill" id="participantsPill" title="Antal anslutna deltagare (exkl. mötesledare)">
-          <span class="dot-live" id="wsStatusDot"></span>
-          <span id="participantCountText">0 deltagare</span>
+          <span class="dot-live" id="wsStatusDot" aria-hidden="true"></span>
+          <span id="participantCountText" aria-live="polite">0 deltagare</span>
         </div>
         <button type="button" class="session-code-pill" id="topSessionCodeBox" title="Visa QR-kod och delningslänk">
           <span class="code-label">Kod</span>
@@ -48,7 +49,8 @@
   </header>
 
   <!-- VIEW 1: LANDING (join by code in focus, create session secondary) -->
-  <main id="landingView" class="landing">
+  <main id="mainContent">
+  <div id="landingView" class="landing">
     <div class="landing-inner">
       <div class="landing-hero">
         <h1>Riskbedömning i realtid</h1>
@@ -176,10 +178,11 @@
         </div>
       </section>
     </div>
-  </main>
+  </div>
 
   <!-- VIEW 2: ACTIVE SESSION – three views: Vote / Presentation / Admin -->
-  <main id="sessionView" class="session-layout hidden">
+  <div id="sessionView" class="session-layout hidden">
+    <h1 class="visually-hidden">Riskmatris Live – pågående session</h1>
     <div class="session-main">
       <!-- View switcher (participants only see "Rösta") -->
       <div class="view-tabs-bar">
@@ -212,13 +215,22 @@
           <!-- Progress indicator -->
           <div class="vote-progress-row">
             <div class="vote-progress-info">
-              <div class="vote-count-headline">
+              <div class="vote-count-headline" aria-live="polite">
                 <strong id="currentVoteCountText">0</strong> av
                 <strong id="currentThresholdText">4</strong> svar
                 <span class="vote-total-sub" id="totalVotesSubtext">(0 röster inkomna)</span>
               </div>
               <div class="progress-bar-track">
-                <div class="progress-bar-fill" id="voteProgressBar" style="width: 0%"></div>
+                <div
+                  class="progress-bar-fill"
+                  id="voteProgressBar"
+                  role="progressbar"
+                  aria-label="Röstningsförlopp"
+                  aria-valuemin="0"
+                  aria-valuemax="4"
+                  aria-valuenow="0"
+                  style="width: 0%"
+                ></div>
               </div>
             </div>
           </div>
@@ -243,16 +255,16 @@
                 <span class="axis-subtitle">Hur troligt är det att risken inträffar?</span>
               </div>
               <div class="vote-options-list" id="probOptionsGroup">
-                <button type="button" class="vote-option-btn" data-prob="1" title="Osannolik">
+                <button type="button" class="vote-option-btn" data-prob="1" title="Osannolik" aria-label="Sannolikhet 1 – Osannolik">
                   <span class="vote-num">1</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-prob="2" title="Möjlig">
+                <button type="button" class="vote-option-btn" data-prob="2" title="Möjlig" aria-label="Sannolikhet 2 – Möjlig">
                   <span class="vote-num">2</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-prob="3" title="Sannolik">
+                <button type="button" class="vote-option-btn" data-prob="3" title="Sannolik" aria-label="Sannolikhet 3 – Sannolik">
                   <span class="vote-num">3</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-prob="4" title="Mycket sannolik">
+                <button type="button" class="vote-option-btn" data-prob="4" title="Mycket sannolik" aria-label="Sannolikhet 4 – Mycket sannolik">
                   <span class="vote-num">4</span>
                 </button>
               </div>
@@ -265,16 +277,16 @@
                 <span class="axis-subtitle">Hur allvarlig blir följden om det sker?</span>
               </div>
               <div class="vote-options-list" id="consOptionsGroup">
-                <button type="button" class="vote-option-btn" data-cons="1" title="Försumbar">
+                <button type="button" class="vote-option-btn" data-cons="1" title="Försumbar" aria-label="Konsekvens 1 – Försumbar">
                   <span class="vote-num">1</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-cons="2" title="Måttlig">
+                <button type="button" class="vote-option-btn" data-cons="2" title="Måttlig" aria-label="Konsekvens 2 – Måttlig">
                   <span class="vote-num">2</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-cons="3" title="Allvarlig">
+                <button type="button" class="vote-option-btn" data-cons="3" title="Allvarlig" aria-label="Konsekvens 3 – Allvarlig">
                   <span class="vote-num">3</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-cons="4" title="Mycket allvarlig">
+                <button type="button" class="vote-option-btn" data-cons="4" title="Mycket allvarlig" aria-label="Konsekvens 4 – Mycket allvarlig">
                   <span class="vote-num">4</span>
                 </button>
               </div>
@@ -282,7 +294,7 @@
           </div>
 
           <div class="voting-footer">
-            <div class="my-selection-preview" id="mySelectionPreview">
+            <div class="my-selection-preview" id="mySelectionPreview" aria-live="polite">
               Välj både Sannolikhet (1–4) och Konsekvens (1–4) ovan.
             </div>
           </div>
@@ -474,16 +486,16 @@
                   <span class="axis-subtitle">Hur troligt är det att risken inträffar?</span>
                 </div>
                 <div class="vote-options-list" id="adminProbOptionsGroup">
-                  <button type="button" class="vote-option-btn" data-prob="1" title="Osannolik">
+                  <button type="button" class="vote-option-btn" data-prob="1" title="Osannolik" aria-label="Sannolikhet 1 – Osannolik">
                     <span class="vote-num">1</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-prob="2" title="Möjlig">
+                  <button type="button" class="vote-option-btn" data-prob="2" title="Möjlig" aria-label="Sannolikhet 2 – Möjlig">
                     <span class="vote-num">2</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-prob="3" title="Sannolik">
+                  <button type="button" class="vote-option-btn" data-prob="3" title="Sannolik" aria-label="Sannolikhet 3 – Sannolik">
                     <span class="vote-num">3</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-prob="4" title="Mycket sannolik">
+                  <button type="button" class="vote-option-btn" data-prob="4" title="Mycket sannolik" aria-label="Sannolikhet 4 – Mycket sannolik">
                     <span class="vote-num">4</span>
                   </button>
                 </div>
@@ -496,16 +508,16 @@
                   <span class="axis-subtitle">Hur allvarlig blir följden om det sker?</span>
                 </div>
                 <div class="vote-options-list" id="adminConsOptionsGroup">
-                  <button type="button" class="vote-option-btn" data-cons="1" title="Försumbar">
+                  <button type="button" class="vote-option-btn" data-cons="1" title="Försumbar" aria-label="Konsekvens 1 – Försumbar">
                     <span class="vote-num">1</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-cons="2" title="Måttlig">
+                  <button type="button" class="vote-option-btn" data-cons="2" title="Måttlig" aria-label="Konsekvens 2 – Måttlig">
                     <span class="vote-num">2</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-cons="3" title="Allvarlig">
+                  <button type="button" class="vote-option-btn" data-cons="3" title="Allvarlig" aria-label="Konsekvens 3 – Allvarlig">
                     <span class="vote-num">3</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-cons="4" title="Mycket allvarlig">
+                  <button type="button" class="vote-option-btn" data-cons="4" title="Mycket allvarlig" aria-label="Konsekvens 4 – Mycket allvarlig">
                     <span class="vote-num">4</span>
                   </button>
                 </div>
@@ -513,7 +525,7 @@
             </div>
 
             <div class="voting-footer">
-              <div class="my-selection-preview" id="adminMySelectionPreview">
+              <div class="my-selection-preview" id="adminMySelectionPreview" aria-live="polite">
                 Välj både Sannolikhet (1–4) och Konsekvens (1–4) ovan.
               </div>
             </div>
@@ -529,7 +541,14 @@
             </div>
             <button type="button" class="btn btn-outline btn-sm" id="btnExpandQr">Förstora QR</button>
           </div>
-          <div class="qr-preview-wrapper" id="qrPreviewWrapper" title="Klicka för att förstora QR-koden">
+          <div
+            class="qr-preview-wrapper"
+            id="qrPreviewWrapper"
+            role="button"
+            tabindex="0"
+            title="Klicka för att förstora QR-koden"
+            aria-label="Förstora QR-koden"
+          >
             <div id="sidebarQrContainer" class="qr-box"></div>
           </div>
           <button type="button" class="btn btn-outline btn-sm btn-block" id="btnTogglePresentQr">
@@ -539,7 +558,7 @@
             Överför admin till annan enhet
           </button>
           <div class="share-url-group">
-            <input type="text" id="shareUrlInput" class="form-input form-input-sm" readonly />
+            <input type="text" id="shareUrlInput" class="form-input form-input-sm" readonly aria-label="Delningslänk till sessionen" />
             <button type="button" class="btn btn-secondary btn-sm" id="btnCopyShareUrl">Kopiera</button>
           </div>
           <p class="qr-lan-hint hidden" id="lanIpHint"></p>
@@ -582,14 +601,15 @@
         </div>
       </div>
     </div>
+  </div>
   </main>
 
   <!-- MODAL: ENLARGED QR CODE FOR PROJECTOR -->
   <div id="qrModal" class="modal-backdrop hidden">
-    <div class="modal-dialog">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
       <div class="modal-header">
-        <h2>Skanna för att delta</h2>
-        <button type="button" class="btn-close-modal" id="btnCloseQrModal" title="Stäng">&times;</button>
+        <h2 id="qrModalTitle">Skanna för att delta</h2>
+        <button type="button" class="btn-close-modal" id="btnCloseQrModal" title="Stäng" aria-label="Stäng dialogruta">&times;</button>
       </div>
       <div class="modal-body qr-modal-body">
         <div id="modalQrContainer" class="qr-box-large"></div>
@@ -598,7 +618,7 @@
         </div>
         <p class="modal-url-text" id="modalShareUrl"></p>
         <div class="share-url-group hidden" id="handoverUrlGroup">
-          <input type="text" id="handoverUrlInput" class="form-input form-input-sm" readonly />
+          <input type="text" id="handoverUrlInput" class="form-input form-input-sm" readonly aria-label="Överföringslänk för admin-rätt" />
           <button type="button" class="btn btn-secondary btn-sm" id="btnCopyHandoverUrl">Kopiera länk</button>
         </div>
 
