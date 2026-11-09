@@ -129,9 +129,11 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
         const targetText = isEffectiveTarget
           ? `, ${risk.locked ? `Låst #${risk.number}` : risk.final_probability ? `Vald #${risk.number}` : `Förslag #${risk.number}`}`
           : "";
+        // Start the name with the cell's visible text so label-in-name (2.5.3)
+        // matches, then append the action the button performs.
         cell.setAttribute(
           "aria-label",
-          `Riskvärde ${meta.score} (${meta.level})${votesText}${targetText} – ${actionLabel}`
+          `${meta.score} ${meta.level}${votesText}${targetText} – ${actionLabel}`
         );
         cell.addEventListener("click", () => {
           onSetFinalCell(prob, cons, risk.locked);
