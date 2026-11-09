@@ -311,7 +311,8 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   text-align: center;
-  opacity: 0.75;
+  /* no opacity here: dimming the level text drops it below 4.5:1 on the
+     pastel cell backgrounds (WCAG 1.4.3) */
 }
 
 .summary-risk-chips {
