@@ -217,9 +217,13 @@
   transition: box-shadow 0.15s ease, transform 0.1s ease;
 }
 
-.matrix-cell.admin-clickable:focus-visible {
-  outline: 3px solid var(--accent);
+.matrix-cell.admin-clickable:focus {
+  outline: 3px solid #4f46e5;
   outline-offset: -3px;
+}
+
+[data-theme="dark"] .matrix-cell.admin-clickable:focus {
+  outline-color: #818cf8;
 }
 
 .matrix-cell.admin-clickable:hover {
