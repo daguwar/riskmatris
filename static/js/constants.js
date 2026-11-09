@@ -1,20 +1,16 @@
+import { t } from "./i18n.js";
+
 /**
  * Label constants for Probability and Consequence.
  */
 
-export const PROB_LABELS = {
-  1: "Osannolik",
-  2: "Möjlig",
-  3: "Sannolik",
-  4: "Mycket sannolik",
-};
+export function probLabel(n) {
+  return t(`vote.prob${n}.short`);
+}
 
-export const CONS_LABELS = {
-  1: "Försumbar",
-  2: "Måttlig",
-  3: "Allvarlig",
-  4: "Mycket allvarlig",
-};
+export function consLabel(n) {
+  return t(`vote.cons${n}.short`);
+}
 
 /**
  * Presentation mapping for risk colors (color name -> CSS classes / hex values

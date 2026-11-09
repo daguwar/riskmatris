@@ -1,7 +1,8 @@
 import { dom } from "../dom.js";
+import { t } from "../i18n.js";
 
 export function renderSidebarRiskList(risks, activeNum, isAdmin, onSelectRisk) {
-  dom.riskCountBadge.textContent = `${risks.length} st`;
+  dom.riskCountBadge.textContent = t("summary.votesSt", { count: risks.length });
   dom.riskListContainer.innerHTML = "";
 
   risks.forEach((r) => {
@@ -18,7 +19,7 @@ export function renderSidebarRiskList(risks, activeNum, isAdmin, onSelectRisk) {
 
     const labelSpan = document.createElement("span");
     labelSpan.className = "risk-item-label";
-    labelSpan.textContent = r.label || (r.locked ? "Bedömd" : "Pågår...");
+    labelSpan.textContent = r.label || (r.locked ? t("sidebar.assessed") : t("sidebar.ongoing"));
 
     left.appendChild(numSpan);
     left.appendChild(labelSpan);

@@ -1,4 +1,5 @@
-import { CONS_LABELS, PROB_LABELS } from "./constants.js";
+import { consLabel, probLabel } from "./constants.js";
+import { getLang, t } from "./i18n.js";
 import { drawRoundedRect, getCellMeta } from "./utils.js";
 
 /**
@@ -17,12 +18,12 @@ export function exportSummaryMatrixAsPng(state) {
   // Title
   ctx.fillStyle = "#0f172a";
   ctx.font = "bold 34px Segoe UI, Arial, sans-serif";
-  ctx.fillText(`Riskmatris – ${state.title} (Session ${state.session_id})`, 70, 58);
+  ctx.fillText(t("export.pngTitleBar", { title: state.title, sid: state.session_id }), 70, 58);
 
   ctx.fillStyle = "#64748b";
   ctx.font = "20px Segoe UI, Arial, sans-serif";
-  const dateStr = new Date().toLocaleDateString("sv-SE");
-  ctx.fillText(`Sammanställning av bedömda risker • ${dateStr}`, 70, 92);
+  const dateStr = new Date().toLocaleDateString(getLang() === "en" ? "en-GB" : "sv-SE");
+  ctx.fillText(t("export.pngSubtitle", { date: dateStr }), 70, 92);
 
   // Matrix geometry
   const startX = 290;
@@ -48,7 +49,7 @@ export function exportSummaryMatrixAsPng(state) {
   ctx.fillStyle = "#1e293b";
   ctx.font = "bold 22px Segoe UI, Arial, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("KONSEKVENS ↑", 0, 0);
+  ctx.fillText(t("export.axisConsBig"), 0, 0);
   ctx.restore();
 
   // Rows: Consequence 4 -> 1
@@ -64,7 +65,7 @@ export function exportSummaryMatrixAsPng(state) {
     ctx.fillText(String(cons), 175, y + 72);
     ctx.font = "18px Segoe UI, Arial, sans-serif";
     ctx.fillStyle = "#e2e8f0";
-    ctx.fillText(CONS_LABELS[cons], 175, y + 105);
+    ctx.fillText(consLabel(cons), 175, y + 105);
 
     // Columns: Probability 1 -> 4
     for (let colIdx = 0; colIdx < 4; colIdx++) {
@@ -112,8 +113,8 @@ export function exportSummaryMatrixAsPng(state) {
   ctx.fillStyle = "#cbd5e1";
   ctx.font = "bold 16px Segoe UI, Arial, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("Konsekvens ↑", 175, xHeaderY + 34);
-  ctx.fillText("Sannolikhet →", 175, xHeaderY + 58);
+  ctx.fillText(t("export.axisCons"), 175, xHeaderY + 34);
+  ctx.fillText(t("export.axisProb"), 175, xHeaderY + 58);
 
   for (let colIdx = 0; colIdx < 4; colIdx++) {
     const prob = colIdx + 1;
@@ -125,21 +126,21 @@ export function exportSummaryMatrixAsPng(state) {
     ctx.fillText(String(prob), x + cellW / 2, xHeaderY + 34);
     ctx.fillStyle = "#e2e8f0";
     ctx.font = "18px Segoe UI, Arial, sans-serif";
-    ctx.fillText(PROB_LABELS[prob], x + cellW / 2, xHeaderY + 62);
+    ctx.fillText(probLabel(prob), x + cellW / 2, xHeaderY + 62);
   }
 
   // X-axis title
   ctx.fillStyle = "#1e293b";
   ctx.font = "bold 22px Segoe UI, Arial, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("SANNOLIKHET →", startX + (cellW * 4 + gap * 3) / 2, xHeaderY + 118);
+  ctx.fillText(t("export.axisProbBig"), startX + (cellW * 4 + gap * 3) / 2, xHeaderY + 118);
 
   // Color legend at the bottom
   const legendItems = [
-    { label: "1–2 Låg risk", color: "#86efac", border: "#16a34a" },
-    { label: "3–6 Medelrisk", color: "#fde047", border: "#ca8a04" },
-    { label: "8–9 Hög risk", color: "#fdba74", border: "#ea580c" },
-    { label: "12–16 Mycket hög risk", color: "#fca5a5", border: "#dc2626" },
+    { label: t("export.legendLow"), color: "#86efac", border: "#16a34a" },
+    { label: t("export.legendMedium"), color: "#fde047", border: "#ca8a04" },
+    { label: t("export.legendHigh"), color: "#fdba74", border: "#ea580c" },
+    { label: t("export.legendVeryHigh"), color: "#fca5a5", border: "#dc2626" },
   ];
   let lx = 290;
   const ly = 985;

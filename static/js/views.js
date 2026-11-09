@@ -1,4 +1,5 @@
 import { dom } from "./dom.js";
+import { t } from "./i18n.js";
 import { renderActiveRiskHeader } from "./render/header.js";
 import { renderActiveRiskMatrix } from "./render/matrix.js";
 import { renderSidebarRiskList } from "./render/sidebar.js";
@@ -62,7 +63,7 @@ export function computeShareUrl(lanIp) {
   if (!state.customShareBaseUrl && (host === "localhost" || host === "127.0.0.1") && lanIp && lanIp !== "127.0.0.1") {
     const port = window.location.port ? `:${window.location.port}` : "";
     origin = `${window.location.protocol}//${lanIp}${port}`;
-    dom.lanIpHint.textContent = `Tips: QR-koden pekar på datorns lokala IP (${lanIp}) så att mobiler på samma Wi-Fi kan ansluta.`;
+    dom.lanIpHint.textContent = t("views.lanHint", { ip: lanIp });
     dom.lanIpHint.classList.remove("hidden");
   } else {
     dom.lanIpHint.classList.add("hidden");
@@ -79,10 +80,10 @@ export function updateShareUrlAndQr(lanIp) {
   }
 
   const qrEndpoint = `/api/sessions/${state.currentSessionId}/qr.svg?url=${encodeURIComponent(shareUrl)}`;
-  dom.sidebarQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för session ${state.currentSessionId}" />`;
+  dom.sidebarQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="${t("views.qrAlt", { sid: state.currentSessionId })}" />`;
   // Don't overwrite the modal QR while a handover QR is intentionally shown
   if (!state.showingHandoverQr) {
-    dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för session ${state.currentSessionId}" />`;
+    dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="${t("views.qrAlt", { sid: state.currentSessionId })}" />`;
   }
 }
 
@@ -98,12 +99,10 @@ export function handleSessionState(newState) {
 
   // Admin toggle button label for the presentation QR modal
   const qrVisible = Boolean(newState.qr_visible);
-  dom.btnTogglePresentQr.textContent = qrVisible
-    ? "Dölj QR i presentationsvyn"
-    : "Visa QR i presentationsvyn";
+  dom.btnTogglePresentQr.textContent = qrVisible ? t("views.hideQrPresent") : t("share.presentQr");
 
   const pCount = newState.participant_count || 0;
-  dom.participantCountText.textContent = `${pCount} ${pCount === 1 ? "deltagare" : "deltagare"}`;
+  dom.participantCountText.textContent = t("views.participantCount", { count: pCount });
 
   // Find the active risk
   const activeRisk =
@@ -160,8 +159,8 @@ export function handleSessionState(newState) {
   dom.adminVoteHint.classList.toggle("hidden", true);
 
   const maxNum = Math.max(...newState.risks.map((r) => r.number));
-  dom.btnNextRiskSidebar.textContent = `+ Nästa risk (#${maxNum + 1})`;
-  dom.btnSaveAndNext.innerHTML = `Lås #${activeRisk.number} &amp; Nästa (#${maxNum + 1}) &rarr;`;
+  dom.btnNextRiskSidebar.textContent = t("views.nextRisk", { num: maxNum + 1 });
+  dom.btnSaveAndNext.innerHTML = t("views.saveAndNext", { num: activeRisk.number, next: maxNum + 1 });
 
   if (isAdmin) {
     if (document.activeElement !== dom.adminThresholdInput) {
@@ -170,26 +169,25 @@ export function handleSessionState(newState) {
     if (document.activeElement !== dom.adminTitleInput) {
       dom.adminTitleInput.value = newState.title || "";
     }
-    dom.thresholdInfo.textContent = `Automatisk visning när ${newState.threshold} röster kommit in (${pCount} anslutna deltagare)`;
+    dom.thresholdInfo.textContent = t("views.thresholdInfo", { threshold: newState.threshold, count: pCount });
     if (document.activeElement !== dom.adminRiskLabelInput) {
       dom.adminRiskLabelInput.value = activeRisk.label || "";
-      dom.adminRiskLabelInput.placeholder = `Valfri etikett för Risk #${activeRisk.number} (t.ex. från PowerPoint)...`;
+      dom.adminRiskLabelInput.placeholder = t("views.labelPlaceholderRisk", { num: activeRisk.number });
     }
     if (dom.adminLabelRiskNum) {
       dom.adminLabelRiskNum.textContent = activeRisk.number;
     }
-    dom.adminClickMatrixHint.textContent =
-      "Tips för mötesledare: Klicka på valfri ruta i matrisen för att manuellt justera placeringen efter diskussion.";
+    dom.adminClickMatrixHint.textContent = t("views.adminMatrixHint");
   } else {
     dom.participantRiskLabelDisplay.textContent = activeRisk.label
       ? `${activeRisk.label}`
-      : `Fråga #${activeRisk.number} – Rösta på Sannolikhet & Konsekvens`;
+      : t("views.participantQuestion", { num: activeRisk.number });
     dom.adminClickMatrixHint.textContent = "";
   }
 
   // Voting cards
   dom.votingPanelCard.classList.toggle("hidden", isAdmin);
-  dom.btnToggleAdminVote.textContent = state.adminWantsToVote ? "Dölj egen röstning" : "Rösta själv på denna risk";
+  dom.btnToggleAdminVote.textContent = state.adminWantsToVote ? t("views.hideOwnVote") : t("admin.selfVote");
 
   if (dom.adminVotePanel) {
     dom.adminVotePanel.classList.toggle("hidden", !state.adminWantsToVote);

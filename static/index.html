@@ -41,7 +41,7 @@
           <span id="participantCountText" aria-live="polite">0 deltagare</span>
         </div>
         <button type="button" class="session-code-pill" id="topSessionCodeBox" data-i18n-title="nav.codePillTitle" title="Visa QR-kod och delningslänk">
-          <span class="code-label">Kod</span>
+          <span class="code-label" data-i18n="nav.codeLabel">Kod</span>
           <span class="code-value" id="headerSessionCode">------</span>
         </button>
       </div>
@@ -214,8 +214,8 @@
           <div class="vote-progress-row">
             <div class="vote-progress-info">
               <div class="vote-count-headline" aria-live="polite">
-                <strong id="currentVoteCountText">0</strong> av
-                <strong id="currentThresholdText">4</strong> svar
+                <strong id="currentVoteCountText">0</strong> <span data-i18n="vote.countOf">av</span>
+                <strong id="currentThresholdText">4</strong> <span data-i18n="vote.countVotes">svar</span>
                 <span class="vote-total-sub" id="totalVotesSubtext">(0 röster inkomna)</span>
               </div>
               <div class="progress-bar-track">
