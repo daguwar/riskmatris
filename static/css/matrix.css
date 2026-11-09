@@ -299,6 +299,12 @@
   padding: 2px 9px;
 }
 
+/* Dark mode: the pill stays light, so the inherited light level-text color
+   fails contrast (1.15:1) – use dark text on the light pill (WCAG 1.4.3) */
+[data-theme="dark"] .vote-count-pill {
+  color: #0f172a;
+}
+
 .cell-bottom-row {
   font-size: 0.66rem;
   font-weight: 700;
