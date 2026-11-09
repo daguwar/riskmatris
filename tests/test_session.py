@@ -171,7 +171,7 @@ class TestComputeRiskStats:
         assert stats["effective_probability"] == 4
         assert stats["effective_consequence"] == 3
         assert stats["score"] == 12
-        assert stats["level"] == "Mycket Hög"
+        assert stats["level"] == "Very high"
         assert stats["color"] == "red"
 
     def test_final_overrides_suggested(self):
@@ -201,7 +201,7 @@ class TestComputeRiskStats:
         risk = self._make_risk(votes=votes, revealed=True)
         stats = compute_risk_stats(risk, threshold=1)
         assert stats["score"] == 6
-        assert stats["level"] == "Medel"
+        assert stats["level"] == "Medium"
         assert stats["color"] == "yellow"
 
     def test_threshold_auto_reveals(self):

@@ -1,4 +1,5 @@
-import { CONS_LABELS, PROB_LABELS } from "../constants.js";
+import { consLabel, probLabel } from "../constants.js";
+import { t } from "../i18n.js";
 import { dom } from "../dom.js";
 import { escapeHtml, getCellMeta } from "../utils.js";
 
@@ -17,7 +18,7 @@ export function renderSummaryMatrix(risks, isAdmin, onSelectRisk) {
   for (let cons = 4; cons >= 1; cons--) {
     const yHeader = document.createElement("div");
     yHeader.className = "matrix-axis-header";
-    yHeader.innerHTML = `<span class="axis-num">${cons}</span><span class="axis-name">${CONS_LABELS[cons]}</span>`;
+    yHeader.innerHTML = `<span class="axis-num">${cons}</span><span class="axis-name">${consLabel(cons)}</span>`;
     dom.summaryMatrixGrid.appendChild(yHeader);
 
     for (let prob = 1; prob <= 4; prob++) {
@@ -44,8 +45,8 @@ export function renderSummaryMatrix(risks, isAdmin, onSelectRisk) {
         chip.className = "summary-risk-chip" + (r.locked ? "" : " unconfirmed");
         chip.textContent = `#${r.number}`;
         chip.title = r.label
-          ? `Risk #${r.number}: ${r.label} (Riskvärde ${meta.score} – ${meta.level})`
-          : `Risk #${r.number} (Riskvärde ${meta.score} – ${meta.level})`;
+          ? t("summary.chipWithLabel", { num: r.number, label: r.label, score: meta.score, level: meta.level })
+          : t("summary.chipNoLabel", { num: r.number, score: meta.score, level: meta.level });
         chip.addEventListener("click", () => {
           onSelectRisk(r.number);
         });
@@ -65,13 +66,13 @@ export function renderSummaryMatrix(risks, isAdmin, onSelectRisk) {
 
   const corner = document.createElement("div");
   corner.className = "matrix-axis-header corner-cell";
-  corner.innerHTML = `<span>Konsekvens &uarr;</span><span>Sannolikhet &rarr;</span>`;
+  corner.innerHTML = `<span>${t("present.axisY")}</span><span>${t("present.axisX")}</span>`;
   dom.summaryMatrixGrid.appendChild(corner);
 
   for (let prob = 1; prob <= 4; prob++) {
     const xHeader = document.createElement("div");
     xHeader.className = "matrix-axis-header";
-    xHeader.innerHTML = `<span class="axis-num">${prob}</span><span class="axis-name">${PROB_LABELS[prob]}</span>`;
+    xHeader.innerHTML = `<span class="axis-num">${prob}</span><span class="axis-name">${probLabel(prob)}</span>`;
     dom.summaryMatrixGrid.appendChild(xHeader);
   }
 }
@@ -88,18 +89,18 @@ export function renderSummaryTable(risks) {
         : "-";
 
     const statusText = r.locked
-      ? "Låst i sammanställning"
+      ? t("vote.statusLocked")
       : r.revealed
-      ? "Visad (ej låst)"
-      : "Pågår / Dold";
+      ? t("summary.statusShown")
+      : t("summary.statusOngoing");
 
     tr.innerHTML = `
       <td><strong>#${r.number}</strong></td>
       <td>${escapeHtml(r.label || "-")}</td>
-      <td>${r.vote_count} st</td>
+      <td>${t("summary.votesSt", { count: r.vote_count })}</td>
       <td>${avgStr}</td>
-      <td>${effP ? `${effP} – ${PROB_LABELS[effP]}` : "-"}</td>
-      <td>${effC ? `${effC} – ${CONS_LABELS[effC]}` : "-"}</td>
+      <td>${effP ? `${effP} – ${probLabel(effP)}` : "-"}</td>
+      <td>${effC ? `${effC} – ${consLabel(effC)}` : "-"}</td>
       <td><strong>${r.score || "-"}</strong></td>
       <td>${r.level ? `<span class="mini-score-pill ${r.color}">${r.level}</span>` : "-"}</td>
       <td>${statusText}</td>

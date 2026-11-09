@@ -1,16 +1,17 @@
-import { CONS_LABELS, PROB_LABELS } from "../constants.js";
+import { consLabel, probLabel } from "../constants.js";
+import { t } from "../i18n.js";
 import { dom } from "../dom.js";
 import { getCellMeta } from "../utils.js";
 
 export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell) {
   const titleSuffix = risk.label ? ` – ${risk.label}` : "";
-  dom.activeMatrixHeading.textContent = `Resultatmatris för Risk #${risk.number}${titleSuffix}`;
+  dom.activeMatrixHeading.textContent = t("present.matrixTitle", { num: risk.number }) + titleSuffix;
 
   if (!risk.revealed) {
     dom.matrixMaskedBanner.classList.remove("hidden");
     dom.activeMatrixWrapper.classList.add("hidden");
     dom.activeStatsSummaryBox.classList.add("hidden");
-    dom.activeMatrixSubtitle.textContent = `Matrisen visas automatiskt när ${threshold} svar har kommit in.`;
+    dom.activeMatrixSubtitle.textContent = t("present.matrixSubThreshold", { threshold });
     return;
   }
 
@@ -32,16 +33,16 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
     const effC = risk.effective_consequence;
     if (effP && effC) {
       const meta = getCellMeta(effP, effC);
-      const modeLabel = risk.locked ? "Låst" : risk.final_probability ? "Manuellt vald" : "Förslag";
-      dom.statSuggestedCell.textContent = `${modeLabel}: S=${effP}, K=${effC} → Riskvärde ${meta.score} (${meta.level})`;
+      const modeLabel = risk.locked ? t("stat.modeLocked") : risk.final_probability ? t("stat.modeManual") : t("stat.modeSuggested");
+      dom.statSuggestedCell.textContent = t("stat.suggestedCell", { mode: modeLabel, p: effP, c: effC, score: meta.score, level: meta.level });
     } else {
       dom.statSuggestedCell.textContent = "-";
     }
     dom.activeMatrixSubtitle.textContent =
-      "Rösterna är nu synliga och matrisen uppdateras i realtid om fler svar kommer in.";
+      t("present.matrixSubVisible");
   } else {
     dom.activeStatsSummaryBox.classList.add("hidden");
-    dom.activeMatrixSubtitle.textContent = "Inga röster har registrerats ännu, men matrisen är öppen.";
+    dom.activeMatrixSubtitle.textContent = t("present.matrixSubEmpty");
   }
 
   dom.activeMatrixGrid.innerHTML = "";
@@ -50,7 +51,7 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
   for (let cons = 4; cons >= 1; cons--) {
     const yHeader = document.createElement("div");
     yHeader.className = "matrix-axis-header";
-    yHeader.innerHTML = `<span class="axis-num">${cons}</span><span class="axis-name">${CONS_LABELS[cons]}</span>`;
+    yHeader.innerHTML = `<span class="axis-num">${cons}</span><span class="axis-name">${consLabel(cons)}</span>`;
     dom.activeMatrixGrid.appendChild(yHeader);
 
     // Columns: Probability (X axis), left to right 1 -> 4
@@ -81,10 +82,10 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
         const badge = document.createElement("span");
         badge.className = "cell-target-badge" + (risk.locked ? "" : " badge-suggested");
         badge.textContent = risk.locked
-          ? `Låst #${risk.number}`
+          ? t("cell.badgeLocked", { num: risk.number })
           : risk.final_probability
-          ? `Vald #${risk.number}`
-          : `Förslag #${risk.number}`;
+          ? t("cell.badgeChosen", { num: risk.number })
+          : t("cell.badgeSuggested", { num: risk.number });
         topRow.appendChild(badge);
       }
 
@@ -104,7 +105,7 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
 
         const countPill = document.createElement("span");
         countPill.className = "vote-count-pill";
-        countPill.textContent = `${cellVotes} ${cellVotes === 1 ? "röst" : "röster"}`;
+        countPill.textContent = t("cell.votes", { count: cellVotes });
         votesArea.appendChild(countPill);
       }
 
@@ -124,8 +125,8 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
         // which a readable label can never match for a grid cell. With no
         // aria-label the name IS the visible text; role="button" + title
         // carry the action.
-        const actionLabel = `placera Risk #${risk.number} i S=${prob} (${PROB_LABELS[prob]}), K=${cons} (${CONS_LABELS[cons]})`;
-        cell.title = `Klicka för att ${actionLabel}`;
+        const actionLabel = t("cell.actionPlace", { num: risk.number, p: prob, plabel: probLabel(prob), c: cons, clabel: consLabel(cons) });
+        cell.title = t("cell.clickTitle", { action: actionLabel });
         cell.tabIndex = 0;
         cell.setAttribute("role", "button");
         cell.addEventListener("click", () => {
@@ -146,13 +147,13 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
   // Bottom row: X-axis headers (Probability 1 -> 4)
   const corner = document.createElement("div");
   corner.className = "matrix-axis-header corner-cell";
-  corner.innerHTML = `<span>Konsekvens &uarr;</span><span>Sannolikhet &rarr;</span>`;
+  corner.innerHTML = `<span>${t("present.axisY")}</span><span>${t("present.axisX")}</span>`;
   dom.activeMatrixGrid.appendChild(corner);
 
   for (let prob = 1; prob <= 4; prob++) {
     const xHeader = document.createElement("div");
     xHeader.className = "matrix-axis-header";
-    xHeader.innerHTML = `<span class="axis-num">${prob}</span><span class="axis-name">${PROB_LABELS[prob]}</span>`;
+    xHeader.innerHTML = `<span class="axis-num">${prob}</span><span class="axis-name">${probLabel(prob)}</span>`;
     dom.activeMatrixGrid.appendChild(xHeader);
   }
 }

@@ -66,15 +66,15 @@ class TestGetRiskLevel:
     @pytest.mark.parametrize(
         "score, expected_level, expected_color",
         [
-            (1, "Låg", "green"),
-            (2, "Låg", "green"),
-            (3, "Medel", "yellow"),
-            (4, "Medel", "yellow"),
-            (6, "Medel", "yellow"),
-            (8, "Hög", "orange"),
-            (9, "Hög", "orange"),
-            (12, "Mycket Hög", "red"),
-            (16, "Mycket Hög", "red"),
+            (1, "Low", "green"),
+            (2, "Low", "green"),
+            (3, "Medium", "yellow"),
+            (4, "Medium", "yellow"),
+            (6, "Medium", "yellow"),
+            (8, "High", "orange"),
+            (9, "High", "orange"),
+            (12, "Very high", "red"),
+            (16, "Very high", "red"),
         ],
     )
     def test_levels(self, score, expected_level, expected_color):
@@ -83,16 +83,16 @@ class TestGetRiskLevel:
         assert result["color"] == expected_color
 
     def test_boundary_green_to_yellow(self):
-        assert get_risk_level(2)["level"] == "Låg"
-        assert get_risk_level(3)["level"] == "Medel"
+        assert get_risk_level(2)["level"] == "Low"
+        assert get_risk_level(3)["level"] == "Medium"
 
     def test_boundary_yellow_to_orange(self):
-        assert get_risk_level(6)["level"] == "Medel"
-        assert get_risk_level(8)["level"] == "Hög"
+        assert get_risk_level(6)["level"] == "Medium"
+        assert get_risk_level(8)["level"] == "High"
 
     def test_boundary_orange_to_red(self):
-        assert get_risk_level(9)["level"] == "Hög"
-        assert get_risk_level(12)["level"] == "Mycket Hög"
+        assert get_risk_level(9)["level"] == "High"
+        assert get_risk_level(12)["level"] == "Very high"
 
 
 # ---------------------------------------------------------------------------

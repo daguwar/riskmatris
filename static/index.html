@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Riskmatris Live – Interaktiv Riskbedömning</title>
+  <title data-i18n="app.title">Riskmatris Live – Interaktiv Riskbedömning</title>
   <script src="/static/theme-init.js"></script>
   <!-- Styles are split per section into static/css/.
        Load order matters: it preserves the intended CSS cascade. -->
@@ -24,7 +24,7 @@
   <!-- Top navigation -->
   <header class="topbar">
     <!-- Skip link lives inside the banner landmark; visually it only appears on focus -->
-    <a href="#mainContent" class="skip-link">Hoppa till huvudinnehåll</a>
+    <a href="#mainContent" class="skip-link" data-i18n="nav.skipLink">Hoppa till huvudinnehåll</a>
     <div class="topbar-inner">
       <a href="/" class="brand" id="brandLink" title="Till startsidan">
         <span class="brand-grid-icon">
@@ -36,16 +36,17 @@
       <span id="sessionTitleDisplay" class="session-title-display hidden"></span>
 
       <div class="topbar-right hidden" id="sessionHeaderControls">
-        <div class="status-pill" id="participantsPill" title="Antal anslutna deltagare (exkl. mötesledare)">
+        <div class="status-pill" id="participantsPill" data-i18n-title="nav.participantsTitle" title="Antal anslutna deltagare (exkl. mötesledare)">
           <span class="dot-live" id="wsStatusDot" aria-hidden="true"></span>
           <span id="participantCountText" aria-live="polite">0 deltagare</span>
         </div>
-        <button type="button" class="session-code-pill" id="topSessionCodeBox" title="Visa QR-kod och delningslänk">
-          <span class="code-label">Kod</span>
+        <button type="button" class="session-code-pill" id="topSessionCodeBox" data-i18n-title="nav.codePillTitle" title="Visa QR-kod och delningslänk">
+          <span class="code-label" data-i18n="nav.codeLabel">Kod</span>
           <span class="code-value" id="headerSessionCode">------</span>
         </button>
       </div>
-      <button type="button" class="theme-toggle" id="btnThemeToggle" title="Växla mörkt/ljust tema"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg><span class="visually-hidden">Växla färgtema</span></button>
+      <select id="langSelect" class="lang-select" data-i18n-aria-label="nav.langLabel" aria-label="Språk"></select>
+      <button type="button" class="theme-toggle" id="btnThemeToggle" data-i18n-title="nav.themeToggleTitle" title="Växla mörkt/ljust tema"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg><span class="visually-hidden" data-i18n="nav.themeToggleLabel">Växla färgtema</span></button>
     </div>
   </header>
 
@@ -54,15 +55,15 @@
   <div id="landingView" class="landing">
     <div class="landing-inner">
       <div class="landing-hero">
-        <h1>Riskbedömning i realtid</h1>
-        <p>Skriv in koden du fått av mötesledaren och rösta anonymt – direkt i mobilen.</p>
+        <h1 data-i18n="landing.heroTitle">Riskbedömning i realtid</h1>
+        <p data-i18n="landing.heroSub">Skriv in koden du fått av mötesledaren och rösta anonymt – direkt i mobilen.</p>
       </div>
 
       <!-- Join session (primary action) -->
       <section class="card landing-card">
-        <h2>Anslut till en session</h2>
-        <form id="joinSessionForm" class="form-stack" aria-label="Anslut till en session">
-          <label class="form-label" for="inputJoinCode">Sessionskod</label>
+        <h2 data-i18n="join.title">Anslut till en session</h2>
+        <form id="joinSessionForm" class="form-stack" data-i18n-aria-label="join.title" aria-label="Anslut till en session">
+          <label class="form-label" for="inputJoinCode" data-i18n="join.label">Sessionskod</label>
           <input
             type="text"
             id="inputJoinCode"
@@ -73,35 +74,36 @@
             autocapitalize="characters"
             required
           />
-          <button type="submit" class="btn btn-primary btn-large btn-block">Anslut</button>
+          <button type="submit" class="btn btn-primary btn-large btn-block" data-i18n="join.submit">Anslut</button>
         </form>
 
         <div id="recentSessionsBox" class="recent-sessions hidden">
-          <h3>Senaste sessioner i denna webbläsare</h3>
+          <h3 data-i18n="join.recentTitle">Senaste sessioner i denna webbläsare</h3>
           <div id="recentSessionsList" class="recent-list"></div>
         </div>
       </section>
 
-      <div class="landing-divider"><span>eller</span></div>
+      <div class="landing-divider"><span data-i18n="landing.divider">eller</span></div>
 
       <!-- Start a new session (secondary action) -->
       <section class="card landing-card landing-card-muted">
-        <h2>Starta ny session <span class="card-tag">för mötesledare</span></h2>
+        <h2><span data-i18n="create.title">Starta ny session</span> <span class="card-tag" data-i18n="create.tag">för mötesledare</span></h2>
         <form id="createSessionForm" class="form-stack" aria-label="Starta ny session">
-          <label class="form-label" for="inputSessionTitle">Namn på sessionen (valfritt)</label>
+          <label class="form-label" for="inputSessionTitle" data-i18n="create.titleLabel">Namn på sessionen (valfritt)</label>
           <input
             type="text"
             id="inputSessionTitle"
             class="form-input"
+            data-i18n-placeholder="create.titlePlaceholder"
             placeholder="T.ex. Riskanalys – Projekt Alfa"
             maxlength="80"
           />
-          <p class="input-hint">
+          <p class="input-hint" data-i18n="create.privacyHint">
             Allt i sessionen sparas tillfälligt på servern och kan hämtas av vem som helst som har
             sessionskoden. Ange därför aldrig känsliga uppgifter som personuppgifter eller
             förtrolig information.
           </p>
-          <label class="form-label" for="inputDefaultThreshold">Rösttröskel för automatisk visning</label>
+          <label class="form-label" for="inputDefaultThreshold" data-i18n="create.thresholdLabel">Rösttröskel för automatisk visning</label>
           <input
             type="number"
             id="inputDefaultThreshold"
@@ -110,71 +112,66 @@
             min="1"
             max="50"
           />
-          <p class="input-hint">
+          <p class="input-hint" data-i18n="create.thresholdHint">
             Matrisen visas automatiskt när detta antal röster har kommit in. Kommer färre
             deltagare än så använder mötesledaren &rdquo;Visa resultat nu&rdquo;.
           </p>
-          <button type="submit" class="btn btn-secondary btn-large btn-block">Starta session &amp; skapa QR-kod</button>
+          <button type="submit" class="btn btn-secondary btn-large btn-block" data-i18n="create.submit">Starta session &amp; skapa QR-kod</button>
         </form>
       </section>
 
       <!-- Import a previously exported session snapshot -->
       <section class="card landing-card landing-card-muted">
-        <h2>Återuppta en sparad session <span class="card-tag">från snapshot</span></h2>
-        <form id="importSnapshotForm" class="form-stack" aria-label="Importera sparad session från snapshot">
-          <label class="form-label" for="inputSnapshotFile">Snapshot-fil (JSON)</label>
+        <h2><span data-i18n="import.title">Återuppta en sparad session</span> <span class="card-tag" data-i18n="import.tag">från snapshot</span></h2>
+        <form id="importSnapshotForm" class="form-stack" data-i18n-aria-label="import.ariaLabel" aria-label="Importera sparad session från snapshot">
+          <label class="form-label" for="inputSnapshotFile" data-i18n="import.fileLabel">Snapshot-fil (JSON)</label>
           <input type="file" id="inputSnapshotFile" class="form-input" accept="application/json,.json" required />
           <label class="form-label" style="display: flex; align-items: center; gap: 8px; font-weight: 400">
             <input type="checkbox" id="inputIncludeVotes" />
-            Importera även tidigare röster
+            <span data-i18n="import.includeVotes">Importera även tidigare röster</span>
           </label>
-          <button type="submit" class="btn btn-outline btn-large btn-block">Importera &amp; starta ny session</button>
+          <button type="submit" class="btn btn-outline btn-large btn-block" data-i18n="import.submit">Importera &amp; starta ny session</button>
         </form>
       </section>
 
       <!-- About the service & data handling -->
       <section class="card landing-card landing-card-muted" id="aboutSection">
-        <h2>Om tjänsten <span class="card-tag">och din data</span></h2>
+        <h2><span data-i18n="about.title">Om tjänsten</span> <span class="card-tag" data-i18n="about.tag">och din data</span></h2>
         <div class="about-list">
           <p>
-            <strong>Vad är det här?</strong> Ett öppet verktyg för riskbedömning i grupp i realtid.
-            Mötesledaren startar en session, deltagarna ansluter med sessionskoden eller QR-koden
-            och röstar anonymt direkt i mobilen – inga konton, ingen inloggning.
+            <strong data-i18n="about.whatIs.strong">Vad är det här?</strong>
+            <span data-i18n="about.whatIs.body">Ett öppet verktyg för riskbedömning i grupp i realtid. Mötesledaren startar en session, deltagarna ansluter med sessionskoden eller QR-koden och röstar anonymt direkt i mobilen – inga konton, ingen inloggning.</span>
           </p>
           <p>
-            <strong>Vad sparas?</strong> Sessionens titel, risker, etiketter och röster sparas
-            tillfälligt på servern (högst <strong>__TTL_HOURS__ timmar</strong>) och raderas sedan automatiskt.
+            <strong data-i18n="about.saved.strong">Vad sparas?</strong>
+            <span data-i18n="about.saved.body">Sessionens titel, risker, etiketter och röster sparas tillfälligt på servern (högst <strong>__TTL_HOURS__ timmar</strong>) och raderas sedan automatiskt.</span>
           </p>
           <p>
-            <strong>Tänk på:</strong> Allt i sessionen kan ses och hämtas av alla som har
-            sessionskoden. Ange därför inte känsliga uppgifter, personuppgifter eller förtrolig
-            information.
+            <strong data-i18n="about.careful.strong">Tänk på:</strong>
+            <span data-i18n="about.careful.body">Allt i sessionen kan ses och hämtas av alla som har sessionskoden. Ange därför inte känsliga uppgifter, personuppgifter eller förtrolig information.</span>
           </p>
           <p>
-            <strong>Kakor?</strong> Tjänsten använder inga kakor (cookies). På din egen enhet
-            sparas endast en slumpgenererad klientnyckel (behövs för att rösta) samt listan av
-            dina senaste sessioner.
+            <strong data-i18n="about.cookies.strong">Kakor?</strong>
+            <span data-i18n="about.cookies.body">Tjänsten använder inga kakor (cookies). På din egen enhet sparas endast en slumpgenererad klientnyckel (behövs för att rösta) samt listan av dina senaste sessioner.</span>
           </p>
           <p>
-            <strong>IP-adresser:</strong> För att skydda tjänsten mot missbruk hanteras
-            IP-adresser tillfälligt i serverns minne och i dess loggar. De används inte för
-            spårning och lagras aldrig i sessionens data.
+            <strong data-i18n="about.ip.strong">IP-adresser:</strong>
+            <span data-i18n="about.ip.body">För att skydda tjänsten mot missbruk hanteras IP-adresser tillfälligt i serverns minne och i dess loggar. De används inte för spårning och lagras aldrig i sessionens data.</span>
           </p>
         </div>
       </section>
 
       <!-- Self-hosting & feedback -->
       <section class="card landing-card landing-card-muted" id="selfHostSection">
-        <h2>Driv tjänsten själv</h2>
+        <h2 data-i18n="selfhost.title">Driv tjänsten själv</h2>
         <div class="about-list">
           <p>
-            Riskmatris är öppen källkod och kan köras på egen server, helt utan konton
-            eller inloggning. Kod och instruktioner finns på
-            <a href="https://github.com/daguwar/riskmatris" target="_blank" rel="noopener">GitHub</a>.
+            <span data-i18n="selfhost.body1a">Riskmatris är öppen källkod och kan köras på egen server, helt utan konton eller inloggning. Kod och instruktioner finns på</span>
+            <a href="https://github.com/daguwar/riskmatris" target="_blank" rel="noopener">GitHub</a><span data-i18n="selfhost.body1b">.</span>
           </p>
           <p>
-            Har du förslag, synpunkter eller har hittat en bugg? Skriv gärna en rad i
-            <a href="https://github.com/daguwar/riskmatris/issues" target="_blank" rel="noopener">Issues</a>.
+            <span data-i18n="selfhost.body2a">Har du förslag, synpunkter eller har hittat en bugg? Skriv gärna en rad i</span>
+            <a href="https://github.com/daguwar/riskmatris/issues" target="_blank" rel="noopener">Issues</a><span data-i18n="selfhost.body2b">.</span>
           </p>
         </div>
       </section>
@@ -183,17 +180,17 @@
 
   <!-- VIEW 2: ACTIVE SESSION – three views: Vote / Presentation / Admin -->
   <div id="sessionView" class="session-layout hidden">
-    <h1 class="visually-hidden">Riskmatris Live – pågående session</h1>
+    <h1 class="visually-hidden" data-i18n="session.hiddenH1">Riskmatris Live – pågående session</h1>
     <div class="session-main">
       <!-- View switcher (participants only see "Rösta") -->
       <div class="view-tabs-bar">
         <div class="view-tabs" id="viewSwitcher">
           <button type="button" class="tab-btn active" data-view="voteView" id="tabBtnVote">
-            Rösta <span class="tab-risk-num" id="tabActiveRiskNum">#1</span>
+            <span data-i18n="tabs.vote">Rösta</span> <span class="tab-risk-num" id="tabActiveRiskNum">#1</span>
           </button>
-          <button type="button" class="tab-btn hidden" data-view="presentView" id="tabBtnPresent">Presentation</button>
+          <button type="button" class="tab-btn hidden" data-view="presentView" id="tabBtnPresent" data-i18n="tabs.present">Presentation</button>
           <button type="button" class="tab-btn hidden" data-view="adminView" id="tabBtnAdmin">
-            Administration <span class="tab-count" id="tabLockedCount">0</span>
+            <span data-i18n="tabs.admin">Administration</span> <span class="tab-count" id="tabLockedCount">0</span>
           </button>
         </div>
       </div>
@@ -206,19 +203,19 @@
             <div class="risk-number-pill" id="activeRiskBadge">Risk #1</div>
             <div class="active-risk-label-area">
               <!-- For participants: readable label -->
-              <h2 id="participantRiskLabelDisplay" class="participant-risk-title">
+              <h2 id="participantRiskLabelDisplay" class="participant-risk-title" data-i18n="vote.riskLabelDefault">
                 Bedöm Sannolikhet och Konsekvens
               </h2>
             </div>
-            <div id="activeRiskStatusTag" class="risk-status-tag">Öppen för röstning</div>
+            <div id="activeRiskStatusTag" class="risk-status-tag" data-i18n="vote.statusOpen">Öppen för röstning</div>
           </div>
 
           <!-- Progress indicator -->
           <div class="vote-progress-row">
             <div class="vote-progress-info">
               <div class="vote-count-headline" aria-live="polite">
-                <strong id="currentVoteCountText">0</strong> av
-                <strong id="currentThresholdText">4</strong> svar
+                <strong id="currentVoteCountText">0</strong> <span data-i18n="vote.countOf">av</span>
+                <strong id="currentThresholdText">4</strong> <span data-i18n="vote.countVotes">svar</span>
                 <span class="vote-total-sub" id="totalVotesSubtext">(0 röster inkomna)</span>
               </div>
               <div class="progress-bar-track">
@@ -226,6 +223,7 @@
                   class="progress-bar-fill"
                   id="voteProgressBar"
                   role="progressbar"
+                  data-i18n-aria-label="vote.progressAria"
                   aria-label="Röstningsförlopp"
                   aria-valuemin="0"
                   aria-valuemax="4"
@@ -238,34 +236,35 @@
         </div>
 
         <p class="admin-vote-hint hidden" id="adminVoteHint">
-          Du är mötesledare – öppna <strong>Admin</strong>-vyn och klicka ”Rösta själv” för att avge egen röst.
+          <span data-i18n="vote.adminHintA">Du är mötesledare – öppna</span>
+          <strong data-i18n="vote.adminHintStrong">Admin</strong><span data-i18n="vote.adminHintB">-vyn och klicka ”Rösta själv” för att avge egen röst.</span>
         </p>
 
         <!-- PARTICIPANT VOTING PANEL -->
         <div class="card voting-card" id="votingPanelCard">
           <div class="voting-card-header">
-            <h3>Din bedömning av <span id="votingCardRiskNum">Risk #1</span></h3>
-            <span class="vote-saved-indicator hidden" id="myVoteSavedBadge">Din röst är registrerad</span>
+            <h3><span data-i18n="vote.cardTitle">Din bedömning av</span> <span id="votingCardRiskNum">Risk #1</span></h3>
+            <span class="vote-saved-indicator hidden" id="myVoteSavedBadge" data-i18n="vote.savedBadge">Din röst är registrerad</span>
           </div>
 
           <div class="voting-axes-grid">
             <!-- Probability (1-4) -->
             <div class="voting-axis-box">
               <div class="axis-title-row">
-                <h4>Sannolikhet</h4>
-                <span class="axis-subtitle">Hur troligt är det att risken inträffar?</span>
+                <h4 data-i18n="vote.probAxis">Sannolikhet</h4>
+                <span class="axis-subtitle" data-i18n="vote.probAxisSub">Hur troligt är det att risken inträffar?</span>
               </div>
               <div class="vote-options-list" id="probOptionsGroup">
-                <button type="button" class="vote-option-btn" data-prob="1" title="Osannolik" aria-label="Sannolikhet 1 – Osannolik">
+                <button type="button" class="vote-option-btn" data-prob="1" data-i18n-title="vote.prob1.short" data-i18n-aria-label="vote.prob1.full" title="Osannolik" aria-label="Sannolikhet 1 – Osannolik">
                   <span class="vote-num">1</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-prob="2" title="Möjlig" aria-label="Sannolikhet 2 – Möjlig">
+                <button type="button" class="vote-option-btn" data-prob="2" data-i18n-title="vote.prob2.short" data-i18n-aria-label="vote.prob2.full" title="Möjlig" aria-label="Sannolikhet 2 – Möjlig">
                   <span class="vote-num">2</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-prob="3" title="Sannolik" aria-label="Sannolikhet 3 – Sannolik">
+                <button type="button" class="vote-option-btn" data-prob="3" data-i18n-title="vote.prob3.short" data-i18n-aria-label="vote.prob3.full" title="Sannolik" aria-label="Sannolikhet 3 – Sannolik">
                   <span class="vote-num">3</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-prob="4" title="Mycket sannolik" aria-label="Sannolikhet 4 – Mycket sannolik">
+                <button type="button" class="vote-option-btn" data-prob="4" data-i18n-title="vote.prob4.short" data-i18n-aria-label="vote.prob4.full" title="Mycket sannolik" aria-label="Sannolikhet 4 – Mycket sannolik">
                   <span class="vote-num">4</span>
                 </button>
               </div>
@@ -274,20 +273,20 @@
             <!-- Consequence (1-4) -->
             <div class="voting-axis-box">
               <div class="axis-title-row">
-                <h4>Konsekvens</h4>
-                <span class="axis-subtitle">Hur allvarlig blir följden om det sker?</span>
+                <h4 data-i18n="vote.consAxis">Konsekvens</h4>
+                <span class="axis-subtitle" data-i18n="vote.consAxisSub">Hur allvarlig blir följden om det sker?</span>
               </div>
               <div class="vote-options-list" id="consOptionsGroup">
-                <button type="button" class="vote-option-btn" data-cons="1" title="Försumbar" aria-label="Konsekvens 1 – Försumbar">
+                <button type="button" class="vote-option-btn" data-cons="1" data-i18n-title="vote.cons1.short" data-i18n-aria-label="vote.cons1.full" title="Försumbar" aria-label="Konsekvens 1 – Försumbar">
                   <span class="vote-num">1</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-cons="2" title="Måttlig" aria-label="Konsekvens 2 – Måttlig">
+                <button type="button" class="vote-option-btn" data-cons="2" data-i18n-title="vote.cons2.short" data-i18n-aria-label="vote.cons2.full" title="Måttlig" aria-label="Konsekvens 2 – Måttlig">
                   <span class="vote-num">2</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-cons="3" title="Allvarlig" aria-label="Konsekvens 3 – Allvarlig">
+                <button type="button" class="vote-option-btn" data-cons="3" data-i18n-title="vote.cons3.short" data-i18n-aria-label="vote.cons3.full" title="Allvarlig" aria-label="Konsekvens 3 – Allvarlig">
                   <span class="vote-num">3</span>
                 </button>
-                <button type="button" class="vote-option-btn" data-cons="4" title="Mycket allvarlig" aria-label="Konsekvens 4 – Mycket allvarlig">
+                <button type="button" class="vote-option-btn" data-cons="4" data-i18n-title="vote.cons4.short" data-i18n-aria-label="vote.cons4.full" title="Mycket allvarlig" aria-label="Konsekvens 4 – Mycket allvarlig">
                   <span class="vote-num">4</span>
                 </button>
               </div>
@@ -296,7 +295,7 @@
 
           <div class="voting-footer">
             <div class="my-selection-preview" id="mySelectionPreview" aria-live="polite">
-              Välj både Sannolikhet (1–4) och Konsekvens (1–4) ovan.
+              <span data-i18n="vote.footerHint">Välj både Sannolikhet (1–4) och Konsekvens (1–4) ovan.</span>
             </div>
           </div>
         </div>
@@ -306,12 +305,12 @@
       <div id="presentView" class="tab-content present-view hidden">
         <div class="view-tabs-bar present-subtabs">
           <div class="view-tabs" id="presentSubTabs">
-            <button type="button" class="tab-btn active" data-subview="presentActive" id="tabBtnPresentActive">Aktuell risk</button>
-            <button type="button" class="tab-btn" data-subview="presentSummary" id="tabBtnPresentSummary">Sammanställning</button>
+            <button type="button" class="tab-btn active" data-subview="presentActive" id="tabBtnPresentActive" data-i18n="present.tabActive">Aktuell risk</button>
+            <button type="button" class="tab-btn" data-subview="presentSummary" id="tabBtnPresentSummary" data-i18n="present.tabSummary">Sammanställning</button>
           </div>
           <div class="present-view-actions">
-            <button type="button" class="btn btn-outline btn-sm" id="btnPresentQr" title="Visa QR-kod och delningslänk">Visa QR-kod</button>
-            <button type="button" class="btn btn-outline btn-sm" id="btnPresentWindow" title="Öppna presentationen i ett eget fönster">Eget fönster</button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnPresentQr" data-i18n="present.btnQr" data-i18n-title="present.btnQrTitle" title="Visa QR-kod och delningslänk">Visa QR-kod</button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnPresentWindow" data-i18n="present.btnWindow" data-i18n-title="present.btnWindowTitle" title="Öppna presentationen i ett eget fönster">Eget fönster</button>
           </div>
         </div>
 
@@ -346,8 +345,8 @@
             <!-- Empty state before the threshold is reached -->
             <div class="matrix-masked-banner" id="matrixMaskedBanner">
               <div class="masked-spinner"></div>
-              <h4>Inväntar svar från deltagarna</h4>
-              <p id="maskedBannerText">
+              <h4 data-i18n="present.maskedTitle">Inväntar svar från deltagarna</h4>
+              <p id="maskedBannerText" data-i18n="present.maskedBody">
                 För att ingen ska påverkas av tidiga röster visas matrisen så snart
                 tröskelvärdet har uppnåtts.
               </p>
@@ -356,22 +355,22 @@
             <!-- The 4x4 matrix (Consequence Y 4->1, Probability X 1->4) -->
             <div class="matrix-board-wrapper" id="activeMatrixWrapper">
               <div class="matrix-board">
-                <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
+                <div class="matrix-y-axis-title" data-i18n="present.axisY">Konsekvens &uarr;</div>
                 <div class="matrix-main-area">
                   <div class="matrix-grid-4x4" id="activeMatrixGrid">
                     <!-- Generated dynamically by app.js -->
                   </div>
-                  <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
+                  <div class="matrix-x-axis-title" data-i18n="present.axisX">Sannolikhet &rarr;</div>
                 </div>
               </div>
             </div>
 
             <!-- Color legend -->
             <div class="matrix-legend">
-              <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg</span>
-              <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medel</span>
-              <span class="legend-item"><span class="legend-swatch swatch-orange"></span> 8–9 Hög</span>
-              <span class="legend-item"><span class="legend-swatch swatch-red"></span> 12–16 Mycket hög</span>
+              <span class="legend-item"><span class="legend-swatch swatch-green"></span><span data-i18n="legend.low"> 1–2 Låg</span></span>
+              <span class="legend-item"><span class="legend-swatch swatch-yellow"></span><span data-i18n="legend.medium"> 3–6 Medel</span></span>
+              <span class="legend-item"><span class="legend-swatch swatch-orange"></span><span data-i18n="legend.high"> 8–9 Hög</span></span>
+              <span class="legend-item"><span class="legend-swatch swatch-red"></span><span data-i18n="legend.veryHigh"> 12–16 Mycket hög</span></span>
               <span class="legend-hint" id="adminClickMatrixHint"></span>
             </div>
           </div>
@@ -382,8 +381,8 @@
           <div class="card matrix-section-card">
             <div class="matrix-card-top">
               <div>
-                <h2>Sammanställningsmatris</h2>
-                <p class="matrix-subtitle">
+                <h2 data-i18n="summary.matrixTitle">Sammanställningsmatris</h2>
+                <p class="matrix-subtitle" data-i18n="summary.matrixSub">
                   Alla bedömda risker (#1, #2, #3...) i samma 4&times;4-matris. Klicka på en riskbricka för att visa dess röstdetaljer.
                 </p>
               </div>
@@ -391,21 +390,21 @@
 
             <div class="matrix-board-wrapper">
               <div class="matrix-board">
-                <div class="matrix-y-axis-title">Konsekvens &uarr;</div>
+                <div class="matrix-y-axis-title" data-i18n="present.axisY">Konsekvens &uarr;</div>
                 <div class="matrix-main-area">
                   <div class="matrix-grid-4x4" id="summaryMatrixGrid">
                     <!-- Generated dynamically by app.js -->
                   </div>
-                  <div class="matrix-x-axis-title">Sannolikhet &rarr;</div>
+                  <div class="matrix-x-axis-title" data-i18n="present.axisX">Sannolikhet &rarr;</div>
                 </div>
               </div>
             </div>
 
             <div class="matrix-legend">
-              <span class="legend-item"><span class="legend-swatch swatch-green"></span> 1–2 Låg</span>
-              <span class="legend-item"><span class="legend-swatch swatch-yellow"></span> 3–6 Medel</span>
-              <span class="legend-item"><span class="legend-swatch swatch-orange"></span> 8–9 Hög</span>
-              <span class="legend-item"><span class="legend-swatch swatch-red"></span> 12–16 Mycket hög</span>
+              <span class="legend-item"><span class="legend-swatch swatch-green"></span><span data-i18n="legend.low"> 1–2 Låg</span></span>
+              <span class="legend-item"><span class="legend-swatch swatch-yellow"></span><span data-i18n="legend.medium"> 3–6 Medel</span></span>
+              <span class="legend-item"><span class="legend-swatch swatch-orange"></span><span data-i18n="legend.high"> 8–9 Hög</span></span>
+              <span class="legend-item"><span class="legend-swatch swatch-red"></span><span data-i18n="legend.veryHigh"> 12–16 Mycket hög</span></span>
             </div>
           </div>
         </div>
@@ -424,7 +423,7 @@
               </div>
             </div>
             <div class="admin-toolbar-group hidden" id="adminSettingsCard">
-              <label class="small-caps" for="adminThresholdInput">Tröskel</label>
+              <label class="small-caps" for="adminThresholdInput" data-i18n="admin.thresholdLabel">Tröskel</label>
               <div class="threshold-control-row">
                 <input type="number" id="adminThresholdInput" class="form-input form-input-sm" min="1" max="50" value="4" />
                 <span class="small-muted" id="thresholdInfo"></span>
@@ -433,11 +432,12 @@
           </div>
           <div class="admin-toolbar-row">
             <div class="admin-toolbar-group admin-toolbar-label">
-              <label class="form-label" for="adminTitleInput">Sessionstitel</label>
+              <label class="form-label" for="adminTitleInput" data-i18n="admin.titleLabel">Sessionstitel</label>
               <input
                 type="text"
                 id="adminTitleInput"
                 class="form-input"
+                data-i18n-placeholder="admin.titlePlaceholder"
                 placeholder="Namn på sessionen..."
                 maxlength="100"
               />
@@ -445,28 +445,29 @@
           </div>
           <div class="admin-toolbar-row">
             <div class="admin-toolbar-group admin-toolbar-label">
-              <label class="form-label" for="adminRiskLabelInput">Etikett för risk #<span id="adminLabelRiskNum">1</span></label>
+              <label class="form-label" for="adminRiskLabelInput"><span data-i18n="admin.labelLabel">Etikett för risk #</span><span id="adminLabelRiskNum">1</span></label>
               <input
                 type="text"
                 id="adminRiskLabelInput"
                 class="form-input"
+                data-i18n-placeholder="admin.labelPlaceholder"
                 placeholder="Valfri benämning (t.ex. från PowerPoint)..."
                 maxlength="120"
               />
-              <p class="input-hint">
+              <p class="input-hint" data-i18n="admin.labelHint">
                 Texten kan hämtas av vem som helst med sessionskoden. Ange inte känsliga uppgifter.
               </p>
             </div>
           </div>
           <div class="admin-toolbar-row admin-toolbar-actions">
             <div id="adminSelfVoteToggleBox" class="hidden">
-              <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote">Rösta själv på denna risk</button>
+              <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote" data-i18n="admin.selfVote">Rösta själv på denna risk</button>
             </div>
             <div class="admin-action-buttons hidden" id="adminRiskActions">
-              <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow">Visa resultat nu</button>
-              <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" title="Nollställ rösterna för denna risk">Nollställ</button>
-              <button type="button" class="btn btn-success btn-sm" id="btnLockRisk">Lås placering</button>
-              <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext">Nästa &rarr;</button>
+              <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow" data-i18n="admin.revealNow">Visa resultat nu</button>
+              <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" data-i18n="admin.reset" data-i18n-title="admin.resetTitle" title="Nollställ rösterna för denna risk">Nollställ</button>
+              <button type="button" class="btn btn-success btn-sm" id="btnLockRisk" data-i18n="admin.lock">Lås placering</button>
+              <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext" data-i18n="admin.next">Nästa &rarr;</button>
             </div>
           </div>
         </div>
@@ -475,8 +476,8 @@
         <div id="adminVotePanel" class="admin-vote-panel hidden">
           <div class="card voting-card">
             <div class="voting-card-header">
-              <h3>Din bedömning av <span id="adminVotingCardRiskNum">Risk #1</span></h3>
-              <span class="vote-saved-indicator hidden" id="adminMyVoteSavedBadge">Din röst är registrerad</span>
+              <h3><span data-i18n="vote.cardTitle">Din bedömning av</span> <span id="adminVotingCardRiskNum">Risk #1</span></h3>
+              <span class="vote-saved-indicator hidden" id="adminMyVoteSavedBadge" data-i18n="vote.savedBadge">Din röst är registrerad</span>
             </div>
 
             <div class="voting-axes-grid">
@@ -487,16 +488,16 @@
                   <span class="axis-subtitle">Hur troligt är det att risken inträffar?</span>
                 </div>
                 <div class="vote-options-list" id="adminProbOptionsGroup">
-                  <button type="button" class="vote-option-btn" data-prob="1" title="Osannolik" aria-label="Sannolikhet 1 – Osannolik">
+                  <button type="button" class="vote-option-btn" data-prob="1" data-i18n-title="vote.prob1.short" data-i18n-aria-label="vote.prob1.full" title="Osannolik" aria-label="Sannolikhet 1 – Osannolik">
                     <span class="vote-num">1</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-prob="2" title="Möjlig" aria-label="Sannolikhet 2 – Möjlig">
+                  <button type="button" class="vote-option-btn" data-prob="2" data-i18n-title="vote.prob2.short" data-i18n-aria-label="vote.prob2.full" title="Möjlig" aria-label="Sannolikhet 2 – Möjlig">
                     <span class="vote-num">2</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-prob="3" title="Sannolik" aria-label="Sannolikhet 3 – Sannolik">
+                  <button type="button" class="vote-option-btn" data-prob="3" data-i18n-title="vote.prob3.short" data-i18n-aria-label="vote.prob3.full" title="Sannolik" aria-label="Sannolikhet 3 – Sannolik">
                     <span class="vote-num">3</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-prob="4" title="Mycket sannolik" aria-label="Sannolikhet 4 – Mycket sannolik">
+                  <button type="button" class="vote-option-btn" data-prob="4" data-i18n-title="vote.prob4.short" data-i18n-aria-label="vote.prob4.full" title="Mycket sannolik" aria-label="Sannolikhet 4 – Mycket sannolik">
                     <span class="vote-num">4</span>
                   </button>
                 </div>
@@ -509,16 +510,16 @@
                   <span class="axis-subtitle">Hur allvarlig blir följden om det sker?</span>
                 </div>
                 <div class="vote-options-list" id="adminConsOptionsGroup">
-                  <button type="button" class="vote-option-btn" data-cons="1" title="Försumbar" aria-label="Konsekvens 1 – Försumbar">
+                  <button type="button" class="vote-option-btn" data-cons="1" data-i18n-title="vote.cons1.short" data-i18n-aria-label="vote.cons1.full" title="Försumbar" aria-label="Konsekvens 1 – Försumbar">
                     <span class="vote-num">1</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-cons="2" title="Måttlig" aria-label="Konsekvens 2 – Måttlig">
+                  <button type="button" class="vote-option-btn" data-cons="2" data-i18n-title="vote.cons2.short" data-i18n-aria-label="vote.cons2.full" title="Måttlig" aria-label="Konsekvens 2 – Måttlig">
                     <span class="vote-num">2</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-cons="3" title="Allvarlig" aria-label="Konsekvens 3 – Allvarlig">
+                  <button type="button" class="vote-option-btn" data-cons="3" data-i18n-title="vote.cons3.short" data-i18n-aria-label="vote.cons3.full" title="Allvarlig" aria-label="Konsekvens 3 – Allvarlig">
                     <span class="vote-num">3</span>
                   </button>
-                  <button type="button" class="vote-option-btn" data-cons="4" title="Mycket allvarlig" aria-label="Konsekvens 4 – Mycket allvarlig">
+                  <button type="button" class="vote-option-btn" data-cons="4" data-i18n-title="vote.cons4.short" data-i18n-aria-label="vote.cons4.full" title="Mycket allvarlig" aria-label="Konsekvens 4 – Mycket allvarlig">
                     <span class="vote-num">4</span>
                   </button>
                 </div>
@@ -527,7 +528,7 @@
 
             <div class="voting-footer">
               <div class="my-selection-preview" id="adminMySelectionPreview" aria-live="polite">
-                Välj både Sannolikhet (1–4) och Konsekvens (1–4) ovan.
+                <span data-i18n="vote.footerHint">Välj både Sannolikhet (1–4) och Konsekvens (1–4) ovan.</span>
               </div>
             </div>
           </div>
@@ -537,30 +538,32 @@
         <div class="card share-card" id="shareCard">
           <div class="share-card-head">
             <div>
-              <span class="small-caps">Dela sessionen</span>
+              <span class="small-caps" data-i18n="share.title">Dela sessionen</span>
               <div class="share-session-code" id="sidebarSessionCode">------</div>
             </div>
-            <button type="button" class="btn btn-outline btn-sm" id="btnExpandQr">Förstora QR</button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnExpandQr" data-i18n="share.expandQr">Förstora QR</button>
           </div>
           <div
             class="qr-preview-wrapper"
             id="qrPreviewWrapper"
             role="button"
             tabindex="0"
+            data-i18n-title="share.qrPreviewTitle"
+            data-i18n-aria-label="share.qrPreviewAria"
             title="Klicka för att förstora QR-koden"
             aria-label="Förstora QR-koden"
           >
             <div id="sidebarQrContainer" class="qr-box"></div>
           </div>
-          <button type="button" class="btn btn-outline btn-sm btn-block" id="btnTogglePresentQr">
+          <button type="button" class="btn btn-outline btn-sm btn-block" id="btnTogglePresentQr" data-i18n="share.presentQr">
             Visa QR i presentationsvyn
           </button>
-          <button type="button" class="btn btn-outline btn-sm btn-block" id="btnHandoverAdmin" title="Visa en QR-kod som överför admin-rätten till en annan enhet">
+          <button type="button" class="btn btn-outline btn-sm btn-block" id="btnHandoverAdmin" data-i18n="share.handover" data-i18n-title="share.handoverTitle" title="Visa en QR-kod som överför admin-rätten till en annan enhet">
             Överför admin till annan enhet
           </button>
           <div class="share-url-group">
-            <input type="text" id="shareUrlInput" class="form-input form-input-sm" readonly aria-label="Delningslänk till sessionen" />
-            <button type="button" class="btn btn-secondary btn-sm" id="btnCopyShareUrl">Kopiera</button>
+            <input type="text" id="shareUrlInput" class="form-input form-input-sm" readonly data-i18n-aria-label="share.urlAria" aria-label="Delningslänk till sessionen" />
+            <button type="button" class="btn btn-secondary btn-sm" id="btnCopyShareUrl" data-i18n="share.copy">Kopiera</button>
           </div>
           <p class="qr-lan-hint hidden" id="lanIpHint"></p>
         </div>
@@ -568,15 +571,15 @@
         <!-- Table overview of all risks + export -->
         <div class="card summary-table-card">
           <div class="summary-table-head">
-            <h2>Tabellöversikt över risker</h2>
+            <h2 data-i18n="table.title">Tabellöversikt över risker</h2>
             <div class="export-buttons-row">
-              <button type="button" class="btn btn-primary btn-sm" id="btnExportPng">
+              <button type="button" class="btn btn-primary btn-sm" id="btnExportPng" data-i18n="export.png">
                 PNG-bild (PowerPoint)
               </button>
-              <button type="button" class="btn btn-secondary btn-sm" id="btnExportCsv">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnExportCsv" data-i18n="export.csv">
                 Excel (CSV)
               </button>
-              <button type="button" class="btn btn-outline btn-sm" id="btnExportSnapshot" title="Spara hela sessionen som en JSON-fil som kan importeras senare">
+              <button type="button" class="btn btn-outline btn-sm" id="btnExportSnapshot" data-i18n="export.snapshot" data-i18n-title="export.snapshotTitle" title="Spara hela sessionen som en JSON-fil som kan importeras senare">
                 Snapshot (JSON)
               </button>
             </div>
@@ -585,15 +588,15 @@
             <table class="risk-summary-table">
               <thead>
                 <tr>
-                  <th>Risk #</th>
-                  <th>Etikett / Anteckning</th>
-                  <th>Röster</th>
-                  <th>Snitt (S / K)</th>
-                  <th>Sannolikhet</th>
-                  <th>Konsekvens</th>
-                  <th>Riskvärde</th>
-                  <th>Risknivå</th>
-                  <th>Status</th>
+                  <th data-i18n="table.colRisk">Risk #</th>
+                  <th data-i18n="table.colLabel">Etikett / Anteckning</th>
+                  <th data-i18n="table.colVotes">Röster</th>
+                  <th data-i18n="table.colAvg">Snitt (S / K)</th>
+                  <th data-i18n="table.colProb">Sannolikhet</th>
+                  <th data-i18n="table.colCons">Konsekvens</th>
+                  <th data-i18n="table.colScore">Riskvärde</th>
+                  <th data-i18n="table.colLevel">Risknivå</th>
+                  <th data-i18n="table.colStatus">Status</th>
                 </tr>
               </thead>
               <tbody id="summaryTableBody"></tbody>
@@ -609,27 +612,27 @@
   <div id="qrModal" class="modal-backdrop hidden">
     <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
       <div class="modal-header">
-        <h2 id="qrModalTitle">Skanna för att delta</h2>
-        <button type="button" class="btn-close-modal" id="btnCloseQrModal" title="Stäng" aria-label="Stäng dialogruta">&times;</button>
+        <h2 id="qrModalTitle" data-i18n="modal.title">Skanna för att delta</h2>
+        <button type="button" class="btn-close-modal" id="btnCloseQrModal" data-i18n-title="modal.closeTitle" data-i18n-aria-label="modal.closeAria" title="Stäng" aria-label="Stäng dialogruta">&times;</button>
       </div>
       <div class="modal-body qr-modal-body">
         <div id="modalQrContainer" class="qr-box-large"></div>
         <div class="modal-code-badge">
-          Sessionskod: <strong id="modalSessionCode">------</strong>
+          <span data-i18n="modal.codeLabel">Sessionskod:</span> <strong id="modalSessionCode">------</strong>
         </div>
         <p class="modal-url-text" id="modalShareUrl"></p>
         <div class="share-url-group hidden" id="handoverUrlGroup">
-          <input type="text" id="handoverUrlInput" class="form-input form-input-sm" readonly aria-label="Överföringslänk för admin-rätt" />
-          <button type="button" class="btn btn-secondary btn-sm" id="btnCopyHandoverUrl">Kopiera länk</button>
+          <input type="text" id="handoverUrlInput" class="form-input form-input-sm" readonly data-i18n-aria-label="modal.handoverUrlAria" aria-label="Överföringslänk för admin-rätt" />
+          <button type="button" class="btn btn-secondary btn-sm" id="btnCopyHandoverUrl" data-i18n="modal.handoverCopy">Kopiera länk</button>
         </div>
 
         <div class="modal-custom-host" id="modalCustomHostBox">
-          <label class="small-muted" for="customBaseUrlInput">
+          <label class="small-muted" for="customBaseUrlInput" data-i18n="modal.customHostLabel">
             Nätverksadress i QR-koden (ändra om servern nås via ett annat domännamn/IP):
           </label>
           <div class="share-url-group">
             <input type="text" id="customBaseUrlInput" class="form-input form-input-sm" />
-            <button type="button" class="btn btn-secondary btn-sm" id="btnApplyCustomUrl">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnApplyCustomUrl" data-i18n="modal.customHostApply">
               Uppdatera QR
             </button>
           </div>

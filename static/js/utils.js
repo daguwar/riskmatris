@@ -3,6 +3,7 @@
  */
 
 import { COLOR_STYLES } from "./constants.js";
+import { t } from "./i18n.js";
 import { state } from "./state.js";
 
 /**
@@ -10,6 +11,13 @@ import { state } from "./state.js";
  * (state.sessionState.cell_meta) so the risk-level thresholds exist in exactly
  * one place – the backend. This function only attaches presentation styles.
  */
+export function levelLabel(score) {
+  if (score <= 2) return t("level.low");
+  if (score <= 6) return t("level.medium");
+  if (score <= 9) return t("level.high");
+  return t("level.veryHigh");
+}
+
 export function getCellMeta(prob, cons) {
   const meta = state.sessionState?.cell_meta?.[`${prob}_${cons}`] || {
     score: prob * cons,
@@ -19,7 +27,7 @@ export function getCellMeta(prob, cons) {
   const styles = COLOR_STYLES[meta.color] || COLOR_STYLES.green;
   return {
     score: meta.score,
-    level: meta.level,
+    level: levelLabel(meta.score),
     colorClass: styles.colorClass,
     pillClass: styles.pillClass,
     hexBg: styles.hexBg,
@@ -56,7 +64,7 @@ export function saveRecentSession(sessionId, title, isAdmin) {
     let list = JSON.parse(raw).filter((x) => x.session_id !== sessionId);
     list.unshift({
       session_id: sessionId,
-      title: title || "Riskanalys",
+      title: title || t("default.title"),
       is_admin: isAdmin,
       ts: Date.now(),
     });

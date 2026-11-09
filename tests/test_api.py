@@ -181,6 +181,35 @@ class TestCsvFormulaInjection:
 
 
 # ---------------------------------------------------------------------------
+# CSV export language (?lang=sv|en, issue #9 phase 3)
+# ---------------------------------------------------------------------------
+
+
+class TestCsvLanguage:
+    def test_default_is_swedish(self, add_session, test_client):
+        sid = "CSVLANG1"
+        add_session(sid)
+        resp = test_client.get(f"/api/sessions/{sid}/export.csv")
+        assert resp.status_code == 200
+        assert "Risknivå" in resp.text
+
+    def test_english_headers(self, add_session, test_client):
+        sid = "CSVLANG2"
+        add_session(sid)
+        resp = test_client.get(f"/api/sessions/{sid}/export.csv?lang=en")
+        assert resp.status_code == 200
+        assert "Risk level" in resp.text
+        assert "Risknivå" not in resp.text
+
+    def test_invalid_lang_rejected(self, add_session, test_client):
+        sid = "CSVLANG3"
+        add_session(sid)
+        resp = test_client.get(f"/api/sessions/{sid}/export.csv?lang=fr")
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == "invalid_lang"
+
+
+# ---------------------------------------------------------------------------
 # A01-4: admin token is only accepted via the X-Admin-Token header, never as
 # a query parameter (tokens in URLs leak into logs/history/Referer)
 # ---------------------------------------------------------------------------

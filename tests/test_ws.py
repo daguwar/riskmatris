@@ -274,7 +274,7 @@ class TestWebSocketMessageRateLimit:
             ws.send_json({"action": "vote", "probability": 1, "consequence": 1})
             msg = ws.receive_json()
             assert msg["type"] == "error"
-            assert "meddelanden" in msg["message"]
+            assert msg["message"] == "too_many_messages"  # server sends codes (i18n)
 
 
 # ---------------------------------------------------------------------------

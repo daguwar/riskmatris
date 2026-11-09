@@ -47,13 +47,13 @@ def get_risk_level(score: int) -> dict[str, str]:
     Green (1-2 Low), Yellow (3-6 Medium), Orange (8-9 High), Red (12-16 Very High)
     """
     if score <= 2:
-        return {"level": "Låg", "color": "green"}
+        return {"level": "Low", "color": "green"}
     elif score <= 6:
-        return {"level": "Medel", "color": "yellow"}
+        return {"level": "Medium", "color": "yellow"}
     elif score <= 9:
-        return {"level": "Hög", "color": "orange"}
+        return {"level": "High", "color": "orange"}
     else:
-        return {"level": "Mycket Hög", "color": "red"}
+        return {"level": "Very high", "color": "red"}
 
 
 @cache

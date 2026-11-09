@@ -1,4 +1,5 @@
-import { CONS_LABELS, PROB_LABELS } from "../constants.js";
+import { consLabel, probLabel } from "../constants.js";
+import { t } from "../i18n.js";
 import { dom } from "../dom.js";
 import { state } from "../state.js";
 import { getCellMeta } from "../utils.js";
@@ -19,15 +20,15 @@ export function renderVotingControls(risk, hasVoted) {
   });
 
   if (risk.locked) {
-    dom.mySelectionPreview.textContent = "Omröstningen för denna risk är låst.";
+    dom.mySelectionPreview.textContent = t("voting.locked");
   } else if (state.selectedProb && state.selectedCons) {
     const meta = getCellMeta(state.selectedProb, state.selectedCons);
     dom.mySelectionPreview.innerHTML =
-      `Ditt val: <strong>Sannolikhet ${state.selectedProb} (${PROB_LABELS[state.selectedProb]})</strong> &times; ` +
-      `<strong>Konsekvens ${state.selectedCons} (${CONS_LABELS[state.selectedCons]})</strong> ` +
-      `&rarr; Riskvärde <strong>${meta.score} (${meta.level})</strong>`;
+      `${t("voting.yourChoice")} <strong>${t("vote.probAxis")} ${state.selectedProb} (${probLabel(state.selectedProb)})</strong> &times; ` +
+      `<strong>${t("vote.consAxis")} ${state.selectedCons} (${consLabel(state.selectedCons)})</strong> ` +
+      t("voting.previewScore", { score: meta.score, level: meta.level });
   } else {
-    dom.mySelectionPreview.textContent = "Klicka på en Sannolikhet (1–4) och en Konsekvens (1–4) ovan för att rösta.";
+    dom.mySelectionPreview.textContent = t("voting.hintVote");
   }
 }
 
@@ -55,16 +56,15 @@ export function renderAdminVotingControls(risk, hasVoted) {
   });
 
   if (risk.locked) {
-    dom.adminMySelectionPreview.textContent = "Omröstningen för denna risk är låst.";
+    dom.adminMySelectionPreview.textContent = t("voting.locked");
   } else if (state.adminSelectedProb && state.adminSelectedCons) {
     const meta = getCellMeta(state.adminSelectedProb, state.adminSelectedCons);
     dom.adminMySelectionPreview.innerHTML =
-      `Ditt val: <strong>Sannolikhet ${state.adminSelectedProb} (${PROB_LABELS[state.adminSelectedProb]})</strong> &times; ` +
-      `<strong>Konsekvens ${state.adminSelectedCons} (${CONS_LABELS[state.adminSelectedCons]})</strong> ` +
-      `&rarr; Riskvärde <strong>${meta.score} (${meta.level})</strong>`;
+      `${t("voting.yourChoice")} <strong>${t("vote.probAxis")} ${state.adminSelectedProb} (${probLabel(state.adminSelectedProb)})</strong> &times; ` +
+      `<strong>${t("vote.consAxis")} ${state.adminSelectedCons} (${consLabel(state.adminSelectedCons)})</strong> ` +
+      t("voting.previewScore", { score: meta.score, level: meta.level });
   } else {
-    dom.adminMySelectionPreview.textContent =
-      "Klicka på en Sannolikhet (1–4) och en Konsekvens (1–4) ovan för att rösta.";
+    dom.adminMySelectionPreview.textContent = t("voting.hintVote");
   }
 }
 

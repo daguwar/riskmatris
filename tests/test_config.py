@@ -1,23 +1,6 @@
 """Tests for configuration constants and env parsing (riskmatris.config)."""
 
-from app import CONSEQUENCE_LABELS, PROBABILITY_LABELS
-
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-
-
-class TestLabels:
-    def test_probability_labels_complete(self):
-        assert set(PROBABILITY_LABELS.keys()) == {1, 2, 3, 4}
-        assert PROBABILITY_LABELS[1] == "Osannolik"
-        assert PROBABILITY_LABELS[4] == "Mycket sannolik"
-
-    def test_consequence_labels_complete(self):
-        assert set(CONSEQUENCE_LABELS.keys()) == {1, 2, 3, 4}
-        assert CONSEQUENCE_LABELS[1] == "Försumbar"
-        assert CONSEQUENCE_LABELS[4] == "Mycket allvarlig"
-
+# Note: user-facing P/C labels moved to the i18n dictionaries (issue #9).
 
 # ---------------------------------------------------------------------------
 # Environment variable parsing (safe fallback)

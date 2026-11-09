@@ -1,4 +1,5 @@
 import { dom } from "./dom.js";
+import { getLang, has, t } from "./i18n.js";
 import { exportSummaryMatrixAsPng } from "./export-png.js";
 import { renderAdminVotingControls, renderVotingControls } from "./render/voting.js";
 import { state } from "./state.js";
@@ -22,7 +23,11 @@ import { connectWebSocket, sendWsAction } from "./ws.js";
 async function readErrorDetail(res, fallback) {
   try {
     const data = await res.json();
-    if (data && typeof data.detail === "string" && data.detail) return data.detail;
+    if (data && typeof data.detail === "string" && data.detail) {
+      // The server sends error codes – translate them; pass through anything else
+      const key = `server.${data.detail}`;
+      return has(key) ? t(key) : data.detail;
+    }
   } catch (_) {}
   return `${fallback} (HTTP ${res.status})`;
 }
@@ -65,13 +70,13 @@ export async function consumeHandoverToken(sid) {
       body: JSON.stringify({ token }),
     });
     if (!res.ok) {
-      alert(await readErrorDetail(res, "Överlämningskoden är ogiltig eller har gått ut"));
+      alert(await readErrorDetail(res, t("events.errHandoverInvalid")));
       return;
     }
     const data = await res.json();
     localStorage.setItem(`riskmatris_admin_${sid}`, data.admin_token);
   } catch (err) {
-    alert("Kunde inte hämta administratörsrollen: " + err.message);
+    alert(t("events.errFetchAdminRole") + err.message);
   }
 }
 
@@ -91,10 +96,10 @@ export async function enterSession(sessionId) {
     );
     if (!res.ok) {
       if (res.status === 404) {
-        alert(`Sessionen "${state.currentSessionId}" hittades inte. Kontrollera koden.`);
+        alert(t("events.errSessionNotFound", { sid: state.currentSessionId }));
       } else {
         // e.g. 429 rate limited – show the server's message
-        alert(await readErrorDetail(res, "Kunde inte ansluta till sessionen"));
+        alert(await readErrorDetail(res, t("events.errJoinFallback")));
       }
       window.history.pushState({}, "", "/");
       return;
@@ -110,7 +115,7 @@ export async function enterSession(sessionId) {
     updateShareUrlAndQr(initialData.lan_ip);
     connectWebSocket(handleSessionState);
   } catch (err) {
-    alert("Kunde inte ansluta till sessionen: " + err.message);
+    alert(t("events.errJoinCatch") + err.message);
   }
 }
 
@@ -118,7 +123,7 @@ export function bindLandingEvents() {
   const createForm = document.getElementById("createSessionForm");
   createForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const title = document.getElementById("inputSessionTitle").value.trim() || "Riskanalys";
+    const title = document.getElementById("inputSessionTitle").value.trim() || t("default.title");
     const threshold = parseInt(document.getElementById("inputDefaultThreshold").value, 10) || 4;
 
     try {
@@ -129,7 +134,7 @@ export function bindLandingEvents() {
       });
       if (!res.ok) {
         // e.g. 429 rate limit – show the server's message ("Too many sessions…")
-        throw new Error(await readErrorDetail(res, "Kunde inte skapa sessionen"));
+        throw new Error(await readErrorDetail(res, t("events.errCreateFallback")));
       }
       const data = await res.json();
       localStorage.setItem(`riskmatris_admin_${data.session_id}`, data.admin_token);
@@ -137,7 +142,7 @@ export function bindLandingEvents() {
       window.history.pushState({}, "", `/s/${data.session_id}`);
       enterSession(data.session_id);
     } catch (err) {
-      alert("Ett fel uppstod när sessionen skulle skapas: " + err.message);
+      alert(t("events.errCreateCatch") + err.message);
     }
   });
 
@@ -163,14 +168,14 @@ export function bindLandingEvents() {
         headers: { "Content-Type": "application/json" },
         body: text,
       });
-      if (!res.ok) throw new Error(await readErrorDetail(res, "Kunde inte importera snapshot-filen"));
+      if (!res.ok) throw new Error(await readErrorDetail(res, t("events.errImportFallback")));
       const data = await res.json();
       localStorage.setItem(`riskmatris_admin_${data.session_id}`, data.admin_token);
       saveRecentSession(data.session_id, data.title, true);
       window.history.pushState({}, "", `/s/${data.session_id}`);
       enterSession(data.session_id);
     } catch (err) {
-      alert("Importen misslyckades: " + err.message);
+      alert(t("events.errImportCatch") + err.message);
     }
   });
 }
@@ -307,7 +312,7 @@ export function bindSessionEvents() {
 
   // Admin: reset votes
   dom.btnResetVotes.addEventListener("click", () => {
-    if (confirm("Vill du nollställa alla röster på denna risk?")) {
+    if (confirm(t("events.confirmReset"))) {
       sendWsAction({ action: "reset_votes" });
     }
   });
@@ -333,11 +338,11 @@ export function bindSessionEvents() {
     const ok = await copyTextToClipboard(dom.shareUrlInput.value);
     const old = btnCopyShareUrl.textContent;
     if (ok) {
-      btnCopyShareUrl.textContent = "Kopierad!";
+      btnCopyShareUrl.textContent = t("events.copied");
     } else {
       dom.shareUrlInput.focus();
       dom.shareUrlInput.select();
-      btnCopyShareUrl.textContent = "Kunde inte kopiera";
+      btnCopyShareUrl.textContent = t("events.copyFail");
     }
     setTimeout(() => (btnCopyShareUrl.textContent = old), 1500);
   });
@@ -434,14 +439,14 @@ export function bindSessionEvents() {
         method: "POST",
         headers: { "X-Admin-Token": getAdminToken(state.currentSessionId) },
       });
-      if (!res.ok) throw new Error(await readErrorDetail(res, "Kunde inte skapa överlämningskod"));
+      if (!res.ok) throw new Error(await readErrorDetail(res, t("events.errHandoverCreate")));
       const data = await res.json();
       const handoverUrl = `${window.location.origin}/s/${state.currentSessionId}?handover=${encodeURIComponent(data.ticket)}`;
       const qrEndpoint = `/api/sessions/${state.currentSessionId}/qr.svg?url=${encodeURIComponent(handoverUrl)}`;
       state.showingHandoverQr = true;
-      dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="QR-kod för överlämning av admin" />`;
+      dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="${t("views.qrAltHandover")}" />`;
       dom.modalSessionCode.textContent = state.currentSessionId;
-      dom.modalShareUrl.textContent = `Skanna från den nya enheten inom ${Math.round(data.expires_in / 60)} min – koden kan bara användas en gång.`;
+      dom.modalShareUrl.textContent = t("events.handoverQrNote", { minutes: Math.round(data.expires_in / 60) });
       dom.handoverUrlInput.value = handoverUrl;
       dom.handoverUrlGroup.classList.remove("hidden");
       openQrModal();
@@ -454,7 +459,7 @@ export function bindSessionEvents() {
   dom.btnCopyHandoverUrl.addEventListener("click", async () => {
     const ok = await copyTextToClipboard(dom.handoverUrlInput.value);
     const old = dom.btnCopyHandoverUrl.textContent;
-    dom.btnCopyHandoverUrl.textContent = ok ? "Kopierad!" : "Kunde inte kopiera";
+    dom.btnCopyHandoverUrl.textContent = ok ? t("events.copied") : t("events.copyFail");
     if (!ok) {
       dom.handoverUrlInput.focus();
       dom.handoverUrlInput.select();
@@ -477,7 +482,7 @@ export function bindSessionEvents() {
   // Export CSV
   document.getElementById("btnExportCsv").addEventListener("click", () => {
     if (!state.currentSessionId) return;
-    window.location.href = `/api/sessions/${state.currentSessionId}/export.csv`;
+    window.location.href = `/api/sessions/${state.currentSessionId}/export.csv?lang=${getLang()}`;
   });
 
   // Export PNG
