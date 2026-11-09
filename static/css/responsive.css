@@ -46,6 +46,30 @@
   .status-pill .dot-live {
     display: none;
   }
+
+  /* Never overflow horizontally on phones: wrap instead, and slim the pills */
+  .topbar-inner {
+    flex-wrap: wrap;
+    min-height: 0;
+    row-gap: 6px;
+  }
+
+  .session-code-pill .code-label {
+    display: none;
+  }
+
+  .session-code-pill {
+    padding: 5px 9px;
+    font-size: 0.8rem;
+  }
+
+  .session-code-pill .code-value {
+    font-size: 0.85rem;
+  }
+
+  .status-pill {
+    font-size: 0.8rem;
+  }
 }
 
 @media (max-width: 560px) {

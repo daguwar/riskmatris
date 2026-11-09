@@ -29,7 +29,6 @@ export function t(key, params) {
   if (typeof entry !== "string") return key;
   if (params) {
     for (const [k, v] of Object.entries(params)) {
-      if (k === "count") continue;
       entry = entry.split(`{${k}}`).join(String(v));
     }
   }
