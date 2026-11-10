@@ -27,6 +27,10 @@ class TestStaticCacheBusting:
             for link in css_links:
                 assert link.endswith(f"?v={version}")
             assert "/static/styles.css" not in resp.text
+            # The asset content hash is injected into a meta tag so the client
+            # can cache-bust the i18n JSON fetches (they are cached for a day)
+            assert f'<meta name="static-version" content="{version}"' in resp.text
+            assert "__STATIC_VERSION__" not in resp.text
             # The SPA shell itself must always be revalidated
             assert resp.headers["cache-control"] == "no-cache"
 
@@ -56,6 +60,8 @@ class TestAboutPage:
         resp = test_client.get("/about")
         assert resp.status_code == 200
         assert f"/static/js/page.js?v={version}" in resp.text
+        assert f'<meta name="static-version" content="{version}"' in resp.text
+        assert "__STATIC_VERSION__" not in resp.text
         css_links = re.findall(r'href="(/static/[^"]+\.css[^"]*)"', resp.text)
         assert len(css_links) >= 10
         for link in css_links:

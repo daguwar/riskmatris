@@ -53,7 +53,12 @@ function detectLang() {
 
 async function loadDict(code) {
   try {
-    const res = await fetch(`/static/i18n/${code}.json`);
+    // Cache-bust the dictionary with the same content hash as the JS/CSS
+    // assets (injected into a meta tag by the SPA route). The JSON files are
+    // served with max-age=86400, so without this a browser could show a
+    // day-old dictionary after a deploy.
+    const staticVersion = document.querySelector('meta[name="static-version"]')?.content || "";
+    const res = await fetch(`/static/i18n/${code}.json${staticVersion ? `?v=${staticVersion}` : ""}`);
     dict = res.ok ? await res.json() : {};
   } catch {
     dict = {};

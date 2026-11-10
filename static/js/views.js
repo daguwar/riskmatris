@@ -204,6 +204,10 @@ export function handleSessionState(newState) {
     // Selecting a risk from the admin view must keep the admin in it (issue #18)
     if (state.currentView !== "adminView") {
       switchView("presentView");
+      // A chip click means "show this risk's details" – switch to the
+      // active-risk subtab, otherwise the click stays on the summary the
+      // chip lives in and appears to do nothing
+      switchPresentSub("presentActive");
     }
   };
 

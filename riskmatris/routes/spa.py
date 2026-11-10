@@ -51,4 +51,7 @@ async def serve_spa(request: Request, session_id: str | None = None):
     # matches what the server actually enforces
     ttl_hours = getattr(config, "SESSION_TTL_HOURS", 48)
     html = html.replace("__TTL_HOURS__", str(ttl_hours))
+    # Inject the asset content hash into the meta tag so the client can
+    # cache-bust its i18n JSON fetches the same way as the JS/CSS references
+    html = html.replace("__STATIC_VERSION__", version)
     return HTMLResponse(content=html)
