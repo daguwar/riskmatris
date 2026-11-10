@@ -144,6 +144,26 @@
   padding: 14px 12px;
 }
 
+/* Label row: label on the left, info "i" on the right, above the input */
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.label-row .info-popup {
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+/* The "i" sits at the right edge of the row – open the popup leftwards so
+   it does not overflow the card */
+.label-row .info-popup-content {
+  left: auto;
+  right: 0;
+}
+
 /* Info popup: long hints are hidden behind a small "i" button to reduce
    always-visible text. Implemented as a native details/summary disclosure,
    so Enter/Space toggling and the expanded state work without JS. */

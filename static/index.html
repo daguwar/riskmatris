@@ -93,7 +93,25 @@
       <section class="card landing-card landing-card-muted">
         <h2><span data-i18n="create.title">Starta ny session</span> <span class="card-tag" data-i18n="create.tag">för mötesledare</span></h2>
         <form id="createSessionForm" class="form-stack" aria-label="Starta ny session">
-          <label class="form-label" for="inputSessionTitle" data-i18n="create.titleLabel">Namn på sessionen (valfritt)</label>
+          <div class="label-row">
+            <label class="form-label" for="inputSessionTitle" data-i18n="create.titleLabel">Namn på sessionen (valfritt)</label>
+            <details class="info-popup">
+              <summary
+                class="info-btn"
+                data-i18n-title="info.title"
+                data-i18n-aria-label="info.ariaLabel"
+                title="Mer information"
+                aria-label="Visa mer information"
+              >
+                <span aria-hidden="true">i</span>
+              </summary>
+              <p class="info-popup-content" data-i18n="create.privacyHint">
+                Allt i sessionen sparas tillfälligt på servern och kan hämtas av vem som helst som har
+                sessionskoden. Ange därför aldrig känsliga uppgifter som personuppgifter eller
+                förtrolig information.
+              </p>
+            </details>
+          </div>
           <input
             type="text"
             id="inputSessionTitle"
@@ -102,23 +120,24 @@
             placeholder="T.ex. Riskanalys – Projekt Alfa"
             maxlength="80"
           />
-          <details class="info-popup">
-            <summary
-              class="info-btn"
-              data-i18n-title="info.title"
-              data-i18n-aria-label="info.ariaLabel"
-              title="Mer information"
-              aria-label="Visa mer information"
-            >
-              <span aria-hidden="true">i</span>
-            </summary>
-            <p class="info-popup-content" data-i18n="create.privacyHint">
-              Allt i sessionen sparas tillfälligt på servern och kan hämtas av vem som helst som har
-              sessionskoden. Ange därför aldrig känsliga uppgifter som personuppgifter eller
-              förtrolig information.
-            </p>
-          </details>
-          <label class="form-label" for="inputDefaultThreshold" data-i18n="create.thresholdLabel">Rösttröskel för automatisk visning</label>
+          <div class="label-row">
+            <label class="form-label" for="inputDefaultThreshold" data-i18n="create.thresholdLabel">Rösttröskel för automatisk visning</label>
+            <details class="info-popup">
+              <summary
+                class="info-btn"
+                data-i18n-title="info.title"
+                data-i18n-aria-label="info.ariaLabel"
+                title="Mer information"
+                aria-label="Visa mer information"
+              >
+                <span aria-hidden="true">i</span>
+              </summary>
+              <p class="info-popup-content" data-i18n="create.thresholdHint">
+                Matrisen visas automatiskt när detta antal röster har kommit in. Kommer färre
+                deltagare än så använder mötesledaren &rdquo;Visa resultat nu&rdquo;.
+              </p>
+            </details>
+          </div>
           <input
             type="number"
             id="inputDefaultThreshold"
@@ -127,21 +146,6 @@
             min="1"
             max="50"
           />
-          <details class="info-popup">
-            <summary
-              class="info-btn"
-              data-i18n-title="info.title"
-              data-i18n-aria-label="info.ariaLabel"
-              title="Mer information"
-              aria-label="Visa mer information"
-            >
-              <span aria-hidden="true">i</span>
-            </summary>
-            <p class="info-popup-content" data-i18n="create.thresholdHint">
-              Matrisen visas automatiskt när detta antal röster har kommit in. Kommer färre
-              deltagare än så använder mötesledaren &rdquo;Visa resultat nu&rdquo;.
-            </p>
-          </details>
           <button type="submit" class="btn btn-secondary btn-large btn-block" data-i18n="create.submit">Starta session &amp; skapa QR-kod</button>
         </form>
       </section>
@@ -430,7 +434,23 @@
           </div>
           <div class="admin-toolbar-row">
             <div class="admin-toolbar-group admin-toolbar-label">
-              <label class="form-label" for="adminRiskLabelInput"><span data-i18n="admin.labelLabel">Etikett för risk #</span><span id="adminLabelRiskNum">1</span></label>
+              <div class="label-row">
+                <label class="form-label" for="adminRiskLabelInput"><span data-i18n="admin.labelLabel">Etikett för risk #</span><span id="adminLabelRiskNum">1</span></label>
+                <details class="info-popup">
+                  <summary
+                    class="info-btn"
+                    data-i18n-title="info.title"
+                    data-i18n-aria-label="info.ariaLabel"
+                    title="Mer information"
+                    aria-label="Visa mer information"
+                  >
+                    <span aria-hidden="true">i</span>
+                  </summary>
+                  <p class="info-popup-content" data-i18n="admin.labelHint">
+                    Texten kan hämtas av vem som helst med sessionskoden. Ange inte känsliga uppgifter.
+                  </p>
+                </details>
+              </div>
               <input
                 type="text"
                 id="adminRiskLabelInput"
@@ -439,20 +459,6 @@
                 placeholder="Valfri benämning (t.ex. från PowerPoint)..."
                 maxlength="120"
               />
-              <details class="info-popup">
-                <summary
-                  class="info-btn"
-                  data-i18n-title="info.title"
-                  data-i18n-aria-label="info.ariaLabel"
-                  title="Mer information"
-                  aria-label="Visa mer information"
-                >
-                  <span aria-hidden="true">i</span>
-                </summary>
-                <p class="info-popup-content" data-i18n="admin.labelHint">
-                  Texten kan hämtas av vem som helst med sessionskoden. Ange inte känsliga uppgifter.
-                </p>
-              </details>
             </div>
           </div>
           <div class="admin-toolbar-row admin-toolbar-actions">
