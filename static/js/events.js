@@ -442,10 +442,13 @@ export function bindSessionEvents() {
     if (e.target === dom.qrModal) closeQr();
   });
 
-  // Presentation view: separate projector window
-  document.getElementById("btnPresentWindow").addEventListener("click", () => {
+  // Presentation view: separate projector window (?view=present is
+  // presentation-only – no vote/admin tabs, see views.js presentOnly)
+  const openPresentWindow = () => {
     window.open(`${window.location.pathname}?view=present`, "_blank", "width=1280,height=860");
-  });
+  };
+  document.getElementById("btnPresentWindow").addEventListener("click", openPresentWindow);
+  document.getElementById("btnPresentWindowAdmin").addEventListener("click", openPresentWindow);
 
   document.getElementById("btnApplyCustomUrl").addEventListener("click", () => {
     state.customShareBaseUrl = dom.customBaseUrlInput.value.trim();
@@ -494,10 +497,29 @@ export function bindSessionEvents() {
     sendWsAction({ action: "set_qr_visible", visible });
   });
 
-  // Export session snapshot (JSON, for later import)
-  dom.btnExportSnapshot.addEventListener("click", () => {
+  // Export session snapshot (JSON, for later import). Sent with the admin
+  // token so the file also contains the votes – the endpoint only includes
+  // raw votes for authenticated admins (SEC-01), which also makes the
+  // import checkbox "also import previous votes" meaningful.
+  dom.btnExportSnapshot.addEventListener("click", async () => {
     if (!state.currentSessionId) return;
-    window.location.href = `/api/sessions/${state.currentSessionId}/snapshot.json`;
+    try {
+      const res = await fetch(`/api/sessions/${state.currentSessionId}/snapshot.json`, {
+        headers: { "X-Admin-Token": getAdminToken(state.currentSessionId) },
+      });
+      if (!res.ok) throw new Error(await readErrorDetail(res, t("events.errSnapshotFallback")));
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `riskmatris_${state.currentSessionId}_snapshot.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.message);
+    }
   });
 
   // Export CSV

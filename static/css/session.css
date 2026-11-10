@@ -505,3 +505,33 @@
   transition: width 0.35s ease;
 }
 
+
+/* Button + info "i" popup pairs in the admin view */
+.btn-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-info .info-popup {
+  margin-top: 0;
+}
+
+/* Full-width button rows in the share card (button grows, "i" stays right) */
+.btn-info-block {
+  display: flex;
+  width: 100%;
+}
+
+.btn-info-block .btn {
+  flex: 1;
+}
+
+/* Session handling card (snapshot, admin handover) */
+.session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}

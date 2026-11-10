@@ -142,18 +142,27 @@ export function handleSessionState(newState) {
   dom.participantRiskLabelDisplay.classList.toggle("hidden", isAdmin);
 
   // View switcher
-  dom.tabBtnVote.classList.toggle("hidden", isAdmin);
-  dom.tabBtnPresent.classList.toggle("hidden", !isAdmin);
-  dom.tabBtnAdmin.classList.toggle("hidden", !isAdmin);
-
-  if (!isAdmin) {
-    switchView("voteView");
+  if (state.presentOnly) {
+    // Projector window (?view=present): presentation only – hide the vote and
+    // admin tabs even for admins, so there is no way to switch away
+    dom.tabBtnVote.classList.add("hidden");
+    dom.tabBtnPresent.classList.remove("hidden");
+    dom.tabBtnAdmin.classList.add("hidden");
+    switchView("presentView");
   } else {
-    if (state.pendingInitialView) {
-      switchView(state.pendingInitialView);
-      state.pendingInitialView = null;
-    } else if (state.currentView !== "adminView" && state.currentView !== "presentView") {
-      switchView("adminView");
+    dom.tabBtnVote.classList.toggle("hidden", isAdmin);
+    dom.tabBtnPresent.classList.toggle("hidden", !isAdmin);
+    dom.tabBtnAdmin.classList.toggle("hidden", !isAdmin);
+
+    if (!isAdmin) {
+      switchView("voteView");
+    } else {
+      if (state.pendingInitialView) {
+        switchView(state.pendingInitialView);
+        state.pendingInitialView = null;
+      } else if (state.currentView !== "adminView" && state.currentView !== "presentView") {
+        switchView("adminView");
+      }
     }
   }
   dom.adminVoteHint.classList.toggle("hidden", true);
