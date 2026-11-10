@@ -3,7 +3,7 @@
  */
 
 import { initDom } from "./js/dom.js";
-import { bindLandingEvents, bindSessionEvents, consumeHandoverToken, enterSession, renderRecentSessions } from "./js/events.js";
+import { bindInfoPopups, bindLandingEvents, bindSessionEvents, consumeHandoverToken, enterSession, renderRecentSessions } from "./js/events.js";
 import { initI18n } from "./js/i18n.js";
 import { state } from "./js/state.js";
 import { initTheme } from "./js/theme.js";
@@ -15,6 +15,7 @@ async function init() {
   initTheme();
   bindLandingEvents();
   bindSessionEvents();
+  bindInfoPopups();
   renderRecentSessions();
   // Re-render dynamic content when the language changes
   window.addEventListener("langchange", () => {

@@ -192,3 +192,29 @@
   color: var(--text);
 }
 
+/* Text link in the top bar (e.g. About) – carries the auto margin that
+   .theme-toggle used to own alone, so the right-side group stays right-aligned */
+.topbar-link {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.topbar-link:hover {
+  color: var(--text);
+  background: var(--bg);
+}
+
+.topbar-link[aria-current="page"] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.topbar-inner .topbar-link ~ .lang-select,
+.topbar-inner .topbar-link ~ .theme-toggle {
+  margin-left: 8px;
+}

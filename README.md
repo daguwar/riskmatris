@@ -1,122 +1,161 @@
 # Riskmatris Live
 
-An open, interactive real-time web application for running group risk assessments (e.g. together with a PowerPoint presentation).
-
-> Note: all code, comments and log messages are in English. The user interface is in Swedish. Translations of the UI may be added in the future.
+Riskmatris Live is a real-time web application for collaborative 4×4 risk assessments. A facilitator creates a session, participants join anonymously via QR code or session code from mobile or desktop browsers, and votes are aggregated live on an interactive risk matrix. Results can be locked and exported as PNG images, CSV spreadsheets, or JSON snapshots.
 
 ## Features
 
-- **Open to everyone (no login):** The meeting leader starts a session and receives a unique session code (**8 characters**, configurable 6–16), a **QR code** and a share link. Participants scan the QR code with their phone and go straight into the voting view, fully anonymously.
-- **Step-by-step voting per risk (`#1`, `#2`, `#3`...):**
-  - **Probability (X axis, 1–4):** `1 – Osannolik` (unlikely), `2 – Möjlig` (possible), `3 – Sannolik` (likely), `4 – Mycket sannolik` (very likely).
-  - **Consequence (Y axis, 1–4):** `1 – Försumbar` (negligible), `2 – Måttlig` (moderate), `3 – Allvarlig` (serious), `4 – Mycket allvarlig` (very serious).
-- **Automatic reveal at the vote threshold:** Results stay hidden until the configured number of responses has arrived (default: `4`), or until the meeting leader clicks **"Visa resultat nu"** (reveal results now). If more responses arrive afterwards, the matrix updates in real time. The threshold is never adjusted to the number of currently connected participants – if fewer participants show up, the leader reveals manually.
-- **4×4 risk matrix (Probability × Consequence = 1–16):**
-  - **Green (1–2):** Low risk
-  - **Yellow (3–6):** Medium risk
-  - **Orange (8–9):** High risk
-  - **Red (12–16):** Very high risk
-- **Calculated suggestion & summary matrix:**
-  - Shows both the vote distribution (number of votes per cell) and the calculated average (rounded up at `.5` per the precautionary principle).
-  - The meeting leader can accept the suggestion or click any cell in the matrix after discussion to lock the placement of `#1`, `#2` etc. into the **summary matrix**.
-- **Export to PowerPoint & Excel:**
-  - **PNG image:** Download a high-resolution image of the summary matrix with all placed risks (`#1`, `#2`...) ready to paste into PowerPoint.
-  - **CSV (Excel):** Export a table with all risks, vote counts, averages, decided Probability/Consequence, risk score and risk level.
-- **Remote-controlled QR overlay:** From the admin view the leader can show/hide a large QR code with the session link directly on the projector view – e.g. to let latecomers join mid-meeting. The state follows every connected presentation window.
-- **Admin handover:** The admin view can show a one-time QR code / copyable link that transfers admin rights to another device (e.g. from laptop to phone). The link is single-use and expires after 5 minutes; the original device stays admin too (the token is per session, not per device).
+- **Anonymous participation:** No user accounts or registrations. Sessions generate an 8-character code, a join link, and a QR code. Participant votes are associated with a random device identifier.
+- **Interactive 4×4 risk matrix:**
+  - **Probability (X-axis, 1–4):** Unlikely (1), Possible (2), Likely (3), Highly likely (4).
+  - **Consequence (Y-axis, 1–4):** Negligible (1), Moderate (2), Serious (3), Critical (4).
+  - **Risk score (1–16):** Low (Green, 1–2), Medium (Yellow, 3–6), High (Orange, 8–9), Very High (Red, 12–16).
+- **Facilitator controls:**
+  - Configurable vote reveal threshold (default: 4 votes). Votes remain hidden until the threshold is met or the facilitator manually triggers a reveal.
+  - Calculated consensus recommendations based on the arithmetic mean, rounded up at `.5` (precautionary principle).
+  - Manual override to adjust and lock a risk's final cell position after group discussion.
+  - Projector mode with a toggleable full-screen QR code for late arrivals.
+  - Secure admin handover via single-use QR code or link with a 5-minute expiry.
+- **Export options:**
+  - **PNG:** High-resolution rendering of the complete summary matrix.
+  - **CSV:** Tabular export containing risk descriptions, vote counts, averages, final coordinates, and risk levels (`/api/sessions/{session_id}/export.csv?lang=sv|en`).
+  - **JSON Snapshot:** Export and restore full session states directly from the landing page.
+- **Localization & accessibility:**
+  - Full UI localization in Swedish (`sv`) and English (`en`), plus light/dark theme toggle.
+  - Built to WCAG 2.1 AA standards (high-contrast ratios, complete keyboard navigation, ARIA live regions, and modal focus traps).
 
----
+## Tech Stack
 
-## Running the application
+- **Backend:** Python 3.12, [FastAPI](https://fastapi.tiangolo.com), Uvicorn, SQLite (WAL mode), WebSockets.
+- **Frontend:** Vanilla JavaScript (ES modules), HTML5, CSS3. No compilation or client-side build pipeline required. Static assets are cache-busted with content hashes.
+- **QR Code Generation:** [`qrcode`](https://pypi.org/project/qrcode/).
 
-### 1. Running locally (manually, without Docker)
+## Project Structure
 
-Create a Python virtual environment, install the dependencies and start the server in your terminal:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn riskmatris:app --host 0.0.0.0 --port 8000
+```
+├── app.py                      # Compatibility entrypoint
+├── riskmatris/                 # Application backend package
+│   ├── __init__.py             # FastAPI factory, middleware, and lifespan handlers
+│   ├── config.py               # Settings, validation, and environment defaults
+│   ├── db.py                   # SQLite database initialization and queries
+│   ├── state.py                # In-memory session state management
+│   ├── routes/
+│   │   ├── api.py              # REST API endpoints (sessions, exports, health)
+│   │   ├── ws.py               # WebSocket endpoint and connection dispatching
+│   │   └── spa.py              # Single Page Application routing and HTML serving
+├── static/                     # Frontend client assets
+│   ├── index.html              # Main application markup
+│   ├── about.html              # Information and privacy page
+│   ├── css/                    # Stylesheets (tokens, layout, matrix, themes)
+│   ├── js/                     # Client JavaScript modules
+│   └── i18n/                   # Translation files (sv.json, en.json)
+├── tests/                      # Pytest suite
+├── Dockerfile                  # Production container definition
+├── docker-compose.yml          # Local container environment
+├── docker-compose.traefik.yml  # Reverse proxy deployment setup
+└── AGENTS.md                   # Development conventions and guidelines
 ```
 
-Then open **http://localhost:8000** in your browser.
-*(If you open it via `localhost`, the QR code automatically points to the computer's local network IP so that participants on the same Wi-Fi can scan it with their phones.)*
+## Getting Started
 
-### Development in VS Code with Dev Containers
+### Local Development (Python)
 
-Open the project in VS Code and choose **Dev Containers: Reopen in Container** from the command palette. Once the container has been created, the dependencies from `requirements-dev.txt` are installed automatically. Then start the app in the container's terminal:
+Prerequisites: Python 3.12+
 
 ```bash
+# Create and activate a virtual environment
+python -m venv .venv
+
+# Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+# Linux/macOS:
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements-dev.txt
+
+# Start development server
 uvicorn riskmatris:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Port 8000 is forwarded automatically. Run the tests with `pytest`.
+Navigate to `http://localhost:8000`. When accessed locally, generated QR codes automatically resolve to your local network IP to allow mobile devices on the same Wi-Fi network to connect.
 
-Check the pinned runtime dependencies for known vulnerabilities:
+### VS Code Dev Containers
 
-```bash
-pip-audit -r requirements.txt
-```
+This repository includes a `.devcontainer` configuration. Open the directory in VS Code and select **Dev Containers: Reopen in Container** to initialize the environment with all development dependencies pre-installed.
 
-### 2. Running with Docker
+### Docker (Local)
+
+Run with Docker Compose:
 
 ```bash
 docker compose up --build -d
 ```
 
-The application is then available at **http://localhost:8000** and stores ongoing sessions in a Docker volume (`riskmatris_data`) so they survive a restart. Sessions are cleaned up automatically after 48 hours (configurable via the `RISKMATRIS_TTL_HOURS` environment variable).
+The application will be available at `http://localhost:8000`. Sessions persist in the `riskmatris_data` volume and interactive API documentation is enabled at `http://localhost:8000/docs`.
 
-### 3. Running in the cloud (Render, Fly.io, Google Cloud Run, Azure App Service)
+### Production Deployment (Traefik)
 
-Since the project has both a `Dockerfile` and `requirements.txt`, and listens to the `PORT` environment variable, you can upload the project directly to any cloud service without changes.
-
-### 4. Running on your own server behind an existing Traefik (HTTPS)
-
-If you have a server where Traefik already handles HTTPS and certificates, run the app **without published ports** – Traefik routes traffic to the container via a shared Docker network (labels on the container, see `docker-compose.traefik.yml`):
+To deploy behind an existing Traefik reverse proxy handling TLS:
 
 ```bash
-cp .env.example .env    # fill in your values
+cp .env.example .env
+# Edit .env with your domain and network configuration
 docker compose -f docker-compose.traefik.yml up -d --build
 ```
 
-Fill in `.env`:
+In this mode, the container does not expose host ports directly; traffic is routed entirely via the shared Docker network.
 
-- `RISKMATRIS_DOMAIN` – the domain Traefik should respond on (required), e.g. `riskmatris.example.com`
-- `RISKMATRIS_TTL_HOURS` – session retention in hours (default: `48`)
-- `RISKMATRIS_SESSION_READ_LIMIT` / `RISKMATRIS_SESSION_READ_WINDOW_SECONDS` – per-IP rate limit on read endpoints keyed by session code, in requests per window (defaults: `300` per `60` seconds); protects against enumeration of session codes
-- `RISKMATRIS_SESSION_CODE_LENGTH` – length of generated session codes, 6–16 (default: `8` = 40 bits of entropy)
-- `RISKMATRIS_WS_MAX_CONNECTIONS_PER_IP` / `RISKMATRIS_WS_MAX_CONNECTIONS_TOTAL` – WebSocket connection caps per client IP / globally (defaults: `20` / `1000`)
-- `RISKMATRIS_WS_MESSAGE_RATE_LIMIT` / `RISKMATRIS_WS_MESSAGE_RATE_WINDOW_SECONDS` – max WS messages per connection per window (defaults: `120` per `60` seconds)
-- `RISKMATRIS_ENABLE_DOCS` – set to `1` to expose the interactive API docs (`/docs`, `/redoc`, `/openapi.json`); disabled by default, enabled only in the local `docker-compose.yml`
-- `RISKMATRIS_SQLITE_BUSY_TIMEOUT_MS` – how long SQLite waits for a lock before failing (default: `5000` ms); the database runs in WAL mode
-- `TRAEFIK_NETWORK` – the name of the Docker network your Traefik runs on (usually `traefik-public`; the network must already exist)
-- `TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERT_RESOLVER` – names of the entrypoint and certificate resolver (defaults: `websecure` / `letsencrypt`)
+## Configuration
 
-Other optional settings (see `riskmatris/config.py` for the full list):
+Settings are configured using environment variables:
 
-- `LOG_LEVEL` – log level (default: `INFO`)
-- `RISKMATRIS_LOG_FORMAT` – `text` (human-readable, default locally) or `json` (one JSON object per line; default in the Docker image)
-- `RISKMATRIS_DB_PATH` – SQLite database path (default: `data/riskmatris.db`)
-- `RISKMATRIS_SESSION_CREATE_LIMIT` – max sessions created per IP per hour (default: `10`)
-- `RISKMATRIS_CLEANUP_INTERVAL` – seconds between automatic session cleanups (default: `3600`)
-- `RISKMATRIS_WS_MAX_CONNECTIONS` – WebSocket connections per session (default: `200`)
-- `RISKMATRIS_WS_MAX_MESSAGE_BYTES` – max WebSocket message size (default: `8192`)
+| Variable | Default | Description |
+| --- | --- | --- |
+| `PORT` | `8000` | HTTP port for the web server |
+| `RISKMATRIS_DB_PATH` | `data/riskmatris.db` | Path to the SQLite database file |
+| `RISKMATRIS_TTL_HOURS` | `48` | Session retention period in hours |
+| `RISKMATRIS_CLEANUP_INTERVAL` | `3600` | Frequency of expired session cleanup in seconds |
+| `RISKMATRIS_SESSION_CODE_LENGTH` | `8` | Length of generated session codes (6–16 characters) |
+| `RISKMATRIS_SESSION_CREATE_LIMIT` | `10` | Max sessions created per IP per hour |
+| `RISKMATRIS_SESSION_READ_LIMIT` | `300` | Max requests per IP to read-only endpoints per window |
+| `RISKMATRIS_SESSION_READ_WINDOW_SECONDS` | `60` | Time window in seconds for read rate limiting |
+| `RISKMATRIS_WS_MAX_CONNECTIONS` | `200` | Maximum simultaneous WebSocket connections per session |
+| `RISKMATRIS_WS_MAX_CONNECTIONS_PER_IP` | `20` | Maximum simultaneous WebSocket connections per IP address |
+| `RISKMATRIS_WS_MAX_CONNECTIONS_TOTAL` | `1000` | Global limit for concurrent WebSocket connections |
+| `RISKMATRIS_WS_MESSAGE_RATE_LIMIT` | `120` | Max WebSocket messages per connection per window |
+| `RISKMATRIS_WS_MESSAGE_RATE_WINDOW_SECONDS` | `60` | Time window in seconds for WebSocket message throttling |
+| `RISKMATRIS_WS_MAX_MESSAGE_BYTES` | `8192` | Maximum allowable WebSocket payload size in bytes |
+| `RISKMATRIS_MAX_RISKS_PER_SESSION` | `100` | Maximum number of risks allowed per session |
+| `RISKMATRIS_MAX_VOTES_PER_RISK` | `500` | Maximum number of recorded votes allowed per risk |
+| `RISKMATRIS_MAX_SNAPSHOT_BYTES` | `1000000` | Maximum payload size in bytes for JSON snapshot imports |
+| `RISKMATRIS_ADMIN_HANDOVER_TTL_SECONDS` | `300` | Validity duration of admin handover tokens in seconds |
+| `RISKMATRIS_SQLITE_BUSY_TIMEOUT_MS` | `5000` | SQLite lock wait timeout in milliseconds |
+| `RISKMATRIS_ENABLE_DOCS` | `0` | Set to `1` to enable `/docs` and `/openapi.json` |
+| `LOG_LEVEL` | `INFO` | Application log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `RISKMATRIS_LOG_FORMAT` | `text` (`json` in Docker) | Log output format (`text` or `json`) |
 
-Open the app via your domain (`https://riskmatris.example.com`). The share link and QR code then point to the right address automatically, and WebSockets (`wss://`) work through Traefik without extra configuration. For local debugging on the server you can add `ports: - "127.0.0.1:8000:8000"` to the compose file (binding to localhost only).
+## Security
 
-**Security note:** `FORWARDED_ALLOW_IPS=*` in `docker-compose.traefik.yml` is only safe because the container port is never published to untrusted networks. If you ever expose port 8000 directly (do not do this in production), remove that variable or clients can spoof `X-Forwarded-For` and bypass the per-IP rate limits.
+- **Anti-enumeration:** Session read endpoints and connection tickets are rate-limited per IP.
+- **WebSocket protection:** Origin validation against Host header, one-time tickets for admin authorization (30s TTL), payload size constraints, and connection limits per IP/session/host.
+- **Input hygiene:** Text input is sanitized, SQL queries use parameterized statements, and CSV exports escape spreadsheet formula triggers (`=`, `+`, `-`, `@`).
+- **Cryptographic verification:** Token validation uses constant-time string comparisons (`secrets.compare_digest`).
+- **Defensive HTTP headers:** Responses include strict Content Security Policy (CSP), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and `X-Frame-Options: DENY`.
+- **Hardened container:** The container runs as an unprivileged user (`appuser`) with a digest-pinned base image.
 
----
+## Testing & Quality
 
-## Development & CI
+Run the test suite and linters:
 
-Every push/PR to `master` runs CI (`.github/workflows/ci.yml`): `ruff` lint, the full `pytest` suite, and `pip-audit` against known dependency vulnerabilities. The Docker base image is pinned to an exact content digest in the `Dockerfile`, and Dependabot (`.github/dependabot.yml`) automatically proposes updates for Python dependencies, GitHub Actions and the base image digest.
+```bash
+# Run tests
+pytest -q
 
----
+# Run linters and formatting checks
+ruff check .
+ruff format --check .
+```
 
 ## License
 
-Licensed under the **European Union Public Licence v. 1.2 (EUPL-1.2)** – see [LICENSE](LICENSE) for the full text (SPDX identifier: `EUPL-1.2`).
-
-The EUPL is a copyleft open-source licence created and maintained by the European Commission, available in all official EU languages (all versions are equally authentic). In short: you may use, study, modify and distribute this software freely, but if you distribute it (or works based on it), you must do so under the same licence and provide access to the source code.
+This project is licensed under the **European Union Public Licence v. 1.2 (EUPL-1.2)**. See the [LICENSE](LICENSE) file for details.

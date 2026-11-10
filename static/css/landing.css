@@ -132,3 +132,52 @@
   border-color: var(--accent);
 }
 
+
+/* FAQ on the about page: native details/summary disclosures, keyboard- and
+   screen-reader accessible by default */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.faq-list details {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 10px 14px;
+}
+
+.faq-list summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.faq-list details p {
+  margin: 8px 0 2px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.about-list code {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
+.about-back {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.about-back a {
+  color: var(--accent-text);
+  font-size: 0.9rem;
+}

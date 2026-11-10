@@ -6,6 +6,7 @@ import { escapeHtml, getCellMeta } from "../utils.js";
 export function renderSummaryMatrix(risks, isAdmin, onSelectRisk) {
   dom.summaryMatrixGrid.innerHTML = "";
 
+  // Group placed risks per cell
   const cellRisksMap = {};
   risks.forEach((r) => {
     if ((r.locked || r.revealed) && r.effective_probability && r.effective_consequence) {
@@ -15,26 +16,16 @@ export function renderSummaryMatrix(risks, isAdmin, onSelectRisk) {
     }
   });
 
+  // 4x4 color board (rows: Consequence 4 -> 1, columns: Probability 1 -> 4).
+  // The only content in the cells is the #N risk chips – that IS the result;
+  // score/level text stays out of the cells (legend + summary table cover it).
   for (let cons = 4; cons >= 1; cons--) {
-    const yHeader = document.createElement("div");
-    yHeader.className = "matrix-axis-header";
-    yHeader.innerHTML = `<span class="axis-num">${cons}</span><span class="axis-name">${consLabel(cons)}</span>`;
-    dom.summaryMatrixGrid.appendChild(yHeader);
-
     for (let prob = 1; prob <= 4; prob++) {
       const meta = getCellMeta(prob, cons);
-      const key = `${prob}_${cons}`;
-      const placedRisks = cellRisksMap[key] || [];
+      const placedRisks = cellRisksMap[`${prob}_${cons}`] || [];
 
       const cell = document.createElement("div");
       cell.className = `matrix-cell ${meta.colorClass}`;
-
-      const topRow = document.createElement("div");
-      topRow.className = "cell-top-row";
-      const scoreSpan = document.createElement("span");
-      scoreSpan.className = "cell-score-number";
-      scoreSpan.textContent = String(meta.score);
-      topRow.appendChild(scoreSpan);
 
       const chipsContainer = document.createElement("div");
       chipsContainer.className = "summary-risk-chips";
@@ -53,27 +44,9 @@ export function renderSummaryMatrix(risks, isAdmin, onSelectRisk) {
         chipsContainer.appendChild(chip);
       });
 
-      const bottomRow = document.createElement("div");
-      bottomRow.className = "cell-bottom-row";
-      bottomRow.textContent = meta.level;
-
-      cell.appendChild(topRow);
       cell.appendChild(chipsContainer);
-      cell.appendChild(bottomRow);
       dom.summaryMatrixGrid.appendChild(cell);
     }
-  }
-
-  const corner = document.createElement("div");
-  corner.className = "matrix-axis-header corner-cell";
-  corner.innerHTML = `<span>${t("present.axisY")}</span><span>${t("present.axisX")}</span>`;
-  dom.summaryMatrixGrid.appendChild(corner);
-
-  for (let prob = 1; prob <= 4; prob++) {
-    const xHeader = document.createElement("div");
-    xHeader.className = "matrix-axis-header";
-    xHeader.innerHTML = `<span class="axis-num">${prob}</span><span class="axis-name">${probLabel(prob)}</span>`;
-    dom.summaryMatrixGrid.appendChild(xHeader);
   }
 }
 

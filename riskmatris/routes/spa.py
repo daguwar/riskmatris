@@ -33,9 +33,11 @@ def get_static_version() -> str:
 
 
 @router.get("/", response_class=HTMLResponse)
+@router.get("/about", response_class=HTMLResponse)
 @router.get("/s/{session_id}", response_class=HTMLResponse)
 async def serve_spa(request: Request, session_id: str | None = None):
-    with open(os.path.join("static", "index.html"), encoding="utf-8") as f:
+    page = "about.html" if request.url.path == "/about" else "index.html"
+    with open(os.path.join("static", page), encoding="utf-8") as f:
         html = f.read()
     version = get_static_version()
     # Append the content hash to every versioned static asset reference
@@ -49,4 +51,7 @@ async def serve_spa(request: Request, session_id: str | None = None):
     # matches what the server actually enforces
     ttl_hours = getattr(config, "SESSION_TTL_HOURS", 48)
     html = html.replace("__TTL_HOURS__", str(ttl_hours))
+    # Inject the asset content hash into the meta tag so the client can
+    # cache-bust its i18n JSON fetches the same way as the JS/CSS references
+    html = html.replace("__STATIC_VERSION__", version)
     return HTMLResponse(content=html)

@@ -47,14 +47,11 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
 
   dom.activeMatrixGrid.innerHTML = "";
 
-  // Rows: Consequence (Y axis), top to bottom 4 -> 1
+  // Pure 4x4 color board: rows = Consequence (Y axis) top to bottom 4 -> 1,
+  // columns = Probability (X axis) left to right 1 -> 4. Cells carry no text
+  // (only their color plus vote dots); the axis titles and the legend outside
+  // the grid explain axes and colors.
   for (let cons = 4; cons >= 1; cons--) {
-    const yHeader = document.createElement("div");
-    yHeader.className = "matrix-axis-header";
-    yHeader.innerHTML = `<span class="axis-num">${cons}</span><span class="axis-name">${consLabel(cons)}</span>`;
-    dom.activeMatrixGrid.appendChild(yHeader);
-
-    // Columns: Probability (X axis), left to right 1 -> 4
     for (let prob = 1; prob <= 4; prob++) {
       const meta = getCellMeta(prob, cons);
       const key = `${prob}_${cons}`;
@@ -69,30 +66,10 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
         cell.classList.add(risk.locked ? "locked-cell" : "suggested-cell");
       }
 
-      // Top row: risk score (1-16) + marker for Suggested / Locked
-      const topRow = document.createElement("div");
-      topRow.className = "cell-top-row";
-
-      const scoreSpan = document.createElement("span");
-      scoreSpan.className = "cell-score-number";
-      scoreSpan.textContent = String(meta.score);
-      topRow.appendChild(scoreSpan);
-
-      if (isEffectiveTarget) {
-        const badge = document.createElement("span");
-        badge.className = "cell-target-badge" + (risk.locked ? "" : " badge-suggested");
-        badge.textContent = risk.locked
-          ? t("cell.badgeLocked", { num: risk.number })
-          : risk.final_probability
-          ? t("cell.badgeChosen", { num: risk.number })
-          : t("cell.badgeSuggested", { num: risk.number });
-        topRow.appendChild(badge);
-      }
-
-      // Middle: vote dots and vote count
-      const votesArea = document.createElement("div");
-      votesArea.className = "cell-votes-area";
+      // Vote dots – purely graphical, no text in cells
       if (cellVotes > 0) {
+        const votesArea = document.createElement("div");
+        votesArea.className = "cell-votes-area";
         const dotsRow = document.createElement("div");
         dotsRow.className = "vote-dots-row";
         const maxDots = Math.min(cellVotes, 12);
@@ -102,29 +79,14 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
           dotsRow.appendChild(dot);
         }
         votesArea.appendChild(dotsRow);
-
-        const countPill = document.createElement("span");
-        countPill.className = "vote-count-pill";
-        countPill.textContent = t("cell.votes", { count: cellVotes });
-        votesArea.appendChild(countPill);
+        cell.appendChild(votesArea);
       }
-
-      // Bottom row: level text
-      const bottomRow = document.createElement("div");
-      bottomRow.className = "cell-bottom-row";
-      bottomRow.textContent = meta.level;
-
-      cell.appendChild(topRow);
-      cell.appendChild(votesArea);
-      cell.appendChild(bottomRow);
 
       if (isAdmin) {
         // WCAG 2.1 AA: clickable cells must also be keyboard operable.
-        // No custom aria-label on purpose: IBM's label-in-name check (2.5.3)
-        // string-matches the accessible name against the exact textContent,
-        // which a readable label can never match for a grid cell. With no
-        // aria-label the name IS the visible text; role="button" + title
-        // carry the action.
+        // Cells have no visible text anymore, so the accessible name comes
+        // from the title attribute (name-from-title); role="button" carries
+        // the action.
         const actionLabel = t("cell.actionPlace", { num: risk.number, p: prob, plabel: probLabel(prob), c: cons, clabel: consLabel(cons) });
         cell.title = t("cell.clickTitle", { action: actionLabel });
         cell.tabIndex = 0;
@@ -142,19 +104,6 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
 
       dom.activeMatrixGrid.appendChild(cell);
     }
-  }
-
-  // Bottom row: X-axis headers (Probability 1 -> 4)
-  const corner = document.createElement("div");
-  corner.className = "matrix-axis-header corner-cell";
-  corner.innerHTML = `<span>${t("present.axisY")}</span><span>${t("present.axisX")}</span>`;
-  dom.activeMatrixGrid.appendChild(corner);
-
-  for (let prob = 1; prob <= 4; prob++) {
-    const xHeader = document.createElement("div");
-    xHeader.className = "matrix-axis-header";
-    xHeader.innerHTML = `<span class="axis-num">${prob}</span><span class="axis-name">${probLabel(prob)}</span>`;
-    dom.activeMatrixGrid.appendChild(xHeader);
   }
 }
 
