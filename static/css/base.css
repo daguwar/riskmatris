@@ -211,7 +211,8 @@ button {
 .btn-close-modal:focus,
 .qr-preview-wrapper:focus,
 .summary-risk-chip:focus,
-.info-btn:focus {
+.info-btn:focus,
+.faq-list summary:focus {
   outline: 3px solid #4f46e5;
   outline-offset: 2px;
   /* double indicator (outline + ring) so the focus state is unmistakable */
@@ -227,7 +228,8 @@ button {
 [data-theme="dark"] .btn-close-modal:focus,
 [data-theme="dark"] .qr-preview-wrapper:focus,
 [data-theme="dark"] .summary-risk-chip:focus,
-[data-theme="dark"] .info-btn:focus {
+[data-theme="dark"] .info-btn:focus,
+[data-theme="dark"] .faq-list summary:focus {
   outline-color: #818cf8;
   box-shadow: 0 0 0 5px rgba(129, 140, 248, 0.3);
 }

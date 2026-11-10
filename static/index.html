@@ -45,6 +45,7 @@
           <span class="code-value" id="headerSessionCode">------</span>
         </button>
       </div>
+      <a href="/about" class="topbar-link" data-i18n="nav.aboutLink">Om tjänsten</a>
       <select id="langSelect" class="lang-select" data-i18n-aria-label="nav.langLabel" aria-label="Språk"></select>
       <button type="button" class="theme-toggle" id="btnThemeToggle" data-i18n-title="nav.themeToggleTitle" title="Växla mörkt/ljust tema"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg><span class="visually-hidden" data-i18n="nav.themeToggleLabel">Växla färgtema</span></button>
     </div>
@@ -156,47 +157,6 @@
         </form>
       </section>
 
-      <!-- About the service & data handling -->
-      <section class="card landing-card landing-card-muted" id="aboutSection">
-        <h2><span data-i18n="about.title">Om tjänsten</span> <span class="card-tag" data-i18n="about.tag">och din data</span></h2>
-        <div class="about-list">
-          <p>
-            <strong data-i18n="about.whatIs.strong">Vad är det här?</strong>
-            <span data-i18n="about.whatIs.body">Ett öppet verktyg för riskbedömning i grupp i realtid. Mötesledaren startar en session, deltagarna ansluter med sessionskoden eller QR-koden och röstar anonymt direkt i mobilen – inga konton, ingen inloggning.</span>
-          </p>
-          <p>
-            <strong data-i18n="about.saved.strong">Vad sparas?</strong>
-            <span data-i18n="about.saved.body">Sessionens titel, risker, etiketter och röster sparas tillfälligt på servern (högst <strong>__TTL_HOURS__ timmar</strong>) och raderas sedan automatiskt.</span>
-          </p>
-          <p>
-            <strong data-i18n="about.careful.strong">Tänk på:</strong>
-            <span data-i18n="about.careful.body">Allt i sessionen kan ses och hämtas av alla som har sessionskoden. Ange därför inte känsliga uppgifter, personuppgifter eller förtrolig information.</span>
-          </p>
-          <p>
-            <strong data-i18n="about.cookies.strong">Kakor?</strong>
-            <span data-i18n="about.cookies.body">Tjänsten använder inga kakor (cookies). På din egen enhet sparas endast en slumpgenererad klientnyckel (behövs för att rösta) samt listan av dina senaste sessioner.</span>
-          </p>
-          <p>
-            <strong data-i18n="about.ip.strong">IP-adresser:</strong>
-            <span data-i18n="about.ip.body">För att skydda tjänsten mot missbruk hanteras IP-adresser tillfälligt i serverns minne och i dess loggar. De används inte för spårning och lagras aldrig i sessionens data.</span>
-          </p>
-        </div>
-      </section>
-
-      <!-- Self-hosting & feedback -->
-      <section class="card landing-card landing-card-muted" id="selfHostSection">
-        <h2 data-i18n="selfhost.title">Driv tjänsten själv</h2>
-        <div class="about-list">
-          <p>
-            <span data-i18n="selfhost.body1a">Riskmatris är öppen källkod och kan köras på egen server, helt utan konton eller inloggning. Kod och instruktioner finns på</span>
-            <a href="https://github.com/daguwar/riskmatris" target="_blank" rel="noopener">GitHub</a><span data-i18n="selfhost.body1b">.</span>
-          </p>
-          <p>
-            <span data-i18n="selfhost.body2a">Har du förslag, synpunkter eller har hittat en bugg? Skriv gärna en rad i</span>
-            <a href="https://github.com/daguwar/riskmatris/issues" target="_blank" rel="noopener">Issues</a><span data-i18n="selfhost.body2b">.</span>
-          </p>
-        </div>
-      </section>
     </div>
   </div>
 

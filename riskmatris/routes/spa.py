@@ -33,9 +33,11 @@ def get_static_version() -> str:
 
 
 @router.get("/", response_class=HTMLResponse)
+@router.get("/about", response_class=HTMLResponse)
 @router.get("/s/{session_id}", response_class=HTMLResponse)
 async def serve_spa(request: Request, session_id: str | None = None):
-    with open(os.path.join("static", "index.html"), encoding="utf-8") as f:
+    page = "about.html" if request.url.path == "/about" else "index.html"
+    with open(os.path.join("static", page), encoding="utf-8") as f:
         html = f.read()
     version = get_static_version()
     # Append the content hash to every versioned static asset reference

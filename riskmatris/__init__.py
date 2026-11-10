@@ -88,7 +88,7 @@ async def add_cache_headers(request: Request, call_next):
     path = request.url.path
     if path.startswith("/static/"):
         response.headers["Cache-Control"] = "public, max-age=86400"
-    elif path == "/" or path.startswith("/s/"):
+    elif path == "/" or path == "/about" or path.startswith("/s/"):
         response.headers["Cache-Control"] = "no-cache"
     return response
 
