@@ -80,7 +80,9 @@ export function updateShareUrlAndQr(lanIp) {
   }
 
   const qrEndpoint = `/api/sessions/${state.currentSessionId}/qr.svg?url=${encodeURIComponent(shareUrl)}`;
-  dom.sidebarQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="${t("views.qrAlt", { sid: state.currentSessionId })}" />`;
+  if (dom.sidebarQrContainer) {
+    dom.sidebarQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="${t("views.qrAlt", { sid: state.currentSessionId })}" />`;
+  }
   // Don't overwrite the modal QR while a handover QR is intentionally shown
   if (!state.showingHandoverQr) {
     dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="${t("views.qrAlt", { sid: state.currentSessionId })}" />`;
@@ -142,18 +144,27 @@ export function handleSessionState(newState) {
   dom.participantRiskLabelDisplay.classList.toggle("hidden", isAdmin);
 
   // View switcher
-  dom.tabBtnVote.classList.toggle("hidden", isAdmin);
-  dom.tabBtnPresent.classList.toggle("hidden", !isAdmin);
-  dom.tabBtnAdmin.classList.toggle("hidden", !isAdmin);
-
-  if (!isAdmin) {
-    switchView("voteView");
+  if (state.presentOnly) {
+    // Projector window (?view=present): presentation only – hide the vote and
+    // admin tabs even for admins, so there is no way to switch away
+    dom.tabBtnVote.classList.add("hidden");
+    dom.tabBtnPresent.classList.remove("hidden");
+    dom.tabBtnAdmin.classList.add("hidden");
+    switchView("presentView");
   } else {
-    if (state.pendingInitialView) {
-      switchView(state.pendingInitialView);
-      state.pendingInitialView = null;
-    } else if (state.currentView !== "adminView" && state.currentView !== "presentView") {
-      switchView("adminView");
+    dom.tabBtnVote.classList.toggle("hidden", isAdmin);
+    dom.tabBtnPresent.classList.toggle("hidden", !isAdmin);
+    dom.tabBtnAdmin.classList.toggle("hidden", !isAdmin);
+
+    if (!isAdmin) {
+      switchView("voteView");
+    } else {
+      if (state.pendingInitialView) {
+        switchView(state.pendingInitialView);
+        state.pendingInitialView = null;
+      } else if (state.currentView !== "adminView" && state.currentView !== "presentView") {
+        switchView("adminView");
+      }
     }
   }
   dom.adminVoteHint.classList.toggle("hidden", true);

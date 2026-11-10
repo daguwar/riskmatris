@@ -27,6 +27,7 @@ async function init() {
   if (pathMatch) {
     if (new URLSearchParams(window.location.search).get("view") === "present") {
       state.pendingInitialView = "presentView";
+      state.presentOnly = true; // projector window: no way to switch to admin/vote views
     }
     const sid = pathMatch[1].toUpperCase();
     await consumeHandoverToken(sid); // stores admin token if ?handover= is present
