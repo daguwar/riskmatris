@@ -229,6 +229,38 @@
   background: rgba(15, 23, 42, 0.5);
 }
 
+.summary-risk-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+  align-content: center;
+}
+
+.summary-risk-chip {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #0f172a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+
+.summary-risk-chip:hover {
+  transform: translateY(-1px);
+}
+
+.summary-risk-chip.unconfirmed {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text);
+  border: 1px dashed var(--border-strong);
+}
+
 /* Color legend */
 .matrix-legend {
   display: flex;

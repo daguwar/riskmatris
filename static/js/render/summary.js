@@ -3,17 +3,48 @@ import { t } from "../i18n.js";
 import { dom } from "../dom.js";
 import { escapeHtml, getCellMeta } from "../utils.js";
 
-export function renderSummaryMatrix() {
+export function renderSummaryMatrix(risks, isAdmin, onSelectRisk) {
   dom.summaryMatrixGrid.innerHTML = "";
 
-  // Static 4x4 color board (rows: Consequence 4 -> 1, columns: Probability
-  // 1 -> 4). Cells carry no text – per-risk details live in the summary table
-  // below and in the PNG export, which draws its own labeled matrix.
+  // Group placed risks per cell
+  const cellRisksMap = {};
+  risks.forEach((r) => {
+    if ((r.locked || r.revealed) && r.effective_probability && r.effective_consequence) {
+      const key = `${r.effective_probability}_${r.effective_consequence}`;
+      if (!cellRisksMap[key]) cellRisksMap[key] = [];
+      cellRisksMap[key].push(r);
+    }
+  });
+
+  // 4x4 color board (rows: Consequence 4 -> 1, columns: Probability 1 -> 4).
+  // The only content in the cells is the #N risk chips – that IS the result;
+  // score/level text stays out of the cells (legend + summary table cover it).
   for (let cons = 4; cons >= 1; cons--) {
     for (let prob = 1; prob <= 4; prob++) {
       const meta = getCellMeta(prob, cons);
+      const placedRisks = cellRisksMap[`${prob}_${cons}`] || [];
+
       const cell = document.createElement("div");
       cell.className = `matrix-cell ${meta.colorClass}`;
+
+      const chipsContainer = document.createElement("div");
+      chipsContainer.className = "summary-risk-chips";
+
+      placedRisks.forEach((r) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "summary-risk-chip" + (r.locked ? "" : " unconfirmed");
+        chip.textContent = `#${r.number}`;
+        chip.title = r.label
+          ? t("summary.chipWithLabel", { num: r.number, label: r.label, score: meta.score, level: meta.level })
+          : t("summary.chipNoLabel", { num: r.number, score: meta.score, level: meta.level });
+        chip.addEventListener("click", () => {
+          onSelectRisk(r.number);
+        });
+        chipsContainer.appendChild(chip);
+      });
+
+      cell.appendChild(chipsContainer);
       dom.summaryMatrixGrid.appendChild(cell);
     }
   }
