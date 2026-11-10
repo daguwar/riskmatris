@@ -106,7 +106,6 @@
 /* QR codes stay on white in both themes (scanners need the quiet zone) –
    .qr-preview-wrapper keeps its light background on purpose */
 [data-theme="dark"] .view-tabs,
-[data-theme="dark"] .matrix-axis-header,
 [data-theme="dark"] .risk-summary-table tbody tr:hover {
   background: #1b2540;
 }
@@ -210,7 +209,6 @@ button {
 .session-code-pill:focus,
 .btn-close-modal:focus,
 .qr-preview-wrapper:focus,
-.summary-risk-chip:focus,
 .info-btn:focus,
 .faq-list summary:focus {
   outline: 3px solid #4f46e5;
@@ -227,7 +225,6 @@ button {
 [data-theme="dark"] .session-code-pill:focus,
 [data-theme="dark"] .btn-close-modal:focus,
 [data-theme="dark"] .qr-preview-wrapper:focus,
-[data-theme="dark"] .summary-risk-chip:focus,
 [data-theme="dark"] .info-btn:focus,
 [data-theme="dark"] .faq-list summary:focus {
   outline-color: #818cf8;

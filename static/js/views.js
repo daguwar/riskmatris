@@ -220,7 +220,7 @@ export function handleSessionState(newState) {
   renderActiveRiskHeader(activeRisk, newState.threshold, isAdmin);
   renderVotingControls(activeRisk, Boolean(newState.my_vote));
   renderActiveRiskMatrix(activeRisk, newState.threshold, isAdmin, onSetFinalCell);
-  renderSummaryMatrix(newState.risks, isAdmin, onSelectRisk);
+  renderSummaryMatrix();
   renderSummaryTable(newState.risks);
   syncQrModal();
 }
