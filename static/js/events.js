@@ -381,14 +381,18 @@ export function bindSessionEvents() {
     document.getElementById("btnCloseQrModal").focus();
   };
   document.getElementById("btnExpandQr").addEventListener("click", openQrManually);
+  // The QR preview is not rendered on the admin view anymore (shown on demand
+  // via the modal) – guard in case the element is absent
   const qrPreview = document.getElementById("qrPreviewWrapper");
-  qrPreview.addEventListener("click", openQrManually);
-  qrPreview.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      openQrManually();
-    }
-  });
+  if (qrPreview) {
+    qrPreview.addEventListener("click", openQrManually);
+    qrPreview.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openQrManually();
+      }
+    });
+  }
   document.getElementById("topSessionCodeBox").addEventListener("click", openQrManually);
   document.getElementById("btnPresentQr").addEventListener("click", openQrManually);
 

@@ -80,7 +80,9 @@ export function updateShareUrlAndQr(lanIp) {
   }
 
   const qrEndpoint = `/api/sessions/${state.currentSessionId}/qr.svg?url=${encodeURIComponent(shareUrl)}`;
-  dom.sidebarQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="${t("views.qrAlt", { sid: state.currentSessionId })}" />`;
+  if (dom.sidebarQrContainer) {
+    dom.sidebarQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="${t("views.qrAlt", { sid: state.currentSessionId })}" />`;
+  }
   // Don't overwrite the modal QR while a handover QR is intentionally shown
   if (!state.showingHandoverQr) {
     dom.modalQrContainer.innerHTML = `<img src="${qrEndpoint}" alt="${t("views.qrAlt", { sid: state.currentSessionId })}" />`;

@@ -462,27 +462,14 @@
             </div>
           </div>
           <div class="admin-toolbar-row admin-toolbar-actions">
-            <span class="btn-info hidden" id="adminSelfVoteToggleBox">
-              <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote" data-i18n="admin.selfVote">Rösta själv på denna risk</button>
-              <details class="info-popup"><summary class="info-btn" data-i18n-title="info.title" data-i18n-aria-label="info.ariaLabel" title="Mer information" aria-label="Visa mer information"><span aria-hidden="true">i</span></summary><p class="info-popup-content" data-i18n="admin.hintSelfVote">Öppnar ett röstandet där du kan avge din egen röst på denna risk – din röst syns bara för dig.</p></details>
-            </span>
+            <div id="adminSelfVoteToggleBox" class="hidden">
+              <button type="button" class="btn btn-outline btn-sm" id="btnToggleAdminVote" data-i18n="admin.selfVote" data-i18n-title="admin.selfVoteTitle" title="Öppna/stäng ett röstandet för egen röst på denna risk (syns bara för dig)">Rösta själv på denna risk</button>
+            </div>
             <div class="admin-action-buttons hidden" id="adminRiskActions">
-              <span class="btn-info">
-                <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow" data-i18n="admin.revealNow">Visa resultat nu</button>
-                <details class="info-popup"><summary class="info-btn" data-i18n-title="info.title" data-i18n-aria-label="info.ariaLabel" title="Mer information" aria-label="Visa mer information"><span aria-hidden="true">i</span></summary><p class="info-popup-content" data-i18n="admin.hintReveal">Visar resultatet för denna risk direkt, även om rösttröskeln ännu inte har nåtts.</p></details>
-              </span>
-              <span class="btn-info">
-                <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" data-i18n="admin.reset" data-i18n-title="admin.resetTitle" title="Nollställ rösterna för denna risk">Nollställ</button>
-                <details class="info-popup"><summary class="info-btn" data-i18n-title="info.title" data-i18n-aria-label="info.ariaLabel" title="Mer information" aria-label="Visa mer information"><span aria-hidden="true">i</span></summary><p class="info-popup-content" data-i18n="admin.hintReset">Raderar alla röster och placeringen för denna risk, så att gruppen kan börja om från början (bekräftelse krävs).</p></details>
-              </span>
-              <span class="btn-info">
-                <button type="button" class="btn btn-success btn-sm" id="btnLockRisk" data-i18n="admin.lock">Lås placering</button>
-                <details class="info-popup"><summary class="info-btn" data-i18n-title="info.title" data-i18n-aria-label="info.ariaLabel" title="Mer information" aria-label="Visa mer information"><span aria-hidden="true">i</span></summary><p class="info-popup-content" data-i18n="admin.hintLock">Låser placeringen av denna risk i sammanställningsmatrisen: den aktuella placeringen (förslaget eller den ruta du själv klickat på) sparas och rösterna kan inte längre ändra den.</p></details>
-              </span>
-              <span class="btn-info">
-                <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext" data-i18n="admin.next">Nästa &rarr;</button>
-                <details class="info-popup"><summary class="info-btn" data-i18n-title="info.title" data-i18n-aria-label="info.ariaLabel" title="Mer information" aria-label="Visa mer information"><span aria-hidden="true">i</span></summary><p class="info-popup-content" data-i18n="admin.hintNext">Låser denna risk (om den har röster) och skapar nästa risk, så att gruppen kan gå vidare.</p></details>
-              </span>
+              <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow" data-i18n="admin.revealNow" data-i18n-title="admin.revealNowTitle" title="Visa resultatet direkt, före tröskeln (gråtonad när det redan visas)">Visa resultat nu</button>
+              <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" data-i18n="admin.reset" data-i18n-title="admin.resetTitle" title="Radera alla röster och placeringen för denna risk (bekräftelse krävs)">Nollställ</button>
+              <button type="button" class="btn btn-success btn-sm" id="btnLockRisk" data-i18n="admin.lock" data-i18n-title="admin.lockTitle" title="Lås placeringen i sammanställningen (förslaget eller en ruta du klickat på) – röstningen stängs">Lås placering</button>
+              <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext" data-i18n="admin.next" data-i18n-title="admin.nextTitle" title="Lås denna risk (om den har röster) och skapa nästa risk">Nästa &rarr;</button>
             </div>
           </div>
         </div>
@@ -549,37 +536,16 @@
           </div>
         </div>
 
-        <!-- Share card -->
+        <!-- Share card: the QR code itself is shown on demand (modal) – the
+             presentation view on the projector is the main scan target -->
         <div class="card share-card" id="shareCard">
           <div class="share-card-head">
             <div>
               <span class="small-caps" data-i18n="share.title">Dela sessionen</span>
               <div class="share-session-code" id="sidebarSessionCode">------</div>
             </div>
-            <button type="button" class="btn btn-outline btn-sm" id="btnExpandQr" data-i18n="share.expandQr">Förstora QR</button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnExpandQr" data-i18n="share.expandQr" data-i18n-title="share.expandQrTitle" title="Förstora QR-koden i en dialogruta">Förstora QR</button>
           </div>
-          <div
-            class="qr-preview-wrapper"
-            id="qrPreviewWrapper"
-            role="button"
-            tabindex="0"
-            data-i18n-title="share.qrPreviewTitle"
-            data-i18n-aria-label="share.qrPreviewAria"
-            title="Klicka för att förstora QR-koden"
-            aria-label="Förstora QR-koden"
-          >
-            <div id="sidebarQrContainer" class="qr-box"></div>
-          </div>
-          <span class="btn-info btn-info-block">
-            <button type="button" class="btn btn-outline btn-sm btn-block" id="btnTogglePresentQr" data-i18n="share.presentQr">
-              Visa QR i presentationsvyn
-            </button>
-            <details class="info-popup"><summary class="info-btn" data-i18n-title="info.title" data-i18n-aria-label="info.ariaLabel" title="Mer information" aria-label="Visa mer information"><span aria-hidden="true">i</span></summary><p class="info-popup-content" data-i18n="share.hintPresentQr">Visar eller döljer en stor QR-kod direkt i presentationsvyn – praktiskt för att låta sena deltagare ansluta mitt i mötet.</p></details>
-          </span>
-          <span class="btn-info btn-info-block">
-            <button type="button" class="btn btn-outline btn-sm btn-block" id="btnPresentWindowAdmin" data-i18n="present.btnWindow" data-i18n-title="present.btnWindowTitle" title="Öppna presentationen i ett eget fönster">Eget fönster</button>
-            <details class="info-popup"><summary class="info-btn" data-i18n-title="info.title" data-i18n-aria-label="info.ariaLabel" title="Mer information" aria-label="Visa mer information"><span aria-hidden="true">i</span></summary><p class="info-popup-content" data-i18n="present.hintWindow">Öppnar presentationen i ett eget fönster – bara presentationsvyn, utan möjlighet att växla till admin- eller röstvy.</p></details>
-          </span>
           <div class="share-url-group">
             <input type="text" id="shareUrlInput" class="form-input form-input-sm" readonly data-i18n-aria-label="share.urlAria" aria-label="Delningslänk till sessionen" />
             <button type="button" class="btn btn-secondary btn-sm" id="btnCopyShareUrl" data-i18n="share.copy">Kopiera</button>
@@ -587,22 +553,27 @@
           <p class="qr-lan-hint hidden" id="lanIpHint"></p>
         </div>
 
+        <!-- Presentation panel: projector helpers -->
+        <div class="card session-card" id="presentCard">
+          <h2 data-i18n="present.panelTitle">Presentation</h2>
+          <div class="card-actions-row">
+            <button type="button" class="btn btn-outline btn-sm" id="btnTogglePresentQr" data-i18n="share.presentQr" data-i18n-title="share.presentQrTitle" title="Visa/dölj en stor QR-kod i presentationsvyn – för sena deltagare mitt i mötet">
+              Visa QR i presentationsvyn
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnPresentWindowAdmin" data-i18n="present.btnWindow" data-i18n-title="present.btnWindowTitle" title="Öppna presentationen i ett eget fönster – bara presentationsvyn, utan admin-/röstvy">Eget fönster</button>
+          </div>
+        </div>
+
         <!-- Session handling: snapshot export + admin handover -->
         <div class="card session-card" id="sessionCard">
           <h2 data-i18n="session.title">Sessionhantering</h2>
-          <div class="session-actions">
-            <span class="btn-info">
-              <button type="button" class="btn btn-outline btn-sm" id="btnExportSnapshot" data-i18n="export.snapshot" data-i18n-title="export.snapshotTitle" title="Spara hela sessionen som en JSON-fil som kan importeras senare">
-                Snapshot (JSON)
-              </button>
-              <details class="info-popup"><summary class="info-btn" data-i18n-title="info.title" data-i18n-aria-label="info.ariaLabel" title="Mer information" aria-label="Visa mer information"><span aria-hidden="true">i</span></summary><p class="info-popup-content" data-i18n="session.hintSnapshot">Sparar hela sessionen som en JSON-fil: titel, tröskel, alla risker med etiketter, placeringar och röster. Importera filen senare via ”Återuppta en sparad session” på startsidan – välj då om rösterna ska följa med. Filen innehåller aldrig admin-token.</p></details>
-            </span>
-            <span class="btn-info">
-              <button type="button" class="btn btn-outline btn-sm" id="btnHandoverAdmin" data-i18n="share.handover" data-i18n-title="share.handoverTitle" title="Visa en QR-kod som överför admin-rätten till en annan enhet">
-                Överför admin till annan enhet
-              </button>
-              <details class="info-popup"><summary class="info-btn" data-i18n-title="info.title" data-i18n-aria-label="info.ariaLabel" title="Mer information" aria-label="Visa mer information"><span aria-hidden="true">i</span></summary><p class="info-popup-content" data-i18n="session.hintHandover">Skapar en engångslänk och QR-kod som ger admin-rätt till en annan enhet (t.ex. från dator till mobil). Länken kan bara användas en gång och går ut efter 5 minuter; denna enhet behåller också admin-rätten.</p></details>
-            </span>
+          <div class="card-actions-row">
+            <button type="button" class="btn btn-outline btn-sm" id="btnExportSnapshot" data-i18n="export.snapshot" data-i18n-title="export.snapshotTitle" title="Spara hela sessionen (titel, tröskel, risker, etiketter, placeringar, röster) som JSON – importera senare från startsidan">
+              Snapshot (JSON)
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnHandoverAdmin" data-i18n="share.handover" data-i18n-title="share.handoverTitle" title="Engångs-QR-kod/länk som överför admin-rätten till en annan enhet (går ut efter 5 min)">
+              Överför admin till annan enhet
+            </button>
           </div>
         </div>
 
