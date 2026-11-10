@@ -144,9 +144,67 @@
   padding: 14px 12px;
 }
 
-.input-hint {
+/* Info popup: long hints are hidden behind a small "i" button to reduce
+   always-visible text. Implemented as a native details/summary disclosure,
+   so Enter/Space toggling and the expanded state work without JS. */
+.info-popup {
+  position: relative;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.info-popup > summary.info-btn {
+  list-style: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.info-popup > summary.info-btn::-webkit-details-marker {
+  display: none;
+}
+
+.info-popup > summary.info-btn:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.info-popup[open] > summary.info-btn {
+  color: var(--text);
+  background: var(--border);
+}
+
+.info-popup-content {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  width: max-content;
+  max-width: min(300px, 80vw);
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
   font-size: 0.78rem;
-  color: var(--text-faint);
-  margin-top: -2px;
+  color: var(--text-muted);
+}
+
+/* The global :focus rule sets border-radius: 4px; keep the "i" circular. */
+.info-popup > summary.info-btn:focus {
+  border-radius: 50%;
 }
 

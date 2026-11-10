@@ -26,6 +26,8 @@
   "import.fileLabel": "Snapshot file (JSON)",
   "import.includeVotes": "Also import previous votes",
   "import.submit": "Import & start new session",
+  "info.title": "More information",
+  "info.ariaLabel": "Show more information",
   "about.title": "About the service",
   "about.tag": "and your data",
   "about.whatIs.strong": "What is this?",

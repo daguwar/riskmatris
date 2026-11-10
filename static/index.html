@@ -98,11 +98,22 @@
             placeholder="T.ex. Riskanalys – Projekt Alfa"
             maxlength="80"
           />
-          <p class="input-hint" data-i18n="create.privacyHint">
-            Allt i sessionen sparas tillfälligt på servern och kan hämtas av vem som helst som har
-            sessionskoden. Ange därför aldrig känsliga uppgifter som personuppgifter eller
-            förtrolig information.
-          </p>
+          <details class="info-popup">
+            <summary
+              class="info-btn"
+              data-i18n-title="info.title"
+              data-i18n-aria-label="info.ariaLabel"
+              title="Mer information"
+              aria-label="Visa mer information"
+            >
+              <span aria-hidden="true">i</span>
+            </summary>
+            <p class="info-popup-content" data-i18n="create.privacyHint">
+              Allt i sessionen sparas tillfälligt på servern och kan hämtas av vem som helst som har
+              sessionskoden. Ange därför aldrig känsliga uppgifter som personuppgifter eller
+              förtrolig information.
+            </p>
+          </details>
           <label class="form-label" for="inputDefaultThreshold" data-i18n="create.thresholdLabel">Rösttröskel för automatisk visning</label>
           <input
             type="number"
@@ -112,10 +123,21 @@
             min="1"
             max="50"
           />
-          <p class="input-hint" data-i18n="create.thresholdHint">
-            Matrisen visas automatiskt när detta antal röster har kommit in. Kommer färre
-            deltagare än så använder mötesledaren &rdquo;Visa resultat nu&rdquo;.
-          </p>
+          <details class="info-popup">
+            <summary
+              class="info-btn"
+              data-i18n-title="info.title"
+              data-i18n-aria-label="info.ariaLabel"
+              title="Mer information"
+              aria-label="Visa mer information"
+            >
+              <span aria-hidden="true">i</span>
+            </summary>
+            <p class="info-popup-content" data-i18n="create.thresholdHint">
+              Matrisen visas automatiskt när detta antal röster har kommit in. Kommer färre
+              deltagare än så använder mötesledaren &rdquo;Visa resultat nu&rdquo;.
+            </p>
+          </details>
           <button type="submit" class="btn btn-secondary btn-large btn-block" data-i18n="create.submit">Starta session &amp; skapa QR-kod</button>
         </form>
       </section>
@@ -454,9 +476,20 @@
                 placeholder="Valfri benämning (t.ex. från PowerPoint)..."
                 maxlength="120"
               />
-              <p class="input-hint" data-i18n="admin.labelHint">
-                Texten kan hämtas av vem som helst med sessionskoden. Ange inte känsliga uppgifter.
-              </p>
+              <details class="info-popup">
+                <summary
+                  class="info-btn"
+                  data-i18n-title="info.title"
+                  data-i18n-aria-label="info.ariaLabel"
+                  title="Mer information"
+                  aria-label="Visa mer information"
+                >
+                  <span aria-hidden="true">i</span>
+                </summary>
+                <p class="info-popup-content" data-i18n="admin.labelHint">
+                  Texten kan hämtas av vem som helst med sessionskoden. Ange inte känsliga uppgifter.
+                </p>
+              </details>
             </div>
           </div>
           <div class="admin-toolbar-row admin-toolbar-actions">

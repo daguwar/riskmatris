@@ -26,6 +26,8 @@
   "import.fileLabel": "Snapshot-fil (JSON)",
   "import.includeVotes": "Importera även tidigare röster",
   "import.submit": "Importera & starta ny session",
+  "info.title": "Mer information",
+  "info.ariaLabel": "Visa mer information",
   "about.title": "Om tjänsten",
   "about.tag": "och din data",
   "about.whatIs.strong": "Vad är det här?",

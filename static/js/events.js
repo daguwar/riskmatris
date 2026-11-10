@@ -180,6 +180,27 @@ export function bindLandingEvents() {
   });
 }
 
+/**
+ * Info popups (details/summary "i" buttons): Enter/Space toggling is native,
+ * but add Escape-to-close and close-on-outside-click for keyboard and pointer
+ * users (WCAG 2.1.1 keyboard operability).
+ */
+export function bindInfoPopups() {
+  const closeOpenPopups = (except) => {
+    document.querySelectorAll("details.info-popup[open]").forEach((popup) => {
+      if (popup !== except) popup.removeAttribute("open");
+    });
+  };
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeOpenPopups(null);
+  });
+  document.addEventListener("click", (e) => {
+    document.querySelectorAll("details.info-popup[open]").forEach((popup) => {
+      if (!popup.contains(e.target)) popup.removeAttribute("open");
+    });
+  });
+}
+
 export function submitVoteIfComplete() {
   if (state.sessionState) {
     const activeRisk =
