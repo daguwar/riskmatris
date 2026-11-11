@@ -40,8 +40,10 @@ const RECENT_WARNING_SECONDS = 6 * 3600;
 
 function formatRemaining(expiresAt) {
   const s = Math.max(0, expiresAt - Date.now() / 1000);
-  const hours = Math.floor(s / 3600);
-  const minutes = Math.round((s % 3600) / 60);
+  // Round UP: a fresh 2 h session is 1 h 59 m remaining and must show "2 h",
+  // not "1 h" (floor would understate the remaining time)
+  const hours = Math.ceil(s / 3600);
+  const minutes = Math.ceil((s % 3600) / 60);
   if (hours >= 1) return t("join.recentLeftHours", { hours });
   return t("join.recentLeftMinutes", { minutes: Math.max(1, minutes) });
 }
