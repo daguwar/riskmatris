@@ -70,7 +70,7 @@ export function readRecentSessions() {
   }
 }
 
-function writeRecentSessions(list) {
+export function writeRecentSessions(list) {
   try {
     localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 6)));
   } catch (_) {}
