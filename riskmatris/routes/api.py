@@ -103,6 +103,7 @@ async def create_session(
         "title": title,
         "threshold": threshold,
         "lan_ip": get_local_lan_ip(),
+        "expires_at": now + config.SESSION_TTL_SECONDS,
     }
 
 
@@ -316,6 +317,7 @@ async def import_session_snapshot(
         "title": session["title"],
         "threshold": session["threshold"],
         "lan_ip": get_local_lan_ip(),
+        "expires_at": now + config.SESSION_TTL_SECONDS,
     }
 
 

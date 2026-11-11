@@ -7,7 +7,9 @@ import {
   copyTextToClipboard,
   getAdminToken,
   getClientId,
+  readRecentSessions,
   saveRecentSession,
+  writeRecentSessions,
 } from "./utils.js";
 import {
   closeQrModal,
@@ -32,25 +34,79 @@ async function readErrorDetail(res, fallback) {
   return `${fallback} (HTTP ${res.status})`;
 }
 
+// Turn the chip red when less than 6 h of server-side lifetime remains, so the
+// admin remembers to export/snapshot the session before it is auto-deleted
+const RECENT_WARNING_SECONDS = 6 * 3600;
+
+function formatRemaining(expiresAt) {
+  const s = Math.max(0, expiresAt - Date.now() / 1000);
+  const hours = Math.floor(s / 3600);
+  const minutes = Math.round((s % 3600) / 60);
+  if (hours >= 1) return t("join.recentLeftHours", { hours });
+  return t("join.recentLeftMinutes", { minutes: Math.max(1, minutes) });
+}
+
 export function renderRecentSessions() {
   try {
-    const list = JSON.parse(localStorage.getItem("riskmatris_recent") || "[]");
+    const now = Date.now() / 1000;
+    // Drop entries whose server-side expiry has passed; persist the cleanup so
+    // dead links disappear instead of lingering until site data is cleared
+    const all = readRecentSessions();
+    const alive = all.filter((item) => !item.expires_at || item.expires_at > now);
+    if (alive.length !== all.length) writeRecentSessions(alive);
+
     const box = document.getElementById("recentSessionsBox");
     const container = document.getElementById("recentSessionsList");
-    if (!list.length) {
+    if (!alive.length) {
       box.classList.add("hidden");
       return;
     }
     box.classList.remove("hidden");
     container.innerHTML = "";
-    list.forEach((item) => {
+    alive.forEach((item) => {
       const a = document.createElement("a");
       a.href = `/s/${item.session_id}`;
       a.className = "recent-chip";
-      a.textContent = `${item.session_id} – ${item.title}${item.is_admin ? " (Admin)" : ""}`;
+      const remaining = item.expires_at ? item.expires_at - now : null;
+      if (remaining !== null && remaining < RECENT_WARNING_SECONDS) a.classList.add("recent-warning");
+      const label = document.createElement("span");
+      label.textContent = `${item.session_id} – ${item.title}${item.is_admin ? " (Admin)" : ""}`;
+      a.appendChild(label);
+      if (remaining !== null) {
+        const exp = document.createElement("span");
+        exp.className = "recent-expires";
+        exp.textContent = formatRemaining(item.expires_at);
+        a.appendChild(exp);
+      }
       container.appendChild(a);
     });
   } catch (_) {}
+}
+
+/**
+ * Validates stored recent sessions against the server: 404 (expired/deleted)
+ * drops the entry, 200 refreshes title + expires_at. Runs once on load; the
+ * periodic re-render afterwards is purely local (no extra requests).
+ */
+export async function probeRecentSessions() {
+  const list = readRecentSessions();
+  if (!list.length) return;
+  const results = await Promise.allSettled(
+    list.map(async (item) => {
+      const res = await fetch(`/api/sessions/${item.session_id}`);
+      if (res.status === 404) return null;
+      if (!res.ok) return item; // e.g. rate-limited – keep, don't punish
+      const data = await res.json();
+      return {
+        ...item,
+        title: data.title || item.title,
+        expires_at: typeof data.expires_at === "number" ? data.expires_at : (item.expires_at ?? null),
+      };
+    })
+  );
+  const kept = results.map((r) => (r.status === "fulfilled" ? r.value : null)).filter(Boolean);
+  writeRecentSessions(kept);
+  renderRecentSessions();
 }
 
 /** If the URL has ?handover=<token>, exchange it for the admin token (POST body,
@@ -110,7 +166,7 @@ export async function enterSession(sessionId) {
     dom.sessionHeaderControls.classList.remove("hidden");
     dom.sessionTitleDisplay.classList.remove("hidden");
 
-    saveRecentSession(state.currentSessionId, initialData.title, initialData.is_admin);
+    saveRecentSession(state.currentSessionId, initialData.title, initialData.is_admin, initialData.expires_at);
     handleSessionState(initialData);
     updateShareUrlAndQr(initialData.lan_ip);
     connectWebSocket(handleSessionState);
@@ -138,7 +194,7 @@ export function bindLandingEvents() {
       }
       const data = await res.json();
       localStorage.setItem(`riskmatris_admin_${data.session_id}`, data.admin_token);
-      saveRecentSession(data.session_id, data.title, true);
+      saveRecentSession(data.session_id, data.title, true, data.expires_at);
       window.history.pushState({}, "", `/s/${data.session_id}`);
       enterSession(data.session_id);
     } catch (err) {
@@ -171,7 +227,7 @@ export function bindLandingEvents() {
       if (!res.ok) throw new Error(await readErrorDetail(res, t("events.errImportFallback")));
       const data = await res.json();
       localStorage.setItem(`riskmatris_admin_${data.session_id}`, data.admin_token);
-      saveRecentSession(data.session_id, data.title, true);
+      saveRecentSession(data.session_id, data.title, true, data.expires_at);
       window.history.pushState({}, "", `/s/${data.session_id}`);
       enterSession(data.session_id);
     } catch (err) {

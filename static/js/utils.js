@@ -60,18 +60,47 @@ export function getAdminToken(sessionId) {
   return localStorage.getItem(`riskmatris_admin_${sessionId}`) || "";
 }
 
-export function saveRecentSession(sessionId, title, isAdmin) {
+const RECENT_KEY = "riskmatris_recent";
+
+export function readRecentSessions() {
   try {
-    const raw = localStorage.getItem("riskmatris_recent") || "[]";
-    let list = JSON.parse(raw).filter((x) => x.session_id !== sessionId);
+    return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+  } catch (_) {
+    return [];
+  }
+}
+
+function writeRecentSessions(list) {
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 6)));
+  } catch (_) {}
+}
+
+export function saveRecentSession(sessionId, title, isAdmin, expiresAt = null) {
+  try {
+    let list = readRecentSessions().filter((x) => x.session_id !== sessionId);
     list.unshift({
       session_id: sessionId,
       title: title || t("default.title"),
       is_admin: isAdmin,
       ts: Date.now(),
+      // Absolute expiry (epoch seconds) from the server: updated_at + TTL.
+      // Refreshed on activity, so busy sessions stay in the list longer.
+      expires_at: typeof expiresAt === "number" ? expiresAt : null,
     });
-    list = list.slice(0, 6);
-    localStorage.setItem("riskmatris_recent", JSON.stringify(list));
+    writeRecentSessions(list);
+  } catch (_) {}
+}
+
+/** Refreshes expiry/title of a stored recent session from live session state. */
+export function touchRecentSession(sessionId, expiresAt, title) {
+  try {
+    const list = readRecentSessions();
+    const item = list.find((x) => x.session_id === sessionId);
+    if (!item) return;
+    if (typeof expiresAt === "number") item.expires_at = expiresAt;
+    if (title) item.title = title;
+    writeRecentSessions(list);
   } catch (_) {}
 }
 

@@ -181,3 +181,22 @@
   color: var(--accent-text);
   font-size: 0.9rem;
 }
+
+/* Remaining lifetime shown on recent-session chips */
+.recent-chip .recent-expires {
+  margin-left: 7px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+/* Short time left (server-side TTL) – red so the admin remembers to
+   snapshot/export before the session is auto-deleted */
+.recent-chip.recent-warning {
+  border-color: var(--red-border);
+  color: var(--red-text);
+}
+
+.recent-chip.recent-warning .recent-expires {
+  color: var(--red-text);
+}

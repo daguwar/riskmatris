@@ -1,9 +1,11 @@
 """WebSocket connection manager."""
 
+import time
 from typing import Any
 
 from fastapi import WebSocket
 
+import riskmatris.config as config
 from riskmatris.db import save_session_to_db, save_session_to_db_async
 from riskmatris.session import compute_risk_stats, get_session_threshold
 from riskmatris.utils import get_local_lan_ip, get_risk_level
@@ -108,6 +110,9 @@ class SessionConnectionManager:
             "session_id": sid,
             "title": session.get("title", "Riskanalys"),
             "threshold": session.get("threshold", 4),
+            # Absolute expiry (epoch seconds): updated_at + TTL. updated_at is
+            # refreshed on every activity, so active sessions live longer.
+            "expires_at": float(session.get("updated_at") or time.time()) + config.SESSION_TTL_SECONDS,
             "participant_count": participant_count,
             "active_risk_number": active_num,
             "risks": risks_summary,

@@ -312,3 +312,31 @@ class TestDocsDisabledByDefault:
         assert test_client.get("/docs").status_code == 404
         assert test_client.get("/redoc").status_code == 404
         assert test_client.get("/openapi.json").status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Session expiry in API responses (drives the recent-sessions countdown on the
+# landing page: entries show remaining time and drop out when expired)
+# ---------------------------------------------------------------------------
+
+
+class TestSessionExpiresAt:
+    def test_session_info_includes_expires_at(self, add_session, test_client):
+        import time
+
+        import app as app_module
+
+        session = add_session("EXPIR01")
+        session["updated_at"] = time.time() - 100
+        resp = test_client.get("/api/sessions/EXPIR01")
+        assert resp.status_code == 200
+        expires_at = resp.json()["expires_at"]
+        assert abs(expires_at - (session["updated_at"] + app_module.SESSION_TTL_SECONDS)) < 5
+
+    def test_create_response_includes_expires_at(self, isolated_client):
+        import time
+
+        resp = isolated_client.post("/api/sessions", json={"title": "Expiry", "threshold": 4})
+        assert resp.status_code == 200
+        expires_at = resp.json()["expires_at"]
+        assert time.time() < expires_at <= time.time() + 48 * 3600 + 5
