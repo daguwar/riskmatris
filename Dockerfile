@@ -2,7 +2,7 @@
 # just a tag: a tag can be moved to different content, a digest cannot.
 # Dependabot (.github/dependabot.yml) proposes updates of this digest.
 # Current: python:3.12-slim manifest list, resolved 2026-11-04.
-FROM python:3.12-slim@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928
 
 WORKDIR /app
 
