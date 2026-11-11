@@ -13,7 +13,7 @@
   "join.label": "Sessionskod",
   "join.submit": "Anslut",
   "join.recentTitle": "Senaste sessioner i denna webbläsare",
-  "join.recentLeftHours": "{hours} h kvar",
+  "join.recentLeftHM": "{hours} h {minutes} min kvar",
   "join.recentLeftMinutes": "{minutes} min kvar",
   "create.title": "Starta ny session",
   "create.tag": "för mötesledare",
