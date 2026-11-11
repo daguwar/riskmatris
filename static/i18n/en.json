@@ -13,6 +13,8 @@
   "join.label": "Session code",
   "join.submit": "Join",
   "join.recentTitle": "Recent sessions in this browser",
+  "join.recentLeftHM": "{hours} h {minutes} min left",
+  "join.recentLeftMinutes": "{minutes} min left",
   "create.title": "Start a new session",
   "create.tag": "for facilitators",
   "create.titleLabel": "Session name (optional)",

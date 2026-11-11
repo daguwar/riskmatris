@@ -64,6 +64,7 @@ class CreateSessionResponse(BaseModel):
     title: str
     threshold: int
     lan_ip: str
+    expires_at: float
 
 
 class WsTicketResponse(BaseModel):

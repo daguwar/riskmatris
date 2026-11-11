@@ -6,6 +6,7 @@ import { renderSidebarRiskList } from "./render/sidebar.js";
 import { renderSummaryMatrix, renderSummaryTable } from "./render/summary.js";
 import { renderAdminVotingControls, renderVotingControls } from "./render/voting.js";
 import { state } from "./state.js";
+import { touchRecentSession } from "./utils.js";
 import { sendWsAction } from "./ws.js";
 
 const VIEW_IDS = ["voteView", "presentView", "adminView"];
@@ -92,6 +93,10 @@ export function updateShareUrlAndQr(lanIp) {
 export function handleSessionState(newState) {
   state.sessionState = newState;
   const isAdmin = Boolean(newState.is_admin);
+
+  // Live state carries the server-computed expiry (updated_at + TTL, refreshed
+  // on activity) – keep the landing-page recent list in sync with it
+  if (newState.session_id) touchRecentSession(newState.session_id, newState.expires_at, newState.title);
 
   // Header & code
   dom.sessionTitleDisplay.textContent = newState.title;
