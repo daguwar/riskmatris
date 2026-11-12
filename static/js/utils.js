@@ -76,11 +76,20 @@ export function writeRecentSessions(list) {
   } catch (_) {}
 }
 
+export function normalizeSessionId(sessionId) {
+  return String(sessionId || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 64);
+}
+
 export function saveRecentSession(sessionId, title, isAdmin, expiresAt = null) {
   try {
-    let list = readRecentSessions().filter((x) => x.session_id !== sessionId);
+    const safeSessionId = normalizeSessionId(sessionId);
+    if (!safeSessionId) return;
+    let list = readRecentSessions().filter((x) => x.session_id !== safeSessionId);
     list.unshift({
-      session_id: sessionId,
+      session_id: safeSessionId,
       title: title || t("default.title"),
       is_admin: isAdmin,
       ts: Date.now(),

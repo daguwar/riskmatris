@@ -7,6 +7,7 @@ import {
   copyTextToClipboard,
   getAdminToken,
   getClientId,
+  normalizeSessionId,
   readRecentSessions,
   saveRecentSession,
   writeRecentSessions,
@@ -66,8 +67,10 @@ export function renderRecentSessions() {
     box.classList.remove("hidden");
     container.innerHTML = "";
     alive.forEach((item) => {
+      const safeSessionId = normalizeSessionId(item.session_id);
+      if (!safeSessionId) return;
       const a = document.createElement("a");
-      a.href = `/s/${item.session_id}`;
+      a.href = `/s/${encodeURIComponent(safeSessionId)}`;
       a.className = "recent-chip";
       const remaining = item.expires_at ? item.expires_at - now : null;
       if (remaining !== null && remaining < RECENT_WARNING_SECONDS) a.classList.add("recent-warning");
