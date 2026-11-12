@@ -587,7 +587,9 @@ export function bindSessionEvents() {
   // Export CSV
   document.getElementById("btnExportCsv").addEventListener("click", () => {
     if (!state.currentSessionId) return;
-    window.location.href = `/api/sessions/${state.currentSessionId}/export.csv?lang=${getLang()}`;
+    const url = new URL(`/api/sessions/${state.currentSessionId}/export.csv`, window.location.origin);
+    url.searchParams.set("lang", getLang());
+    window.location.href = url.toString();
   });
 
   // Export PNG
