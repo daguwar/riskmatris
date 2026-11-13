@@ -507,7 +507,9 @@ export function bindSessionEvents() {
   const openPresentWindow = () => {
     window.open(`${window.location.pathname}?view=present`, "_blank", "width=1280,height=860");
   };
-  document.getElementById("btnPresentWindow").addEventListener("click", openPresentWindow);
+  // The "own window" button lives only in the admin view (btnPresentWindowAdmin);
+  // inside the presentation view itself it was removed – in a ?view=present
+  // projector window it would just open yet another window
   document.getElementById("btnPresentWindowAdmin").addEventListener("click", openPresentWindow);
 
   document.getElementById("btnApplyCustomUrl").addEventListener("click", () => {
