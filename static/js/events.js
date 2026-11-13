@@ -399,11 +399,6 @@ export function bindSessionEvents() {
     }
   });
 
-  // Admin: lock placement
-  dom.btnLockRisk.addEventListener("click", () => {
-    sendWsAction({ action: "lock_risk" });
-  });
-
   // Admin: save & next risk
   dom.btnSaveAndNext.addEventListener("click", () => {
     sendWsAction({ action: "next_risk", auto_lock: true });

@@ -32,8 +32,6 @@ export function renderActiveRiskHeader(risk, threshold, isAdmin) {
     // Grey out instead of hiding once revealed – the button stays visible and
     // its title explains why it is inactive
     dom.btnRevealNow.disabled = Boolean(risk.revealed);
-    dom.btnLockRisk.textContent = risk.locked ? t("vote.lockUpdate") : t("vote.lockInSummary");
-    dom.btnLockRisk.title = risk.locked ? t("admin.lockUpdateTitle") : t("admin.lockTitle");
   }
 }
 
