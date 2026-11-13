@@ -9,6 +9,7 @@ from riskmatris.ws_actions import (
     handle_delete_risk,
     handle_lock_risk,
     handle_next_risk,
+    handle_reset_placement,
     handle_reset_votes,
     handle_reveal_now,
     handle_select_risk,
@@ -190,6 +191,42 @@ async def test_handle_set_final_cell(test_session, mock_admin_conn):
     assert active_risk["final_probability"] == 2
     assert active_risk["final_consequence"] == 3
     assert active_risk["locked"] is True
+
+
+@pytest.mark.asyncio
+async def test_handle_reset_placement(test_session, mock_admin_conn):
+    active_risk = test_session["risks"][0]
+    # Votes averaging P=3, C=3 -> suggested cell (3, 3)
+    active_risk["votes"] = {
+        "a": {"probability": 3, "consequence": 2},
+        "b": {"probability": 3, "consequence": 4},
+    }
+    active_risk["revealed"] = True
+
+    # Unlocked: a manual cell click (1, 1) is cleared, effective = suggestion
+    await handle_set_final_cell(
+        test_session, active_risk, {"action": "set_final_cell", "probability": 1, "consequence": 1}, mock_admin_conn
+    )
+    assert active_risk["final_probability"] == 1
+    res = await handle_reset_placement(test_session, active_risk, {"action": "reset_placement"}, mock_admin_conn)
+    assert res is True
+    assert active_risk["final_probability"] is None
+    assert active_risk["final_consequence"] is None
+    assert active_risk["locked"] is False
+    # Votes untouched
+    assert len(active_risk["votes"]) == 2
+
+    # Locked: the locked placement moves back to the suggested cell, stays locked
+    await handle_lock_risk(
+        test_session, active_risk, {"action": "lock_risk", "probability": 2, "consequence": 2}, mock_admin_conn
+    )
+    assert active_risk["locked"] is True
+    assert active_risk["final_probability"] == 2
+    res = await handle_reset_placement(test_session, active_risk, {"action": "reset_placement"}, mock_admin_conn)
+    assert res is True
+    assert active_risk["locked"] is True
+    assert active_risk["final_probability"] == 3
+    assert active_risk["final_consequence"] == 3
 
 
 @pytest.mark.asyncio

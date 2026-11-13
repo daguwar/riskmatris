@@ -131,6 +131,8 @@
   "admin.selfVote": "Rösta själv på denna risk",
   "admin.reset": "Nollställ",
   "admin.resetTitle": "Nollställ rösterna för denna risk",
+  "admin.resetPlacement": "Återställ till förslag",
+  "admin.resetPlacementTitle": "Ta bort den manuella placeringen (t.ex. en felklickad ruta) – matrisen visar det föreslagna resultatet igen; rösterna påverkas inte",
   "admin.lock": "Lås placering",
   "admin.lockTitle": "Lås denna risk utan att skapa en ny – placeringen blir förslaget (eller en ruta du klickat på) och röstningen stängs",
   "admin.next": "Nästa →",

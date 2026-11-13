@@ -399,6 +399,12 @@ export function bindSessionEvents() {
     }
   });
 
+  // Admin: undo an accidental cell click – placement back to the vote-based
+  // suggestion (votes are not touched)
+  dom.btnResetPlacement.addEventListener("click", () => {
+    sendWsAction({ action: "reset_placement" });
+  });
+
   // Admin: lock the active risk without creating a new one. The button is only
   // visible on a previous risk (see views.js), e.g. after going back to redo
   // the vote; on the newest risk "Lock & next" is the single action.

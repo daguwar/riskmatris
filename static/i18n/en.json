@@ -131,6 +131,8 @@
   "admin.selfVote": "Cast your own vote on this risk",
   "admin.reset": "Reset",
   "admin.resetTitle": "Delete all votes and the placement for this risk (confirmation required)",
+  "admin.resetPlacement": "Reset to suggestion",
+  "admin.resetPlacementTitle": "Remove the manual placement (e.g. an accidentally clicked cell) – the matrix shows the vote-based suggestion again; votes are unaffected",
   "admin.lock": "Lock placement",
   "admin.lockTitle": "Lock this risk without creating a new one – placement becomes the suggestion (or a cell you clicked) and voting closes",
   "admin.next": "Next →",

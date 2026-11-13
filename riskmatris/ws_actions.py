@@ -312,6 +312,32 @@ async def handle_reset_votes(
     return True
 
 
+async def handle_reset_placement(
+    session: dict[str, Any],
+    active_risk: dict[str, Any],
+    msg: dict[str, Any],
+    conn: ConnectionInfo,
+    state: AppState | None = None,
+) -> bool:
+    """Resets a manual placement override back to the vote-based suggestion.
+
+    Unlocked risk: clears final_probability/final_consequence, so the effective
+    cell is the suggestion again (and keeps following new votes). Locked risk:
+    moves the locked placement back to the suggested cell (stays locked).
+    Votes are never touched.
+    """
+    if active_risk["locked"]:
+        eff_thresh = get_session_threshold(session)
+        stats = compute_risk_stats(active_risk, eff_thresh)
+        active_risk["final_probability"] = stats["suggested_probability"]
+        active_risk["final_consequence"] = stats["suggested_consequence"]
+    else:
+        active_risk["final_probability"] = None
+        active_risk["final_consequence"] = None
+    await db.save_session_to_db_async(session)
+    return True
+
+
 async def handle_delete_risk(
     session: dict[str, Any],
     active_risk: dict[str, Any],
@@ -372,6 +398,7 @@ ADMIN_ACTIONS: dict[str, ActionHandler] = {
     "next_risk": handle_next_risk,
     "select_risk": handle_select_risk,
     "reset_votes": handle_reset_votes,
+    "reset_placement": handle_reset_placement,
     "delete_risk": handle_delete_risk,
     "set_qr_visible": handle_set_qr_visible,
 }

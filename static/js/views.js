@@ -181,6 +181,13 @@ export function handleSessionState(newState) {
   // went back to a previous risk to redo it; on the newest risk "Lock & next"
   // is the single action, so the button stays hidden there
   dom.btnLockRisk.classList.toggle("hidden", activeRisk.number === maxNum);
+  // "Reset to suggestion" is only useful when a manual placement override
+  // differs from the vote-based suggestion (e.g. an accidental cell click)
+  const placementDiffers =
+    activeRisk.final_probability != null &&
+    (activeRisk.final_probability !== activeRisk.suggested_probability ||
+      activeRisk.final_consequence !== activeRisk.suggested_consequence);
+  dom.btnResetPlacement.classList.toggle("hidden", !(activeRisk.revealed && placementDiffers));
 
   if (isAdmin) {
     if (document.activeElement !== dom.adminThresholdInput) {
