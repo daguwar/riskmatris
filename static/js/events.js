@@ -399,6 +399,13 @@ export function bindSessionEvents() {
     }
   });
 
+  // Admin: lock the active risk without creating a new one. The button is only
+  // visible on a previous risk (see views.js), e.g. after going back to redo
+  // the vote; on the newest risk "Lock & next" is the single action.
+  dom.btnLockRisk.addEventListener("click", () => {
+    sendWsAction({ action: "lock_risk" });
+  });
+
   // Admin: save & next risk
   dom.btnSaveAndNext.addEventListener("click", () => {
     sendWsAction({ action: "next_risk", auto_lock: true });

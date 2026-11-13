@@ -131,6 +131,8 @@
   "admin.selfVote": "Rösta själv på denna risk",
   "admin.reset": "Nollställ",
   "admin.resetTitle": "Nollställ rösterna för denna risk",
+  "admin.lock": "Lås placering",
+  "admin.lockTitle": "Lås denna risk utan att skapa en ny – placeringen blir förslaget (eller en ruta du klickat på) och röstningen stängs",
   "admin.next": "Nästa →",
   "share.title": "Dela sessionen",
   "share.expandQr": "Förstora QR",

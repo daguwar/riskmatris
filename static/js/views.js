@@ -177,6 +177,10 @@ export function handleSessionState(newState) {
   const maxNum = Math.max(...newState.risks.map((r) => r.number));
   dom.btnNextRiskSidebar.textContent = t("views.nextRisk", { num: maxNum + 1 });
   dom.btnSaveAndNext.innerHTML = t("views.saveAndNext", { num: activeRisk.number, next: maxNum + 1 });
+  // The standalone "Lock" button (no new risk) only makes sense when the admin
+  // went back to a previous risk to redo it; on the newest risk "Lock & next"
+  // is the single action, so the button stays hidden there
+  dom.btnLockRisk.classList.toggle("hidden", activeRisk.number === maxNum);
 
   if (isAdmin) {
     if (document.activeElement !== dom.adminThresholdInput) {

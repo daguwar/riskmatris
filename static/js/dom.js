@@ -60,6 +60,7 @@ export function initDom() {
   dom.adminRiskActions = document.getElementById("adminRiskActions");
   dom.btnRevealNow = document.getElementById("btnRevealNow");
   dom.btnResetVotes = document.getElementById("btnResetVotes");
+  dom.btnLockRisk = document.getElementById("btnLockRisk");
   dom.btnSaveAndNext = document.getElementById("btnSaveAndNext");
 
   dom.votingPanelCard = document.getElementById("votingPanelCard");
