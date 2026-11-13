@@ -35,8 +35,23 @@
 }
 
 .present-view .matrix-cell {
-  min-height: 150px;
-  padding: 12px 14px;
+  /* The present window is often smaller than full screen (e.g. beside a
+     PowerPoint on the same projector), so scale the squares with the window
+     height: the whole 4x4 board then fits without scrolling. Capped at 150px
+     so a full-size projector window keeps the previous look. 380px is the
+     approximate height of everything around the grid (topbar, subtabs, card
+     header, axis titles, legend, paddings). */
+  min-height: clamp(40px, calc((100vh - 380px) / 4), 150px);
+  min-height: clamp(40px, calc((100dvh - 380px) / 4), 150px);
+  padding: clamp(4px, 1vmin, 12px) clamp(6px, 1.2vmin, 14px);
+}
+
+.present-view .matrix-grid-4x4 {
+  gap: clamp(4px, 1vmin, 8px);
+}
+
+.present-view .matrix-board {
+  gap: clamp(4px, 1vmin, 10px);
 }
 
 .present-subtabs {
