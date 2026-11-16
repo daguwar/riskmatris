@@ -399,7 +399,15 @@ export function bindSessionEvents() {
     }
   });
 
-  // Admin: lock placement
+  // Admin: undo an accidental cell click – placement back to the vote-based
+  // suggestion (votes are not touched)
+  dom.btnResetPlacement.addEventListener("click", () => {
+    sendWsAction({ action: "reset_placement" });
+  });
+
+  // Admin: lock the active risk without creating a new one. The button is only
+  // visible on a previous risk (see views.js), e.g. after going back to redo
+  // the vote; on the newest risk "Lock & next" is the single action.
   dom.btnLockRisk.addEventListener("click", () => {
     sendWsAction({ action: "lock_risk" });
   });
@@ -512,7 +520,9 @@ export function bindSessionEvents() {
   const openPresentWindow = () => {
     window.open(`${window.location.pathname}?view=present`, "_blank", "width=1280,height=860");
   };
-  document.getElementById("btnPresentWindow").addEventListener("click", openPresentWindow);
+  // The "own window" button lives only in the admin view (btnPresentWindowAdmin);
+  // inside the presentation view itself it was removed – in a ?view=present
+  // projector window it would just open yet another window
   document.getElementById("btnPresentWindowAdmin").addEventListener("click", openPresentWindow);
 
   document.getElementById("btnApplyCustomUrl").addEventListener("click", () => {

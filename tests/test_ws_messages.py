@@ -7,7 +7,7 @@ from riskmatris.ws_messages import WS_ACTION_MODELS, format_validation_error, pa
 
 
 class TestParseWsMessage:
-    def test_all_thirteen_actions_have_models(self):
+    def test_all_fourteen_actions_have_models(self):
         assert set(WS_ACTION_MODELS) == {
             "vote",
             "reveal_now",
@@ -20,6 +20,7 @@ class TestParseWsMessage:
             "next_risk",
             "select_risk",
             "reset_votes",
+            "reset_placement",
             "delete_risk",
             "set_qr_visible",
         }

@@ -299,7 +299,6 @@
           </div>
           <div class="present-view-actions">
             <button type="button" class="btn btn-outline btn-sm" id="btnPresentQr" data-i18n="present.btnQr" data-i18n-title="present.btnQrTitle" title="Visa QR-kod och delningslänk">Visa QR-kod</button>
-            <button type="button" class="btn btn-outline btn-sm" id="btnPresentWindow" data-i18n="present.btnWindow" data-i18n-title="present.btnWindowTitle" title="Öppna presentationen i ett eget fönster">Eget fönster</button>
           </div>
         </div>
 
@@ -361,6 +360,7 @@
               <span class="legend-item"><span class="legend-swatch swatch-orange"></span><span data-i18n="legend.high"> 8–9 Hög</span></span>
               <span class="legend-item"><span class="legend-swatch swatch-red"></span><span data-i18n="legend.veryHigh"> 12–16 Mycket hög</span></span>
               <span class="legend-hint" id="adminClickMatrixHint"></span>
+              <button type="button" class="btn btn-outline btn-sm hidden" id="btnResetPlacement" data-i18n="admin.resetPlacement" data-i18n-title="admin.resetPlacementTitle" title="Ta bort den manuella placeringen – matrisen visar det föreslagna resultatet igen">Återställ till förslag</button>
             </div>
           </div>
         </div>
@@ -468,7 +468,7 @@
             <div class="admin-action-buttons hidden" id="adminRiskActions">
               <button type="button" class="btn btn-outline btn-sm" id="btnRevealNow" data-i18n="admin.revealNow" data-i18n-title="admin.revealNowTitle" title="Visa resultatet direkt, före tröskeln (gråtonad när det redan visas)">Visa resultat nu</button>
               <button type="button" class="btn btn-outline btn-sm" id="btnResetVotes" data-i18n="admin.reset" data-i18n-title="admin.resetTitle" title="Radera alla röster och placeringen för denna risk (bekräftelse krävs)">Nollställ</button>
-              <button type="button" class="btn btn-success btn-sm" id="btnLockRisk" data-i18n="admin.lock" data-i18n-title="admin.lockTitle" title="Lås placeringen i sammanställningen (förslaget eller en ruta du klickat på) – röstningen stängs">Lås placering</button>
+              <button type="button" class="btn btn-success btn-sm hidden" id="btnLockRisk" data-i18n="admin.lock" data-i18n-title="admin.lockTitle" title="Lås denna risk utan att skapa en ny">Lås placering</button>
               <button type="button" class="btn btn-primary btn-sm" id="btnSaveAndNext" data-i18n="admin.next" data-i18n-title="admin.nextTitle" title="Lås denna risk (om den har röster) och skapa nästa risk">Nästa &rarr;</button>
             </div>
           </div>

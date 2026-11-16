@@ -73,6 +73,10 @@ class ResetVotesMessage(BaseModel):
     action: Literal["reset_votes"] = "reset_votes"
 
 
+class ResetPlacementMessage(BaseModel):
+    action: Literal["reset_placement"] = "reset_placement"
+
+
 class DeleteRiskMessage(BaseModel):
     action: Literal["delete_risk"] = "delete_risk"
     number: int | None = Field(default=None, ge=1, le=9999)
@@ -99,6 +103,7 @@ WS_ACTION_MODELS: dict[str, type[BaseModel]] = {
         NextRiskMessage,
         SelectRiskMessage,
         ResetVotesMessage,
+        ResetPlacementMessage,
         DeleteRiskMessage,
         SetQrVisibleMessage,
     )
