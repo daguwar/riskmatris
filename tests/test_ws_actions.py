@@ -194,6 +194,28 @@ async def test_handle_set_final_cell(test_session, mock_admin_conn):
 
 
 @pytest.mark.asyncio
+async def test_handle_lock_risk_unrevealed_uses_suggestion_not_2_2(test_session, mock_admin_conn):
+    # Regression: reset a locked risk (revealed=False), new votes arrive but
+    # stay below the threshold, then "Lock placement" is pressed. The lock
+    # must use the vote-based suggested cell (3, 3) – not the (2, 2) fallback.
+    active_risk = test_session["risks"][0]
+    active_risk["votes"] = {
+        "a": {"probability": 3, "consequence": 4},
+        "b": {"probability": 3, "consequence": 2},
+    }
+    active_risk["revealed"] = False
+    active_risk["locked"] = False
+    active_risk["final_probability"] = None
+    active_risk["final_consequence"] = None
+
+    res = await handle_lock_risk(test_session, active_risk, {"action": "lock_risk"}, mock_admin_conn)
+    assert res is True
+    assert active_risk["locked"] is True
+    assert active_risk["final_probability"] == 3
+    assert active_risk["final_consequence"] == 3
+
+
+@pytest.mark.asyncio
 async def test_handle_reset_placement(test_session, mock_admin_conn):
     active_risk = test_session["risks"][0]
     # Votes averaging P=3, C=3 -> suggested cell (3, 3)

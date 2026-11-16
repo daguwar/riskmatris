@@ -168,7 +168,12 @@ async def handle_lock_risk(
 ) -> bool:
     """Locks the final placement in the summary matrix."""
     eff_thresh = get_session_threshold(session)
-    stats = compute_risk_stats(active_risk, eff_thresh)
+    # effective_*/suggested_* are masked to None while the risk is not yet
+    # revealed; locking an unrevealed risk (e.g. right after reset_votes,
+    # with votes below the threshold) must still place it at the vote-based
+    # suggestion – not at the (2, 2) fallback. Force revealed on a copy so
+    # effective = final or suggested.
+    stats = compute_risk_stats(dict(active_risk, revealed=True), eff_thresh)
     prob_raw = msg.get("probability")
     cons_raw = msg.get("consequence")
     prob = (
