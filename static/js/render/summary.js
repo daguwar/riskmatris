@@ -73,8 +73,8 @@ export function renderSummaryTable(risks) {
       <td>${escapeHtml(r.label || "-")}</td>
       <td>${t("summary.votesSt", { count: r.vote_count })}</td>
       <td>${avgStr}</td>
-      <td>${effP ? `${effP} – ${probLabel(effP, size)}` : "-"}</td>
-      <td>${effC ? `${effC} – ${consLabel(effC, size)}` : "-"}</td>
+      <td>${effP ? `${effP} – ${probLabel(effP, matrixSize())}` : "-"}</td>
+      <td>${effC ? `${effC} – ${consLabel(effC, matrixSize())}` : "-"}</td>
       <td><strong>${r.score || "-"}</strong></td>
       <td>${r.level ? `<span class="mini-score-pill ${r.color}">${r.level}</span>` : "-"}</td>
       <td>${statusText}</td>
