@@ -110,6 +110,32 @@
   border-color: var(--red-border);
 }
 
+/* Level colors for any matrix size: JS adds vote-color-0..3 (green/yellow/
+   orange/red) computed from the button's position on the axis scale,
+   round((n-1)/(N-1)*3). These rules come after the legacy [data-prob="1..4"]
+   ones above and win at equal specificity, so 4x4 looks exactly as before
+   while 3x3/5x5 buttons get an even gradient (button 5 in 5x5 is no longer
+   uncolored). */
+.vote-option-btn.vote-color-0 {
+  background: var(--green-bg);
+  border-color: var(--green-border);
+}
+
+.vote-option-btn.vote-color-1 {
+  background: var(--yellow-bg);
+  border-color: var(--yellow-border);
+}
+
+.vote-option-btn.vote-color-2 {
+  background: var(--orange-bg);
+  border-color: var(--orange-border);
+}
+
+.vote-option-btn.vote-color-3 {
+  background: var(--red-bg);
+  border-color: var(--red-border);
+}
+
 /* Dark mode (issue #19): the translucent level colors are hard to tell apart
    on dark surfaces. Redefine the level variables ON the voting buttons only
    (matrix cells, pills etc. keep the softer palette): stronger backgrounds,
@@ -144,6 +170,24 @@
 
 [data-theme="dark"] .vote-option-btn:not(.selected)[data-prob="4"],
 [data-theme="dark"] .vote-option-btn:not(.selected)[data-cons="4"] {
+  color: var(--red-text);
+}
+
+/* Dark-mode text colors for the size-aware vote-color-* classes (after the
+   legacy [data-prob] rules so they win at equal specificity) */
+[data-theme="dark"] .vote-option-btn:not(.selected).vote-color-0 {
+  color: var(--green-text);
+}
+
+[data-theme="dark"] .vote-option-btn:not(.selected).vote-color-1 {
+  color: var(--yellow-text);
+}
+
+[data-theme="dark"] .vote-option-btn:not(.selected).vote-color-2 {
+  color: var(--orange-text);
+}
+
+[data-theme="dark"] .vote-option-btn:not(.selected).vote-color-3 {
   color: var(--red-text);
 }
 

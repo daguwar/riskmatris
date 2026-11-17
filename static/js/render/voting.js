@@ -24,6 +24,12 @@ function buildVoteGroup(group, kind, size) {
     btn.type = "button";
     btn.className = "vote-option-btn";
     btn.setAttribute(isProb ? "data-prob" : "data-cons", String(n));
+    // Level color from the button's position on the axis scale (0=green ..
+    // 3=red), so it works for any matrix size: 4x4 maps 1:1 to the legacy
+    // [data-prob="1..4"] CSS rules, 3x3 -> green/orange/red, 5x5 -> an even
+    // green->red gradient
+    const colorIdx = size > 1 ? Math.round(((n - 1) / (size - 1)) * 3) : 0;
+    btn.classList.add(`vote-color-${colorIdx}`);
     const shortKey = isProb ? probLabelKey(n, size) : consLabelKey(n, size);
     const fullKey = isProb ? probLabelFullKey(n, size) : consLabelFullKey(n, size);
     // data-i18n-* so a language switch re-translates the generated buttons too
