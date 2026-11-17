@@ -7,7 +7,9 @@ their defensive ``_safe_int`` checks (they are also called directly by tests).
 
 All fields except ``action`` are optional: the handlers apply their own
 defaults (e.g. ``lock_risk`` falls back to the suggested cell), so validation
-here only rejects values that are present but invalid.
+here only rejects values that are present but invalid. Probability/consequence
+are capped at 5 here (the largest matrix); the handlers enforce the session's
+own matrix size (3/4/5) on top.
 """
 
 from typing import Literal
@@ -17,8 +19,8 @@ from pydantic import BaseModel, Field, ValidationError
 
 class VoteMessage(BaseModel):
     action: Literal["vote"] = "vote"
-    probability: int = Field(ge=1, le=4)
-    consequence: int = Field(ge=1, le=4)
+    probability: int = Field(ge=1, le=5)
+    consequence: int = Field(ge=1, le=5)
 
 
 class RevealNowMessage(BaseModel):
@@ -43,8 +45,8 @@ class SetThresholdMessage(BaseModel):
 
 class LockRiskMessage(BaseModel):
     action: Literal["lock_risk"] = "lock_risk"
-    probability: int | None = Field(default=None, ge=1, le=4)
-    consequence: int | None = Field(default=None, ge=1, le=4)
+    probability: int | None = Field(default=None, ge=1, le=5)
+    consequence: int | None = Field(default=None, ge=1, le=5)
 
 
 class UnlockRiskMessage(BaseModel):
@@ -53,8 +55,8 @@ class UnlockRiskMessage(BaseModel):
 
 class SetFinalCellMessage(BaseModel):
     action: Literal["set_final_cell"] = "set_final_cell"
-    probability: int = Field(ge=1, le=4)
-    consequence: int = Field(ge=1, le=4)
+    probability: int = Field(ge=1, le=5)
+    consequence: int = Field(ge=1, le=5)
     lock: bool = False
 
 

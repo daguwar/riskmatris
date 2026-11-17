@@ -38,8 +38,15 @@ class TestParseWsMessage:
         assert msg.consequence == 2
 
     def test_vote_out_of_range_rejected(self):
+        # 6 is beyond the largest matrix (5x5); 1..5 pass model validation and
+        # the handler enforces the session's own matrix size on top
         with pytest.raises(ValidationError):
-            parse_ws_message("vote", {"action": "vote", "probability": 5, "consequence": 2})
+            parse_ws_message("vote", {"action": "vote", "probability": 6, "consequence": 2})
+
+    def test_vote_up_to_5_passes_model_validation(self):
+        msg = parse_ws_message("vote", {"action": "vote", "probability": 5, "consequence": 5})
+        assert msg.probability == 5
+        assert msg.consequence == 5
 
     def test_vote_missing_field_rejected(self):
         with pytest.raises(ValidationError):

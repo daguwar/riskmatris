@@ -2,7 +2,7 @@
  * General helper utilities for risk matrix calculation, storage, and DOM formatting.
  */
 
-import { COLOR_STYLES } from "./constants.js";
+import { COLOR_STYLES, LEVEL_THRESHOLDS } from "./constants.js";
 import { t } from "./i18n.js";
 import { state } from "./state.js";
 
@@ -11,10 +11,17 @@ import { state } from "./state.js";
  * (state.sessionState.cell_meta) so the risk-level thresholds exist in exactly
  * one place – the backend. This function only attaches presentation styles.
  */
-export function levelLabel(score) {
-  if (score <= 2) return t("level.low");
-  if (score <= 6) return t("level.medium");
-  if (score <= 9) return t("level.high");
+/** The session's matrix size (3, 4 or 5); defaults to 4 (also for old sessions). */
+export function matrixSize() {
+  const s = state.sessionState?.matrix_size;
+  return s === 3 || s === 5 ? s : 4;
+}
+
+export function levelLabel(score, size = matrixSize()) {
+  const [greenMax, yellowMax, orangeMax] = LEVEL_THRESHOLDS[size] || LEVEL_THRESHOLDS[4];
+  if (score <= greenMax) return t("level.low");
+  if (score <= yellowMax) return t("level.medium");
+  if (score <= orangeMax) return t("level.high");
   return t("level.veryHigh");
 }
 

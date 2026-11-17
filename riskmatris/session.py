@@ -6,7 +6,7 @@ from typing import Any
 import riskmatris.config as config
 import riskmatris.db as db
 from riskmatris.models import Risk, Session
-from riskmatris.utils import get_risk_level, round_half_up
+from riskmatris.utils import MATRIX_SIZES, get_risk_level, round_half_up
 
 
 def generate_session_id(sessions: dict[str, Session] | None = None) -> str:
@@ -46,7 +46,17 @@ def get_session_threshold(session: Session) -> int:
     return max(1, int(session.get("threshold", 4)))
 
 
-def compute_risk_stats(risk: Risk, threshold: int) -> dict[str, Any]:
+def get_session_matrix_size(session: Session) -> int:
+    """Returns the session's matrix size (3, 4 or 5).
+
+    Defaults to 4 for sessions created before the matrix-size feature existed
+    (and for any corrupt value), so old sessions keep working unchanged.
+    """
+    size = session.get("matrix_size", 4)
+    return size if size in MATRIX_SIZES else 4
+
+
+def compute_risk_stats(risk: Risk, threshold: int, matrix_size: int = 4) -> dict[str, Any]:
     """Computes statistics for a risk without side effects (pure function).
 
     Also returns ``threshold_reached`` so the caller can update
@@ -69,8 +79,8 @@ def compute_risk_stats(risk: Risk, threshold: int) -> dict[str, Any]:
     if vote_count > 0:
         avg_prob = round(sum(v["probability"] for v in votes_list) / vote_count, 2)
         avg_cons = round(sum(v["consequence"] for v in votes_list) / vote_count, 2)
-        suggested_prob = round_half_up(avg_prob)
-        suggested_cons = round_half_up(avg_cons)
+        suggested_prob = round_half_up(avg_prob, matrix_size)
+        suggested_cons = round_half_up(avg_cons, matrix_size)
 
         for v in votes_list:
             key = f"{v['probability']}_{v['consequence']}"
@@ -79,7 +89,7 @@ def compute_risk_stats(risk: Risk, threshold: int) -> dict[str, Any]:
     final_prob = risk["final_probability"] or suggested_prob
     final_cons = risk["final_consequence"] or suggested_cons
     final_score = (final_prob * final_cons) if (final_prob and final_cons) else None
-    risk_meta = get_risk_level(final_score) if final_score else None
+    risk_meta = get_risk_level(final_score, matrix_size) if final_score else None
 
     return {
         "number": risk["number"],

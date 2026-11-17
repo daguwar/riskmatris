@@ -17,7 +17,7 @@ from riskmatris.config import (
     MAX_RISKS_PER_SESSION,
     MAX_VOTES_PER_RISK,
 )
-from riskmatris.session import create_new_risk
+from riskmatris.session import create_new_risk, get_session_matrix_size
 from riskmatris.utils import sanitize_user_text
 
 SNAPSHOT_FORMAT = "riskmatris-snapshot"
@@ -26,8 +26,8 @@ MAX_RISKS_PER_SNAPSHOT = MAX_RISKS_PER_SESSION
 
 
 class SnapshotVote(BaseModel):
-    probability: int = Field(ge=1, le=4)
-    consequence: int = Field(ge=1, le=4)
+    probability: int = Field(ge=1, le=5)
+    consequence: int = Field(ge=1, le=5)
 
 
 class SnapshotRisk(BaseModel):
@@ -35,8 +35,8 @@ class SnapshotRisk(BaseModel):
     label: str = ""
     revealed: bool = False
     locked: bool = False
-    final_probability: int | None = Field(default=None, ge=1, le=4)
-    final_consequence: int | None = Field(default=None, ge=1, le=4)
+    final_probability: int | None = Field(default=None, ge=1, le=5)
+    final_consequence: int | None = Field(default=None, ge=1, le=5)
     votes: dict[str, SnapshotVote] = Field(default_factory=dict)
 
 
@@ -50,6 +50,9 @@ class SnapshotFile(BaseModel):
     version: Literal[SNAPSHOT_VERSION]
     title: str = ""
     threshold: int = Field(default=4, ge=1, le=50)
+    # Matrix size (3/4/5); defaults to 4 so snapshots from before this feature
+    # still import (the field is optional, unknown fields stay forbidden)
+    matrix_size: int = Field(default=4, ge=3, le=5)
     exported_at: str = ""
     risks: list[SnapshotRisk] = Field(default_factory=list, max_length=MAX_RISKS_PER_SNAPSHOT)
 
@@ -90,6 +93,7 @@ def build_snapshot(session: dict[str, Any], include_votes: bool = True) -> dict[
         "version": SNAPSHOT_VERSION,
         "title": session.get("title", ""),
         "threshold": int(session.get("threshold", 4)),
+        "matrix_size": get_session_matrix_size(session),
         "exported_at": datetime.now(UTC).isoformat(),
         "risks": risks,
     }

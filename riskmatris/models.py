@@ -36,6 +36,7 @@ class Session(TypedDict, total=False):
     admin_token: str
     title: str
     threshold: int
+    matrix_size: int  # 3, 4 (default) or 5; missing in old sessions = 4
     created_at: float
     updated_at: float
     active_risk_number: int
@@ -50,6 +51,7 @@ class Session(TypedDict, total=False):
 class CreateSessionRequest(BaseModel):
     title: str | None = "Riskanalys"
     threshold: int | None = Field(default=4, ge=1, le=50)
+    matrix_size: int | None = Field(default=4, ge=3, le=5)
 
 
 class HealthResponse(BaseModel):
@@ -63,6 +65,7 @@ class CreateSessionResponse(BaseModel):
     admin_token: str
     title: str
     threshold: int
+    matrix_size: int
     lan_ip: str
     expires_at: float
 

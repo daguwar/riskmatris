@@ -37,22 +37,37 @@ def sanitize_csv_cell(value: Any) -> str:
     return text
 
 
-def round_half_up(value: float) -> int:
-    """Rounds half up (cautious rounding: .5 rounds up) to an integer in 1..4."""
+def round_half_up(value: float, max_val: int = 4) -> int:
+    """Rounds half up (cautious rounding: .5 rounds up) to an integer in 1..max_val."""
     rounded = int(math.floor(value + 0.5))
-    return max(1, min(4, rounded))
+    return max(1, min(max_val, rounded))
 
 
-def get_risk_level(score: int) -> dict[str, str]:
+# Allowed matrix sizes and their risk-level thresholds:
+# (green_max, yellow_max, orange_max) – everything above orange_max is red.
+# Score = probability x consequence, so the score range is 1..size^2.
+MATRIX_SIZES = (3, 4, 5)
+LEVEL_THRESHOLDS: dict[int, tuple[int, int, int]] = {
+    3: (2, 4, 6),  # score 1..9
+    4: (2, 6, 9),  # score 1..16 (unchanged default)
+    5: (4, 9, 15),  # score 1..25
+}
+
+
+def get_risk_level(score: int, matrix_size: int = 4) -> dict[str, str]:
     """
-    Risk score = Probability (1-4) x Consequence (1-4) -> 1..16
-    Green (1-2 Low), Yellow (3-6 Medium), Orange (8-9 High), Red (12-16 Very High)
+    Risk score = Probability (1..N) x Consequence (1..N) -> 1..N^2, where N is
+    the session's matrix size (3, 4 or 5; default 4).
+    N=3 (1-9):   Green 1-2 Low, Yellow 3-4 Medium, Orange 6 High, Red 9 Very High
+    N=4 (1-16):  Green 1-2 Low, Yellow 3-6 Medium, Orange 8-9 High, Red 12-16 Very High
+    N=5 (1-25):  Green 1-4 Low, Yellow 5-9 Medium, Orange 10-15 High, Red 16-25 Very High
     """
-    if score <= 2:
+    green_max, yellow_max, orange_max = LEVEL_THRESHOLDS.get(matrix_size, LEVEL_THRESHOLDS[4])
+    if score <= green_max:
         return {"level": "Low", "color": "green"}
-    elif score <= 6:
+    elif score <= yellow_max:
         return {"level": "Medium", "color": "yellow"}
-    elif score <= 9:
+    elif score <= orange_max:
         return {"level": "High", "color": "orange"}
     else:
         return {"level": "Very high", "color": "red"}

@@ -59,7 +59,8 @@
 
 .vote-options-list {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* N = session matrix size, set via --vote-n when the buttons are generated */
+  grid-template-columns: repeat(var(--vote-n, 4), 1fr);
   gap: 8px;
 }
 

@@ -340,3 +340,59 @@ class TestSessionExpiresAt:
         assert resp.status_code == 200
         expires_at = resp.json()["expires_at"]
         assert time.time() < expires_at <= time.time() + 48 * 3600 + 5
+
+
+# ---------------------------------------------------------------------------
+# Matrix size selection (3x3 / 4x4 / 5x5, default 4)
+# ---------------------------------------------------------------------------
+
+
+class TestMatrixSizeApi:
+    def test_create_with_matrix_size(self, isolated_client):
+        resp = isolated_client.post("/api/sessions", json={"title": "5x5", "matrix_size": 5})
+        assert resp.status_code == 200
+        assert resp.json()["matrix_size"] == 5
+
+    def test_create_defaults_to_4(self, isolated_client):
+        resp = isolated_client.post("/api/sessions", json={"title": "default"})
+        assert resp.status_code == 200
+        assert resp.json()["matrix_size"] == 4
+
+    def test_create_rejects_invalid_matrix_size(self, isolated_client):
+        # Pydantic validation happens before the rate-limited handler runs
+        assert isolated_client.post("/api/sessions", json={"matrix_size": 2}).status_code == 422
+        assert isolated_client.post("/api/sessions", json={"matrix_size": 6}).status_code == 422
+
+    def test_get_session_payload_includes_matrix_size(self, add_session, test_client):
+        sid = "MSPAY01"
+        session = add_session(sid)
+        resp = test_client.get(f"/api/sessions/{sid}?client_id=c1")
+        assert resp.status_code == 200
+        assert resp.json()["matrix_size"] == 4  # old session without the field
+        assert len(resp.json()["cell_meta"]) == 16
+
+        session["matrix_size"] = 5
+        resp = test_client.get(f"/api/sessions/{sid}?client_id=c1")
+        assert resp.json()["matrix_size"] == 5
+        assert len(resp.json()["cell_meta"]) == 25
+        assert resp.json()["cell_meta"]["5_5"]["color"] == "red"
+
+    def test_csv_headers_and_labels_follow_matrix_size(self, add_session, test_client):
+        sid = "MSCSV01"
+        session = add_session(sid)
+        session["matrix_size"] = 5
+        risk = session["risks"][0]
+        risk["revealed"] = True
+        risk["final_probability"] = 5
+        risk["final_consequence"] = 5
+        resp = test_client.get(f"/api/sessions/{sid}/export.csv")
+        assert resp.status_code == 200
+        text = resp.content.decode("utf-8-sig")
+        header = text.splitlines()[0]
+        assert "Sannolikhet (1-5)" in header
+        assert "Konsekvens (1-5)" in header
+        assert "Riskvärde (1-25)" in header
+        # 5x5 labels in the text columns and the top level for score 25
+        assert "Nästan säker" in text
+        assert "Katastrofal" in text
+        assert "Mycket Hög" in text

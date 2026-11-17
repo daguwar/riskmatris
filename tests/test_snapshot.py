@@ -162,3 +162,28 @@ class TestSnapshotImport:
         monkeypatch.setattr(app_module, "SESSION_CREATE_LIMIT", 1)
         assert isolated_client.post("/api/sessions/import", json=_snapshot_payload()).status_code == 200
         assert isolated_client.post("/api/sessions/import", json=_snapshot_payload()).status_code == 429
+
+
+class TestSnapshotMatrixSize:
+    def test_export_includes_matrix_size(self, add_session, test_client):
+        sid = "SNAPMS01"
+        session = add_session(sid)
+        session["matrix_size"] = 5
+        resp = test_client.get(f"/api/sessions/{sid}/snapshot.json")
+        assert resp.status_code == 200
+        assert resp.json()["matrix_size"] == 5
+
+    def test_import_preserves_matrix_size(self, isolated_client):
+        import app as app_module
+
+        resp = isolated_client.post("/api/sessions/import", json=_snapshot_payload(matrix_size=5))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["matrix_size"] == 5
+        assert app_module.SESSIONS[data["session_id"]]["matrix_size"] == 5
+
+    def test_import_without_matrix_size_defaults_to_4(self, isolated_client):
+        # Snapshots exported before this feature have no matrix_size field
+        resp = isolated_client.post("/api/sessions/import", json=_snapshot_payload())
+        assert resp.status_code == 200
+        assert resp.json()["matrix_size"] == 4

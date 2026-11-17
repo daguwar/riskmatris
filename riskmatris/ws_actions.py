@@ -11,7 +11,7 @@ from fastapi import WebSocket
 import riskmatris.config as config
 import riskmatris.db as db
 from riskmatris.config import MAX_LABEL_LENGTH, MAX_TITLE_LENGTH, logger
-from riskmatris.session import compute_risk_stats, create_new_risk, get_session_threshold
+from riskmatris.session import compute_risk_stats, create_new_risk, get_session_matrix_size, get_session_threshold
 from riskmatris.utils import _safe_int, sanitize_user_text
 from riskmatris.ws_manager import ConnectionInfo
 
@@ -45,8 +45,9 @@ async def handle_vote(
     state: AppState | None = None,
 ) -> bool:
     """Participant or admin votes on the active risk."""
-    prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4)
-    cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=4)
+    max_val = get_session_matrix_size(session)
+    prob = _safe_int(msg, "probability", 0, min_val=1, max_val=max_val)
+    cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=max_val)
     if prob is None or cons is None:
         await send_ws_error(conn.websocket, "invalid_values")
         return False
@@ -168,21 +169,22 @@ async def handle_lock_risk(
 ) -> bool:
     """Locks the final placement in the summary matrix."""
     eff_thresh = get_session_threshold(session)
+    matrix_size = get_session_matrix_size(session)
     # effective_*/suggested_* are masked to None while the risk is not yet
     # revealed; locking an unrevealed risk (e.g. right after reset_votes,
     # with votes below the threshold) must still place it at the vote-based
     # suggestion – not at the (2, 2) fallback. Force revealed on a copy so
     # effective = final or suggested.
-    stats = compute_risk_stats(dict(active_risk, revealed=True), eff_thresh)
+    stats = compute_risk_stats(dict(active_risk, revealed=True), eff_thresh, matrix_size)
     prob_raw = msg.get("probability")
     cons_raw = msg.get("consequence")
     prob = (
-        _safe_int(msg, "probability", 0, min_val=1, max_val=4)
+        _safe_int(msg, "probability", 0, min_val=1, max_val=matrix_size)
         if prob_raw is not None
         else (stats["effective_probability"] or 2)
     )
     cons = (
-        _safe_int(msg, "consequence", 0, min_val=1, max_val=4)
+        _safe_int(msg, "consequence", 0, min_val=1, max_val=matrix_size)
         if cons_raw is not None
         else (stats["effective_consequence"] or 2)
     )
@@ -227,8 +229,9 @@ async def handle_set_final_cell(
     state: AppState | None = None,
 ) -> bool:
     """Admin clicks a cell in the matrix to adjust suggested/locked placement."""
-    prob = _safe_int(msg, "probability", 0, min_val=1, max_val=4)
-    cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=4)
+    max_val = get_session_matrix_size(session)
+    prob = _safe_int(msg, "probability", 0, min_val=1, max_val=max_val)
+    cons = _safe_int(msg, "consequence", 0, min_val=1, max_val=max_val)
     if prob is None or cons is None:
         await send_ws_error(conn.websocket, "invalid_values")
         return False
@@ -251,7 +254,7 @@ async def handle_next_risk(
     """Locks current risk if auto_lock is set, and creates the next risk."""
     if msg.get("auto_lock", True) and len(active_risk["votes"]) > 0 and not active_risk["locked"]:
         eff_thresh = get_session_threshold(session)
-        stats = compute_risk_stats(active_risk, eff_thresh)
+        stats = compute_risk_stats(active_risk, eff_thresh, get_session_matrix_size(session))
         active_risk["final_probability"] = stats["effective_probability"]
         active_risk["final_consequence"] = stats["effective_consequence"]
         active_risk["revealed"] = True
@@ -333,7 +336,7 @@ async def handle_reset_placement(
     """
     if active_risk["locked"]:
         eff_thresh = get_session_threshold(session)
-        stats = compute_risk_stats(active_risk, eff_thresh)
+        stats = compute_risk_stats(active_risk, eff_thresh, get_session_matrix_size(session))
         active_risk["final_probability"] = stats["suggested_probability"]
         active_risk["final_consequence"] = stats["suggested_consequence"]
     else:

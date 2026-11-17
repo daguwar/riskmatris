@@ -7,17 +7,18 @@ from fastapi import WebSocket
 
 import riskmatris.config as config
 from riskmatris.db import save_session_to_db, save_session_to_db_async
-from riskmatris.session import compute_risk_stats, get_session_threshold
+from riskmatris.session import compute_risk_stats, get_session_matrix_size, get_session_threshold
 from riskmatris.utils import get_local_lan_ip, get_risk_level
 
 
-def build_cell_meta() -> dict[str, dict[str, Any]]:
-    """Static 4x4 map of cell key ("prob_cons") -> score/level/color.
+def build_cell_meta(matrix_size: int = 4) -> dict[str, dict[str, Any]]:
+    """Map of cell key ("prob_cons") -> score/level/color for an NxN matrix.
 
     Sent in every session payload so the frontend never has to duplicate the
     server's risk-level thresholds – it only maps color -> CSS/hex.
     """
-    return {f"{p}_{c}": {"score": p * c, **get_risk_level(p * c)} for p in range(1, 5) for c in range(1, 5)}
+    n = matrix_size if matrix_size in (3, 4, 5) else 4
+    return {f"{p}_{c}": {"score": p * c, **get_risk_level(p * c, n)} for p in range(1, n + 1) for c in range(1, n + 1)}
 
 
 class ConnectionInfo:
@@ -87,6 +88,7 @@ class SessionConnectionManager:
         sid = session["session_id"]
         participant_count = self.get_participant_count(sid)
         threshold = get_session_threshold(session)
+        matrix_size = get_session_matrix_size(session)
 
         # Compute stats for all risks (and update revealed at threshold)
         risks_summary: list[dict[str, Any]] = []
@@ -94,7 +96,7 @@ class SessionConnectionManager:
         state_changed = False
 
         for r in session["risks"]:
-            r_stats = compute_risk_stats(r, threshold)
+            r_stats = compute_risk_stats(r, threshold, matrix_size)
             # Update revealed explicitly based on threshold_reached (no side effect in compute_risk_stats)
             if r_stats["threshold_reached"]:
                 r["revealed"] = True
@@ -110,6 +112,7 @@ class SessionConnectionManager:
             "session_id": sid,
             "title": session.get("title", "Riskanalys"),
             "threshold": session.get("threshold", 4),
+            "matrix_size": matrix_size,
             # Absolute expiry (epoch seconds): updated_at + TTL. updated_at is
             # refreshed on every activity, so active sessions live longer.
             "expires_at": float(session.get("updated_at") or time.time()) + config.SESSION_TTL_SECONDS,
@@ -119,8 +122,9 @@ class SessionConnectionManager:
             "lan_ip": get_local_lan_ip(),
             # QR overlay in the presentation views, toggled from the admin view
             "qr_visible": bool(session.get("qr_visible", False)),
-            # Static cell meta so the client never duplicates risk-level logic
-            "cell_meta": build_cell_meta(),
+            # Cell meta for the session's matrix size so the client never
+            # duplicates risk-level logic
+            "cell_meta": build_cell_meta(matrix_size),
         }
         return payload, active_risk_raw, state_changed
 

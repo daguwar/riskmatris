@@ -46,7 +46,7 @@
   padding: clamp(4px, 1vmin, 12px) clamp(6px, 1.2vmin, 14px);
 }
 
-.present-view .matrix-grid-4x4 {
+.present-view .matrix-grid {
   gap: clamp(4px, 1vmin, 8px);
 }
 

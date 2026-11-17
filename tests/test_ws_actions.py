@@ -369,3 +369,35 @@ async def test_handle_set_qr_visible(test_session, mock_admin_conn):
     res_default = await handle_set_qr_visible(test_session, active_risk, {}, mock_admin_conn)
     assert res_default is True
     assert test_session["qr_visible"] is True
+
+
+@pytest.mark.asyncio
+async def test_handle_vote_respects_matrix_size(test_session, mock_admin_conn, mock_conn):
+    active_risk = test_session["risks"][0]
+
+    # Default session is 4x4: a vote of 5 is rejected
+    res = await handle_vote(
+        test_session, active_risk, {"action": "vote", "probability": 5, "consequence": 2}, mock_conn
+    )
+    assert res is False
+    assert active_risk["votes"] == {}
+
+    # 5x5 session accepts 5, and set_final_cell accepts a 5x5 cell
+    test_session["matrix_size"] = 5
+    res = await handle_vote(
+        test_session, active_risk, {"action": "vote", "probability": 5, "consequence": 5}, mock_conn
+    )
+    assert res is True
+    assert active_risk["votes"][mock_conn.client_id]["probability"] == 5
+    res = await handle_set_final_cell(
+        test_session, active_risk, {"action": "set_final_cell", "probability": 5, "consequence": 4}, mock_admin_conn
+    )
+    assert res is True
+    assert active_risk["final_probability"] == 5
+
+    # 3x3 session rejects 4
+    test_session["matrix_size"] = 3
+    res = await handle_vote(
+        test_session, active_risk, {"action": "vote", "probability": 4, "consequence": 1}, mock_conn
+    )
+    assert res is False

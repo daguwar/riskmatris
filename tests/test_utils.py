@@ -247,3 +247,50 @@ class TestSanitizeCsvCell:
     )
     def test_safe_values_pass_through(self, value, expected):
         assert sanitize_csv_cell(value) == expected
+
+
+# ---------------------------------------------------------------------------
+# Matrix size (3x3 / 4x4 / 5x5): risk-level thresholds per size
+# ---------------------------------------------------------------------------
+
+
+class TestMatrixSizeLevels:
+    def test_get_risk_level_per_size(self):
+        # 3x3 (score 1..9): green 1-2, yellow 3-4, orange 6, red 9
+        assert get_risk_level(2, 3)["color"] == "green"
+        assert get_risk_level(3, 3)["color"] == "yellow"
+        assert get_risk_level(6, 3)["color"] == "orange"
+        assert get_risk_level(9, 3)["color"] == "red"
+        # 4x4 (score 1..16) unchanged: green 1-2, yellow 3-6, orange 8-9, red 12-16
+        assert get_risk_level(9, 4)["color"] == "orange"
+        assert get_risk_level(12, 4)["color"] == "red"
+        # 5x5 (score 1..25): green 1-4, yellow 5-9, orange 10-15, red 16-25
+        assert get_risk_level(4, 5)["color"] == "green"
+        assert get_risk_level(5, 5)["color"] == "yellow"
+        assert get_risk_level(15, 5)["color"] == "orange"
+        assert get_risk_level(16, 5)["color"] == "red"
+        # unknown size falls back to 4x4 thresholds
+        assert get_risk_level(9, 99) == get_risk_level(9, 4)
+
+    def test_level_key_matches_get_risk_level_for_all_sizes(self):
+        from riskmatris.i18n import level_key_for_score
+
+        color_to_key = {"green": "low", "yellow": "medium", "orange": "high", "red": "very_high"}
+        for size in (3, 4, 5):
+            for score in range(1, size * size + 1):
+                assert level_key_for_score(score, size) == color_to_key[get_risk_level(score, size)["color"]]
+
+    def test_round_half_up_max_val(self):
+        assert round_half_up(4.6, 5) == 5
+        assert round_half_up(4.6) == 4
+        assert round_half_up(0.2, 3) == 1
+
+    def test_build_cell_meta_sizes(self):
+        from riskmatris.ws_manager import build_cell_meta
+
+        assert len(build_cell_meta(4)) == 16
+        assert len(build_cell_meta(3)) == 9
+        assert len(build_cell_meta(5)) == 25
+        assert build_cell_meta(5)["5_5"] == {"score": 25, "level": "Very high", "color": "red"}
+        assert build_cell_meta(3)["3_3"]["color"] == "red"
+        assert build_cell_meta(5)["1_1"]["color"] == "green"

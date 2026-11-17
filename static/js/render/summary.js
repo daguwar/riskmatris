@@ -1,7 +1,7 @@
 import { consLabel, probLabel } from "../constants.js";
 import { t } from "../i18n.js";
 import { dom } from "../dom.js";
-import { escapeHtml, getCellMeta } from "../utils.js";
+import { escapeHtml, getCellMeta, matrixSize } from "../utils.js";
 
 export function renderSummaryMatrix(risks, isAdmin, onSelectRisk) {
   dom.summaryMatrixGrid.innerHTML = "";
@@ -16,11 +16,12 @@ export function renderSummaryMatrix(risks, isAdmin, onSelectRisk) {
     }
   });
 
-  // 4x4 color board (rows: Consequence 4 -> 1, columns: Probability 1 -> 4).
+  // NxN color board (rows: Consequence N -> 1, columns: Probability 1 -> N).
   // The only content in the cells is the #N risk chips – that IS the result;
   // score/level text stays out of the cells (legend + summary table cover it).
-  for (let cons = 4; cons >= 1; cons--) {
-    for (let prob = 1; prob <= 4; prob++) {
+  const size = matrixSize();
+  for (let cons = size; cons >= 1; cons--) {
+    for (let prob = 1; prob <= size; prob++) {
       const meta = getCellMeta(prob, cons);
       const placedRisks = cellRisksMap[`${prob}_${cons}`] || [];
 
@@ -72,8 +73,8 @@ export function renderSummaryTable(risks) {
       <td>${escapeHtml(r.label || "-")}</td>
       <td>${t("summary.votesSt", { count: r.vote_count })}</td>
       <td>${avgStr}</td>
-      <td>${effP ? `${effP} – ${probLabel(effP)}` : "-"}</td>
-      <td>${effC ? `${effC} – ${consLabel(effC)}` : "-"}</td>
+      <td>${effP ? `${effP} – ${probLabel(effP, size)}` : "-"}</td>
+      <td>${effC ? `${effC} – ${consLabel(effC, size)}` : "-"}</td>
       <td><strong>${r.score || "-"}</strong></td>
       <td>${r.level ? `<span class="mini-score-pill ${r.color}">${r.level}</span>` : "-"}</td>
       <td>${statusText}</td>

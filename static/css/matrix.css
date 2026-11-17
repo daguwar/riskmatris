@@ -100,7 +100,7 @@
   }
 }
 
-/* The 4x4 board itself */
+/* The NxN board itself (N set via --matrix-n by JS from the session) */
 .matrix-board {
   display: flex;
   gap: 10px;
@@ -136,9 +136,9 @@
   color: var(--text-muted);
 }
 
-.matrix-grid-4x4 {
+.matrix-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--matrix-n, 4), minmax(0, 1fr));
   gap: 8px;
 }
 

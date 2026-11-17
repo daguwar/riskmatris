@@ -88,6 +88,8 @@ export function initDom() {
   dom.matrixMaskedBanner = document.getElementById("matrixMaskedBanner");
   dom.activeMatrixWrapper = document.getElementById("activeMatrixWrapper");
   dom.activeMatrixGrid = document.getElementById("activeMatrixGrid");
+  dom.activeMatrixLegend = document.getElementById("activeMatrixLegend");
+  dom.summaryMatrixLegend = document.getElementById("summaryMatrixLegend");
   dom.adminClickMatrixHint = document.getElementById("adminClickMatrixHint");
 
   dom.summaryMatrixGrid = document.getElementById("summaryMatrixGrid");
