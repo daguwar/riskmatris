@@ -1,16 +1,55 @@
 import { t } from "./i18n.js";
 
 /**
- * Label constants for Probability and Consequence.
+ * Label constants for Probability and Consequence, per matrix size.
+ * Size 4 keeps the classic vote.probN / vote.consN keys; sizes 3 and 5 use
+ * vote.p<size>.<n> / vote.c<size>.<n> (short label on the button, full text
+ * for the aria-label). All wordings follow common Swedish/English risk-matrix
+ * scales (MSB-style for 5x5, low/medium/high for 3x3).
  */
 
-export function probLabel(n) {
-  return t(`vote.prob${n}.short`);
+export function probLabel(n, size = 4) {
+  return t(size === 4 ? `vote.prob${n}.short` : `vote.p${size}.${n}.short`);
 }
 
-export function consLabel(n) {
-  return t(`vote.cons${n}.short`);
+export function consLabel(n, size = 4) {
+  return t(size === 4 ? `vote.cons${n}.short` : `vote.c${size}.${n}.short`);
 }
+
+export function probLabelFull(n, size = 4) {
+  return t(size === 4 ? `vote.prob${n}.full` : `vote.p${size}.${n}.full`);
+}
+
+export function consLabelFull(n, size = 4) {
+  return t(size === 4 ? `vote.cons${n}.full` : `vote.c${size}.${n}.full`);
+}
+
+export function probLabelKey(n, size = 4) {
+  return size === 4 ? `vote.prob${n}.short` : `vote.p${size}.${n}.short`;
+}
+
+export function consLabelKey(n, size = 4) {
+  return size === 4 ? `vote.cons${n}.short` : `vote.c${size}.${n}.short`;
+}
+
+export function probLabelFullKey(n, size = 4) {
+  return size === 4 ? `vote.prob${n}.full` : `vote.p${size}.${n}.full`;
+}
+
+export function consLabelFullKey(n, size = 4) {
+  return size === 4 ? `vote.cons${n}.full` : `vote.c${size}.${n}.full`;
+}
+
+/**
+ * Risk-level thresholds per matrix size – mirror of the server's
+ * utils.LEVEL_THRESHOLDS: [greenMax, yellowMax, orangeMax]; above orangeMax
+ * is red ("Very high"). Score = probability x consequence (1..size^2).
+ */
+export const LEVEL_THRESHOLDS = {
+  3: [2, 4, 6], // score 1..9
+  4: [2, 6, 9], // score 1..16 (unchanged default)
+  5: [4, 9, 15], // score 1..25
+};
 
 /**
  * Presentation mapping for risk colors (color name -> CSS classes / hex values

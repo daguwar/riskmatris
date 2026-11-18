@@ -200,3 +200,38 @@
 .recent-chip.recent-warning .recent-expires {
   color: var(--red-text);
 }
+
+/* Matrix size picker on the create-session form (3x3 / 4x4 / 5x5) */
+.matrix-size-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.matrix-size-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.matrix-size-option:hover {
+  border-color: var(--border-strong);
+}
+
+.matrix-size-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.matrix-size-option input {
+  accent-color: var(--accent);
+}

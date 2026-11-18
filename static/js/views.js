@@ -1,16 +1,26 @@
 import { dom } from "./dom.js";
 import { t } from "./i18n.js";
 import { renderActiveRiskHeader } from "./render/header.js";
-import { renderActiveRiskMatrix } from "./render/matrix.js";
+import { renderActiveRiskMatrix, renderMatrixLegend } from "./render/matrix.js";
 import { renderSidebarRiskList } from "./render/sidebar.js";
 import { renderSummaryMatrix, renderSummaryTable } from "./render/summary.js";
-import { renderAdminVotingControls, renderVotingControls } from "./render/voting.js";
+import { renderAdminVotingControls, renderVotingControls, renderVoteOptionButtons } from "./render/voting.js";
 import { state } from "./state.js";
-import { touchRecentSession } from "./utils.js";
+import { matrixSize, touchRecentSession } from "./utils.js";
 import { sendWsAction } from "./ws.js";
 
 const VIEW_IDS = ["voteView", "presentView", "adminView"];
 let currentPresentSub = "presentActive";
+
+/** Applies the session's matrix size to everything that depends on it:
+ *  the grid CSS variable, the 1..N voting buttons and both legends. */
+function applyMatrixSize() {
+  const size = matrixSize();
+  document.querySelectorAll(".matrix-grid").forEach((g) => g.style.setProperty("--matrix-n", String(size)));
+  renderVoteOptionButtons(size);
+  renderMatrixLegend(dom.activeMatrixLegend, size);
+  renderMatrixLegend(dom.summaryMatrixLegend, size);
+}
 
 export function openQrModal() {
   dom.qrModal.classList.remove("hidden");
@@ -103,6 +113,9 @@ export function handleSessionState(newState) {
   dom.headerSessionCode.textContent = newState.session_id;
   dom.sidebarSessionCode.textContent = newState.session_id;
   dom.modalSessionCode.textContent = newState.session_id;
+
+  // Matrix size (3/4/5) drives grid, voting buttons and legends
+  applyMatrixSize();
 
   // Admin toggle button label for the presentation QR modal
   const qrVisible = Boolean(newState.qr_visible);

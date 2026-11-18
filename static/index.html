@@ -146,6 +146,38 @@
             min="1"
             max="50"
           />
+          <div class="label-row">
+            <span class="form-label" id="matrixSizeLabel" data-i18n="create.matrixLabel">Matrisstorlek</span>
+            <details class="info-popup">
+              <summary
+                class="info-btn"
+                data-i18n-title="info.title"
+                data-i18n-aria-label="info.ariaLabel"
+                title="Mer information"
+                aria-label="Visa mer information"
+              >
+                <span aria-hidden="true">i</span>
+              </summary>
+              <p class="info-popup-content" data-i18n="create.matrixHint">
+                Antal nivåer på Sannolikhet- och Konsekvens-axlarna. 4×4 är standard;
+                3×3 är enklare, 5×5 ger mer detaljer.
+              </p>
+            </details>
+          </div>
+          <div class="matrix-size-picker" role="radiogroup" aria-labelledby="matrixSizeLabel">
+            <label class="matrix-size-option">
+              <input type="radio" name="matrixSize" value="3" />
+              <span>3×3</span>
+            </label>
+            <label class="matrix-size-option">
+              <input type="radio" name="matrixSize" value="4" checked />
+              <span>4×4 <span class="card-tag" data-i18n="create.matrixDefault">standard</span></span>
+            </label>
+            <label class="matrix-size-option">
+              <input type="radio" name="matrixSize" value="5" />
+              <span>5×5</span>
+            </label>
+          </div>
           <button type="submit" class="btn btn-secondary btn-large btn-block" data-i18n="create.submit">Starta ny session</button>
         </form>
       </section>
@@ -346,7 +378,7 @@
               <div class="matrix-board">
                 <div class="matrix-y-axis-title" data-i18n="present.axisY">Konsekvens &uarr;</div>
                 <div class="matrix-main-area">
-                  <div class="matrix-grid-4x4" id="activeMatrixGrid">
+                  <div class="matrix-grid" id="activeMatrixGrid">
                     <!-- Generated dynamically by app.js -->
                   </div>
                   <div class="matrix-x-axis-title" data-i18n="present.axisX">Sannolikhet &rarr;</div>
@@ -354,12 +386,8 @@
               </div>
             </div>
 
-            <!-- Color legend -->
-            <div class="matrix-legend">
-              <span class="legend-item"><span class="legend-swatch swatch-green"></span><span data-i18n="legend.low"> 1–2 Låg</span></span>
-              <span class="legend-item"><span class="legend-swatch swatch-yellow"></span><span data-i18n="legend.medium"> 3–6 Medel</span></span>
-              <span class="legend-item"><span class="legend-swatch swatch-orange"></span><span data-i18n="legend.high"> 8–9 Hög</span></span>
-              <span class="legend-item"><span class="legend-swatch swatch-red"></span><span data-i18n="legend.veryHigh"> 12–16 Mycket hög</span></span>
+            <!-- Legend items are rendered per matrix size by render/matrix.js -->
+            <div class="matrix-legend" id="activeMatrixLegend">
               <button type="button" class="btn btn-outline btn-sm hidden" id="btnResetPlacement" data-i18n="admin.resetPlacement" data-i18n-title="admin.resetPlacementTitle" title="Ta bort den manuella placeringen – matrisen visar det föreslagna resultatet igen">Återställ till förslag</button>
             </div>
           </div>
@@ -381,7 +409,7 @@
               <div class="matrix-board">
                 <div class="matrix-y-axis-title" data-i18n="present.axisY">Konsekvens &uarr;</div>
                 <div class="matrix-main-area">
-                  <div class="matrix-grid-4x4" id="summaryMatrixGrid">
+                  <div class="matrix-grid" id="summaryMatrixGrid">
                     <!-- Generated dynamically by app.js -->
                   </div>
                   <div class="matrix-x-axis-title" data-i18n="present.axisX">Sannolikhet &rarr;</div>
@@ -389,12 +417,8 @@
               </div>
             </div>
 
-            <div class="matrix-legend">
-              <span class="legend-item"><span class="legend-swatch swatch-green"></span><span data-i18n="legend.low"> 1–2 Låg</span></span>
-              <span class="legend-item"><span class="legend-swatch swatch-yellow"></span><span data-i18n="legend.medium"> 3–6 Medel</span></span>
-              <span class="legend-item"><span class="legend-swatch swatch-orange"></span><span data-i18n="legend.high"> 8–9 Hög</span></span>
-              <span class="legend-item"><span class="legend-swatch swatch-red"></span><span data-i18n="legend.veryHigh"> 12–16 Mycket hög</span></span>
-            </div>
+            <!-- Legend items are rendered per matrix size by render/matrix.js -->
+            <div class="matrix-legend" id="summaryMatrixLegend"></div>
           </div>
         </div>
       </div>

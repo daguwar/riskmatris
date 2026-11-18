@@ -6,6 +6,8 @@ for the cases where the server itself must produce localized output (CSV
 export) plus the canonical Swedish/English message table.
 """
 
+from riskmatris.utils import LEVEL_THRESHOLDS
+
 SUPPORTED_LANGS = ("sv", "en")
 
 MESSAGES: dict[str, dict[str, str]] = {
@@ -47,8 +49,8 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "This risk is locked – voting is not possible.",
     },
     "invalid_values": {
-        "sv": "Sannolikhet och Konsekvens måste vara heltal 1–4.",
-        "en": "Probability and Consequence must be integers 1–4.",
+        "sv": "Sannolikhet och Konsekvens måste vara heltal mellan 1 och matrisstorleken.",
+        "en": "Probability and Consequence must be integers between 1 and the matrix size.",
     },
     "invalid_risk_number": {"sv": "Ogiltigt risknummer.", "en": "Invalid risk number."},
     "risk_not_found": {"sv": "Risken finns inte.", "en": "The risk does not exist."},
@@ -94,11 +96,11 @@ CSV_TEXTS: dict[str, dict[str, object]] = {
             "Antal röster",
             "Medel Sannolikhet",
             "Medel Konsekvens",
-            "Sannolikhet (1-4)",
+            "Sannolikhet (1-{n})",
             "Sannolikhet (Text)",
-            "Konsekvens (1-4)",
+            "Konsekvens (1-{n})",
             "Konsekvens (Text)",
-            "Riskvärde (1-16)",
+            "Riskvärde (1-{max})",
             "Risknivå",
             "Röstfördelning (Sannolikhet x Konsekvens: Antal)",
         ],
@@ -107,8 +109,16 @@ CSV_TEXTS: dict[str, dict[str, object]] = {
         "status_hidden": "Ej visad",
         "distribution": "S{p}xK{c}: {count} st",
         "levels": {"low": "Låg", "medium": "Medel", "high": "Hög", "very_high": "Mycket Hög"},
-        "prob_labels": {1: "Osannolik", 2: "Möjlig", 3: "Sannolik", 4: "Mycket sannolik"},
-        "cons_labels": {1: "Försumbar", 2: "Måttlig", 3: "Allvarlig", 4: "Mycket allvarlig"},
+        "prob_labels_by_size": {
+            "3": {1: "Låg", 2: "Medel", 3: "Hög"},
+            "4": {1: "Osannolik", 2: "Möjlig", 3: "Sannolik", 4: "Mycket sannolik"},
+            "5": {1: "Mycket osannolik", 2: "Osannolik", 3: "Möjlig", 4: "Trolig", 5: "Nästan säker"},
+        },
+        "cons_labels_by_size": {
+            "3": {1: "Lindrig", 2: "Måttlig", 3: "Allvarlig"},
+            "4": {1: "Försumbar", 2: "Måttlig", 3: "Allvarlig", 4: "Mycket allvarlig"},
+            "5": {1: "Försumbar", 2: "Lindrig", 3: "Måttlig", 4: "Allvarlig", 5: "Katastrofal"},
+        },
     },
     "en": {
         "headers": [
@@ -118,11 +128,11 @@ CSV_TEXTS: dict[str, dict[str, object]] = {
             "Vote count",
             "Avg Probability",
             "Avg Consequence",
-            "Probability (1-4)",
+            "Probability (1-{n})",
             "Probability (Text)",
-            "Consequence (1-4)",
+            "Consequence (1-{n})",
             "Consequence (Text)",
-            "Risk score (1-16)",
+            "Risk score (1-{max})",
             "Risk level",
             "Vote distribution (Probability x Consequence: Count)",
         ],
@@ -131,8 +141,16 @@ CSV_TEXTS: dict[str, dict[str, object]] = {
         "status_hidden": "Not shown",
         "distribution": "P{p}xC{c}: {count}",
         "levels": {"low": "Low", "medium": "Medium", "high": "High", "very_high": "Very high"},
-        "prob_labels": {1: "Unlikely", 2: "Possible", 3: "Likely", 4: "Very likely"},
-        "cons_labels": {1: "Negligible", 2: "Moderate", 3: "Serious", 4: "Very serious"},
+        "prob_labels_by_size": {
+            "3": {1: "Low", 2: "Medium", 3: "High"},
+            "4": {1: "Unlikely", 2: "Possible", 3: "Likely", 4: "Very likely"},
+            "5": {1: "Very rare", 2: "Rare", 3: "Possible", 4: "Likely", 5: "Almost certain"},
+        },
+        "cons_labels_by_size": {
+            "3": {1: "Minor", 2: "Moderate", 3: "Severe"},
+            "4": {1: "Negligible", 2: "Moderate", 3: "Serious", 4: "Very serious"},
+            "5": {1: "Insignificant", 2: "Minor", 3: "Moderate", 4: "Major", 5: "Catastrophic"},
+        },
     },
 }
 
@@ -142,12 +160,13 @@ def csv_texts(lang: str) -> dict[str, object]:
     return CSV_TEXTS.get(lang, CSV_TEXTS["sv"])
 
 
-def level_key_for_score(score: int) -> str:
+def level_key_for_score(score: int, matrix_size: int = 4) -> str:
     """Same thresholds as utils.get_risk_level, as a translation key."""
-    if score <= 2:
+    green_max, yellow_max, orange_max = LEVEL_THRESHOLDS.get(matrix_size, LEVEL_THRESHOLDS[4])
+    if score <= green_max:
         return "low"
-    if score <= 6:
+    if score <= yellow_max:
         return "medium"
-    if score <= 9:
+    if score <= orange_max:
         return "high"
     return "very_high"

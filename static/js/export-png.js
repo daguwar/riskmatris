@@ -1,4 +1,4 @@
-import { consLabel, probLabel } from "./constants.js";
+import { LEVEL_THRESHOLDS, consLabel, probLabel } from "./constants.js";
 import { getLang, t } from "./i18n.js";
 import { drawRoundedRect, getCellMeta } from "./utils.js";
 
@@ -6,9 +6,9 @@ import { drawRoundedRect, getCellMeta } from "./utils.js";
  * High-resolution PNG Export of the Summary Matrix (for PowerPoint).
  */
 export function exportSummaryMatrixAsPng(state) {
+  const size = state.matrix_size === 3 || state.matrix_size === 5 ? state.matrix_size : 4;
   const canvas = document.createElement("canvas");
   canvas.width = 1600;
-  canvas.height = 1040;
   const ctx = canvas.getContext("2d");
 
   // Background
@@ -25,12 +25,16 @@ export function exportSummaryMatrixAsPng(state) {
   const dateStr = new Date().toLocaleDateString(getLang() === "en" ? "en-GB" : "sv-SE");
   ctx.fillText(t("export.pngSubtitle", { date: dateStr }), 70, 92);
 
-  // Matrix geometry
+  // Matrix geometry (N = session matrix size; cells fill the available width)
   const startX = 290;
   const startY = 125;
-  const cellW = 295;
-  const cellH = 165;
   const gap = 10;
+  const cellW = Math.floor((canvas.width - startX - 60 - (size - 1) * gap) / size);
+  const cellH = size === 5 ? 138 : 165;
+  const gridW = size * cellW + (size - 1) * gap;
+  const gridH = size * cellH + (size - 1) * gap;
+  const xHeaderY = startY + gridH;
+  canvas.height = xHeaderY + 80 + 60 + 70;
 
   // Group risks per cell
   const cellRisksMap = {};
@@ -44,7 +48,7 @@ export function exportSummaryMatrixAsPng(state) {
 
   // Y-axis title (CONSEQUENCE)
   ctx.save();
-  ctx.translate(45, startY + (cellH * 4 + gap * 3) / 2);
+  ctx.translate(45, startY + gridH / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.fillStyle = "#1e293b";
   ctx.font = "bold 22px Segoe UI, Arial, sans-serif";
@@ -52,9 +56,9 @@ export function exportSummaryMatrixAsPng(state) {
   ctx.fillText(t("export.axisConsBig"), 0, 0);
   ctx.restore();
 
-  // Rows: Consequence 4 -> 1
-  for (let rowIdx = 0; rowIdx < 4; rowIdx++) {
-    const cons = 4 - rowIdx;
+  // Rows: Consequence N -> 1
+  for (let rowIdx = 0; rowIdx < size; rowIdx++) {
+    const cons = size - rowIdx;
     const y = startY + rowIdx * (cellH + gap);
 
     // Y-axis label box
@@ -62,13 +66,13 @@ export function exportSummaryMatrixAsPng(state) {
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 28px Segoe UI, Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(String(cons), 175, y + 72);
+    ctx.fillText(String(cons), 175, y + cellH * 0.44);
     ctx.font = "18px Segoe UI, Arial, sans-serif";
     ctx.fillStyle = "#e2e8f0";
-    ctx.fillText(consLabel(cons), 175, y + 105);
+    ctx.fillText(consLabel(cons, size), 175, y + cellH * 0.64);
 
-    // Columns: Probability 1 -> 4
-    for (let colIdx = 0; colIdx < 4; colIdx++) {
+    // Columns: Probability 1 -> N
+    for (let colIdx = 0; colIdx < size; colIdx++) {
       const prob = colIdx + 1;
       const x = startX + colIdx * (cellW + gap);
       const meta = getCellMeta(prob, cons);
@@ -76,7 +80,7 @@ export function exportSummaryMatrixAsPng(state) {
 
       drawRoundedRect(ctx, x, y, cellW, cellH, 12, meta.hexBg, meta.hexBorder, 3);
 
-      // Risk score (1-16) in the top-left corner
+      // Risk score (1..N^2) in the top-left corner
       ctx.fillStyle = meta.hexText;
       ctx.font = "bold 28px Segoe UI, Arial, sans-serif";
       ctx.textAlign = "left";
@@ -107,8 +111,7 @@ export function exportSummaryMatrixAsPng(state) {
     }
   }
 
-  // X-axis labels (Probability 1 -> 4)
-  const xHeaderY = startY + 4 * (cellH + gap);
+  // X-axis labels (Probability 1 -> N)
   drawRoundedRect(ctx, 75, xHeaderY, 200, 80, 12, "#334155", "#334155");
   ctx.fillStyle = "#cbd5e1";
   ctx.font = "bold 16px Segoe UI, Arial, sans-serif";
@@ -116,7 +119,7 @@ export function exportSummaryMatrixAsPng(state) {
   ctx.fillText(t("export.axisCons"), 175, xHeaderY + 34);
   ctx.fillText(t("export.axisProb"), 175, xHeaderY + 58);
 
-  for (let colIdx = 0; colIdx < 4; colIdx++) {
+  for (let colIdx = 0; colIdx < size; colIdx++) {
     const prob = colIdx + 1;
     const x = startX + colIdx * (cellW + gap);
     drawRoundedRect(ctx, x, xHeaderY, cellW, 80, 12, "#1e293b", "#1e293b");
@@ -126,24 +129,26 @@ export function exportSummaryMatrixAsPng(state) {
     ctx.fillText(String(prob), x + cellW / 2, xHeaderY + 34);
     ctx.fillStyle = "#e2e8f0";
     ctx.font = "18px Segoe UI, Arial, sans-serif";
-    ctx.fillText(probLabel(prob), x + cellW / 2, xHeaderY + 62);
+    ctx.fillText(probLabel(prob, size), x + cellW / 2, xHeaderY + 62);
   }
 
   // X-axis title
   ctx.fillStyle = "#1e293b";
   ctx.font = "bold 22px Segoe UI, Arial, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(t("export.axisProbBig"), startX + (cellW * 4 + gap * 3) / 2, xHeaderY + 118);
+  ctx.fillText(t("export.axisProbBig"), startX + gridW / 2, xHeaderY + 118);
 
-  // Color legend at the bottom
+  // Color legend at the bottom (score bands depend on the matrix size)
+  const [greenMax, yellowMax, orangeMax] = LEVEL_THRESHOLDS[size] || LEVEL_THRESHOLDS[4];
+  const maxScore = size * size;
   const legendItems = [
-    { label: t("export.legendLow"), color: "#86efac", border: "#16a34a" },
-    { label: t("export.legendMedium"), color: "#fde047", border: "#ca8a04" },
-    { label: t("export.legendHigh"), color: "#fdba74", border: "#ea580c" },
-    { label: t("export.legendVeryHigh"), color: "#fca5a5", border: "#dc2626" },
+    { label: t("export.legendLow", { range: `1–${greenMax}` }), color: "#86efac", border: "#16a34a" },
+    { label: t("export.legendMedium", { range: `${greenMax + 1}–${yellowMax}` }), color: "#fde047", border: "#ca8a04" },
+    { label: t("export.legendHigh", { range: `${yellowMax + 1}–${orangeMax}` }), color: "#fdba74", border: "#ea580c" },
+    { label: t("export.legendVeryHigh", { range: `${orangeMax + 1}–${maxScore}` }), color: "#fca5a5", border: "#dc2626" },
   ];
   let lx = 290;
-  const ly = 985;
+  const ly = canvas.height - 55;
   legendItems.forEach((item) => {
     drawRoundedRect(ctx, lx, ly - 18, 24, 24, 5, item.color, item.border, 2);
     ctx.fillStyle = "#1e293b";

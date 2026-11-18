@@ -186,12 +186,13 @@ export function bindLandingEvents() {
     e.preventDefault();
     const title = document.getElementById("inputSessionTitle").value.trim() || t("default.title");
     const threshold = parseInt(document.getElementById("inputDefaultThreshold").value, 10) || 4;
+    const matrixSize = parseInt(document.querySelector('input[name="matrixSize"]:checked')?.value || "4", 10);
 
     try {
       const res = await fetch("/api/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, threshold }),
+        body: JSON.stringify({ title, threshold, matrix_size: matrixSize }),
       });
       if (!res.ok) {
         // e.g. 429 rate limit – show the server's message ("Too many sessions…")
@@ -302,20 +303,20 @@ export function bindSessionEvents() {
     btn.addEventListener("click", () => switchPresentSub(btn.getAttribute("data-subview")));
   });
 
-  // Probability voting buttons (1-4)
-  dom.probOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      state.selectedProb = parseInt(btn.getAttribute("data-prob"), 10);
-      submitVoteIfComplete();
-    });
+  // Voting buttons are generated per matrix size (1..N) by renderVoteOptionButtons,
+  // so bind via delegation on the group containers instead of per button
+  dom.probOptionsGroup.addEventListener("click", (e) => {
+    const btn = e.target.closest(".vote-option-btn");
+    if (!btn) return;
+    state.selectedProb = parseInt(btn.getAttribute("data-prob"), 10);
+    submitVoteIfComplete();
   });
 
-  // Consequence voting buttons (1-4)
-  dom.consOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      state.selectedCons = parseInt(btn.getAttribute("data-cons"), 10);
-      submitVoteIfComplete();
-    });
+  dom.consOptionsGroup.addEventListener("click", (e) => {
+    const btn = e.target.closest(".vote-option-btn");
+    if (!btn) return;
+    state.selectedCons = parseInt(btn.getAttribute("data-cons"), 10);
+    submitVoteIfComplete();
   });
 
   // Admin: toggle own voting
@@ -335,23 +336,22 @@ export function bindSessionEvents() {
     }
   });
 
-  // Admin's probability voting buttons (1-4)
+  // Admin's voting buttons (delegated like the participant ones above)
   if (dom.adminProbOptionsGroup) {
-    dom.adminProbOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        state.adminSelectedProb = parseInt(btn.getAttribute("data-prob"), 10);
-        submitAdminVoteIfComplete();
-      });
+    dom.adminProbOptionsGroup.addEventListener("click", (e) => {
+      const btn = e.target.closest(".vote-option-btn");
+      if (!btn) return;
+      state.adminSelectedProb = parseInt(btn.getAttribute("data-prob"), 10);
+      submitAdminVoteIfComplete();
     });
   }
 
-  // Admin's consequence voting buttons (1-4)
   if (dom.adminConsOptionsGroup) {
-    dom.adminConsOptionsGroup.querySelectorAll(".vote-option-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        state.adminSelectedCons = parseInt(btn.getAttribute("data-cons"), 10);
-        submitAdminVoteIfComplete();
-      });
+    dom.adminConsOptionsGroup.addEventListener("click", (e) => {
+      const btn = e.target.closest(".vote-option-btn");
+      if (!btn) return;
+      state.adminSelectedCons = parseInt(btn.getAttribute("data-cons"), 10);
+      submitAdminVoteIfComplete();
     });
   }
 

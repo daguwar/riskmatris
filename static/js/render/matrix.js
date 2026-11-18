@@ -1,7 +1,7 @@
-import { consLabel, probLabel } from "../constants.js";
+import { LEVEL_THRESHOLDS, consLabel, probLabel } from "../constants.js";
 import { t } from "../i18n.js";
 import { dom } from "../dom.js";
-import { getCellMeta } from "../utils.js";
+import { getCellMeta, matrixSize } from "../utils.js";
 
 export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell) {
   const titleSuffix = risk.label ? ` – ${risk.label}` : "";
@@ -47,12 +47,13 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
 
   dom.activeMatrixGrid.innerHTML = "";
 
-  // Pure 4x4 color board: rows = Consequence (Y axis) top to bottom 4 -> 1,
-  // columns = Probability (X axis) left to right 1 -> 4. Cells carry no text
-  // (only their color plus vote dots); the axis titles and the legend outside
-  // the grid explain axes and colors.
-  for (let cons = 4; cons >= 1; cons--) {
-    for (let prob = 1; prob <= 4; prob++) {
+  // Pure NxN color board (N = session matrix size): rows = Consequence (Y axis)
+  // top to bottom N -> 1, columns = Probability (X axis) left to right 1 -> N.
+  // Cells carry no text (only their color plus vote dots); the axis titles and
+  // the legend outside the grid explain axes and colors.
+  const size = matrixSize();
+  for (let cons = size; cons >= 1; cons--) {
+    for (let prob = 1; prob <= size; prob++) {
       const meta = getCellMeta(prob, cons);
       const key = `${prob}_${cons}`;
       const cellVotes = (risk.cell_counts && risk.cell_counts[key]) || 0;
@@ -87,7 +88,7 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
         // Cells have no visible text anymore, so the accessible name comes
         // from the title attribute (name-from-title); role="button" carries
         // the action.
-        const actionLabel = t("cell.actionPlace", { num: risk.number, p: prob, plabel: probLabel(prob), c: cons, clabel: consLabel(cons) });
+        const actionLabel = t("cell.actionPlace", { num: risk.number, p: prob, plabel: probLabel(prob, size), c: cons, clabel: consLabel(cons, size) });
         cell.title = t("cell.clickTitle", { action: actionLabel });
         cell.tabIndex = 0;
         cell.setAttribute("role", "button");
@@ -104,6 +105,38 @@ export function renderActiveRiskMatrix(risk, threshold, isAdmin, onSetFinalCell)
 
       dom.activeMatrixGrid.appendChild(cell);
     }
+  }
+}
+
+/**
+ * Renders the color legend for the session's matrix size into the given
+ * container (keeps an existing .legend-hint child, e.g. the admin hint and
+ * the reset-placement button). Score bands mirror the server's
+ * LEVEL_THRESHOLDS: 1..green / green+1..yellow / yellow+1..orange / rest red.
+ */
+export function renderMatrixLegend(el, size = matrixSize()) {
+  if (!el) return;
+  const keep = Array.from(el.children).filter((c) => !c.classList.contains("legend-item"));
+  el.innerHTML = "";
+  keep.forEach((c) => el.appendChild(c));
+  const [greenMax, yellowMax, orangeMax] = LEVEL_THRESHOLDS[size] || LEVEL_THRESHOLDS[4];
+  const max = size * size;
+  const bands = [
+    [1, greenMax, "level.low", "swatch-green"],
+    [greenMax + 1, yellowMax, "level.medium", "swatch-yellow"],
+    [yellowMax + 1, orangeMax, "level.high", "swatch-orange"],
+    [orangeMax + 1, max, "level.veryHigh", "swatch-red"],
+  ];
+  for (const [from, to, key, swatch] of bands) {
+    const item = document.createElement("span");
+    item.className = "legend-item";
+    const sw = document.createElement("span");
+    sw.className = `legend-swatch ${swatch}`;
+    const label = document.createElement("span");
+    label.textContent = `${from}–${to} ${t(key)}`;
+    item.appendChild(sw);
+    item.appendChild(label);
+    el.appendChild(item);
   }
 }
 

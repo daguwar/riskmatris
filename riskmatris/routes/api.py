@@ -31,6 +31,7 @@ from riskmatris.session import (
     compute_risk_stats,
     create_new_risk,
     generate_session_id,
+    get_session_matrix_size,
     get_session_threshold,
 )
 from riskmatris.snapshot import SnapshotFile, build_snapshot, risks_from_snapshot
@@ -82,6 +83,7 @@ async def create_session(
     admin_token = secrets.token_urlsafe(24)
     now = time.time()
     threshold = max(1, min(50, req.threshold or 4))
+    matrix_size = req.matrix_size if req.matrix_size in (3, 4, 5) else 4
     title = sanitize_user_text(req.title or "", MAX_TITLE_LENGTH) or "Riskanalys"
 
     session = {
@@ -89,6 +91,7 @@ async def create_session(
         "admin_token": admin_token,
         "title": title,
         "threshold": threshold,
+        "matrix_size": matrix_size,
         "created_at": now,
         "updated_at": now,
         "active_risk_number": 1,
@@ -96,12 +99,20 @@ async def create_session(
     }
     state.sessions[session_id] = session
     await db.save_session_to_db_async(session)
-    logger.info("New session created: %s – '%s' (threshold: %d)", session_id, title, threshold)
+    logger.info(
+        "New session created: %s – '%s' (threshold: %d, matrix: %dx%d)",
+        session_id,
+        title,
+        threshold,
+        matrix_size,
+        matrix_size,
+    )
     return {
         "session_id": session_id,
         "admin_token": admin_token,
         "title": title,
         "threshold": threshold,
+        "matrix_size": matrix_size,
         "lan_ip": get_local_lan_ip(),
         "expires_at": now + config.SESSION_TTL_SECONDS,
     }
@@ -303,6 +314,7 @@ async def import_session_snapshot(
         "admin_token": admin_token,
         "title": sanitize_user_text(snap.title, MAX_TITLE_LENGTH) or "Riskanalys",
         "threshold": snap.threshold,
+        "matrix_size": snap.matrix_size if snap.matrix_size in (3, 4, 5) else 4,
         "created_at": now,
         "updated_at": now,
         "active_risk_number": risks[0]["number"],
@@ -316,6 +328,7 @@ async def import_session_snapshot(
         "admin_token": admin_token,
         "title": session["title"],
         "threshold": session["threshold"],
+        "matrix_size": session["matrix_size"],
         "lan_ip": get_local_lan_ip(),
         "expires_at": now + config.SESSION_TTL_SECONDS,
     }
@@ -338,6 +351,9 @@ async def export_session_csv(
     texts = csv_texts(lang)
 
     threshold = get_session_threshold(session)
+    matrix_size = get_session_matrix_size(session)
+    prob_labels = texts["prob_labels_by_size"][str(matrix_size)]
+    cons_labels = texts["cons_labels_by_size"][str(matrix_size)]
     output = io.StringIO()
     # Write a UTF-8 BOM so Microsoft Excel on Windows renders å, ä, ö correctly when opening the file directly
     output.write("\ufeff")
@@ -349,14 +365,14 @@ async def export_session_csv(
         # evaluated as a formula when the file is opened in Excel/LibreOffice.
         writer.writerow([sanitize_csv_cell(c) for c in cells])
 
-    write_row(list(texts["headers"]))
+    write_row([str(h).format(n=matrix_size, max=matrix_size * matrix_size) for h in texts["headers"]])
 
     for r in session["risks"]:
-        stats = compute_risk_stats(r, threshold)
+        stats = compute_risk_stats(r, threshold, matrix_size)
         prob = stats["effective_probability"]
         cons = stats["effective_consequence"]
         score = stats["score"]
-        level = texts["levels"][level_key_for_score(score)] if score else ""
+        level = texts["levels"][level_key_for_score(score, matrix_size)] if score else ""
         status_str = (
             texts["status_locked"]
             if r["locked"]
@@ -377,9 +393,9 @@ async def export_session_csv(
                 str(stats["avg_probability"]).replace(".", ",") if stats["avg_probability"] is not None else "",
                 str(stats["avg_consequence"]).replace(".", ",") if stats["avg_consequence"] is not None else "",
                 prob or "",
-                texts["prob_labels"].get(prob, "") if prob else "",
+                prob_labels.get(prob, "") if prob else "",
                 cons or "",
-                texts["cons_labels"].get(cons, "") if cons else "",
+                cons_labels.get(cons, "") if cons else "",
                 score or "",
                 level,
                 ", ".join(dist_parts),
