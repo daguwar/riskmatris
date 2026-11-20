@@ -269,7 +269,7 @@
           </div>
 
           <div class="voting-axes-grid">
-            <!-- Probability (1-4) -->
+            <!-- Probability (1..N, N = session matrix size) -->
             <div class="voting-axis-box">
               <div class="axis-title-row">
                 <h4 data-i18n="vote.probAxis">Sannolikhet</h4>
@@ -291,7 +291,7 @@
               </div>
             </div>
 
-            <!-- Consequence (1-4) -->
+            <!-- Consequence (1..N, N = session matrix size) -->
             <div class="voting-axis-box">
               <div class="axis-title-row">
                 <h4 data-i18n="vote.consAxis">Konsekvens</h4>
@@ -316,7 +316,7 @@
 
           <div class="voting-footer">
             <div class="my-selection-preview" id="mySelectionPreview" aria-live="polite">
-              <span data-i18n="vote.footerHint">Välj både Sannolikhet (1–4) och Konsekvens (1–4) ovan.</span>
+              <span data-i18n="vote.footerHint">Välj både Sannolikhet och Konsekvens ovan.</span>
             </div>
           </div>
         </div>
@@ -373,7 +373,7 @@
               </p>
             </div>
 
-            <!-- The 4x4 matrix (Consequence Y 4->1, Probability X 1->4) -->
+            <!-- The NxN matrix (Consequence Y N->1, Probability X 1->N; N = session matrix size) -->
             <div class="matrix-board-wrapper" id="activeMatrixWrapper">
               <div class="matrix-board">
                 <div class="matrix-y-axis-title" data-i18n="present.axisY">Konsekvens &uarr;</div>
@@ -507,7 +507,7 @@
             </div>
 
             <div class="voting-axes-grid">
-              <!-- Probability (1-4) -->
+              <!-- Probability (1..N, N = session matrix size) -->
               <div class="voting-axis-box">
                 <div class="axis-title-row">
                   <h4>Sannolikhet</h4>
@@ -529,7 +529,7 @@
                 </div>
               </div>
 
-              <!-- Consequence (1-4) -->
+              <!-- Consequence (1..N, N = session matrix size) -->
               <div class="voting-axis-box">
                 <div class="axis-title-row">
                   <h4>Konsekvens</h4>
@@ -554,7 +554,7 @@
 
             <div class="voting-footer">
               <div class="my-selection-preview" id="adminMySelectionPreview" aria-live="polite">
-                <span data-i18n="vote.footerHint">Välj både Sannolikhet (1–4) och Konsekvens (1–4) ovan.</span>
+                <span data-i18n="vote.footerHint">Välj både Sannolikhet och Konsekvens ovan.</span>
               </div>
             </div>
           </div>

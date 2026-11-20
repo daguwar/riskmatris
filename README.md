@@ -1,14 +1,17 @@
 # Riskmatris Live
 
-Riskmatris Live is a real-time web application for collaborative 4×4 risk assessments. A facilitator creates a session, participants join anonymously via QR code or session code from mobile or desktop browsers, and votes are aggregated live on an interactive risk matrix. Results can be locked and exported as PNG images, CSV spreadsheets, or JSON snapshots.
+Riskmatris Live is a real-time web application for collaborative risk assessments. The matrix size (3×3, 4×4 or 5×5) is chosen when the session is created — 4×4 is the default. A facilitator creates a session, participants join anonymously via QR code or session code from mobile or desktop browsers, and votes are aggregated live on an interactive risk matrix. Results can be locked and exported as PNG images, CSV spreadsheets, or JSON snapshots.
+
+## Try it live
+
+A hosted instance runs at [https://riskmatris.se/](https://riskmatris.se/) — create a session, share the QR code with participants, and run a risk workshop right away, no installation needed. Self-host with Docker when you're ready (see [Getting Started](#getting-started)).
 
 ## Features
 
 - **Anonymous participation:** No user accounts or registrations. Sessions generate an 8-character code, a join link, and a QR code. Participant votes are associated with a random device identifier.
-- **Interactive 4×4 risk matrix:**
-  - **Probability (X-axis, 1–4):** Unlikely (1), Possible (2), Likely (3), Highly likely (4).
-  - **Consequence (Y-axis, 1–4):** Negligible (1), Moderate (2), Serious (3), Critical (4).
-  - **Risk score (1–16):** Low (Green, 1–2), Medium (Yellow, 3–6), High (Orange, 8–9), Very High (Red, 12–16).
+- **Interactive risk matrix — 3×3, 4×4 or 5×5, chosen per session (4×4 default):**
+  - **Probability (X-axis, 1–N) and Consequence (Y-axis, 1–N)** with per-size labels. 4×4: Unlikely (1), Possible (2), Likely (3), Highly likely (4) / Negligible (1), Moderate (2), Serious (3), Critical (4). 3×3: Low / Medium / High and Minor / Moderate / Severe. 5×5: Very rare … Almost certain / Insignificant … Catastrophic.
+  - **Risk score = P × C (1–N²)** with per-size level bands. 4×4 (1–16): Low (Green, 1–2), Medium (Yellow, 3–6), High (Orange, 8–9), Very High (Red, 12–16). 3×3 (1–9): 1–2 / 3–4 / 6 / 9. 5×5 (1–25): 1–4 / 5–9 / 10–15 / 16–25.
 - **Facilitator controls:**
   - Configurable vote reveal threshold (default: 4 votes). Votes remain hidden until the threshold is met or the facilitator manually triggers a reveal.
   - Calculated consensus recommendations based on the arithmetic mean, rounded up at `.5` (precautionary principle).
@@ -25,7 +28,7 @@ Riskmatris Live is a real-time web application for collaborative 4×4 risk asses
 
 ## Tech Stack
 
-- **Backend:** Python 3.12, [FastAPI](https://fastapi.tiangolo.com), Uvicorn, SQLite (WAL mode), WebSockets.
+- **Backend:** Python 3.12+ (3.15 in the Docker image), [FastAPI](https://fastapi.tiangolo.com), Uvicorn, SQLite (WAL mode), WebSockets.
 - **Frontend:** Vanilla JavaScript (ES modules), HTML5, CSS3. No compilation or client-side build pipeline required. Static assets are cache-busted with content hashes.
 - **QR Code Generation:** [`qrcode`](https://pypi.org/project/qrcode/).
 
