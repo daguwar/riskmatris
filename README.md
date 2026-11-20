@@ -8,15 +8,16 @@ A hosted instance runs at [https://riskmatris.se/](https://riskmatris.se/) — c
 
 ## Features
 
-- **Anonymous participation:** No user accounts or registrations. Sessions generate an 8-character code, a join link, and a QR code. Participant votes are associated with a random device identifier.
+- **Anonymous participation:** No user accounts or registrations. Sessions generate an 8-character code, a join link, and a QR code. Participant votes are associated with a random device identifier. The landing page lists recently used sessions in the browser, with the remaining server-side lifetime shown per session; expired entries disappear automatically.
 - **Interactive risk matrix — 3×3, 4×4 or 5×5, chosen per session (4×4 default):**
   - **Probability (X-axis, 1–N) and Consequence (Y-axis, 1–N)** with per-size labels. 4×4: Unlikely (1), Possible (2), Likely (3), Highly likely (4) / Negligible (1), Moderate (2), Serious (3), Critical (4). 3×3: Low / Medium / High and Minor / Moderate / Severe. 5×5: Very rare … Almost certain / Insignificant … Catastrophic.
   - **Risk score = P × C (1–N²)** with per-size level bands. 4×4 (1–16): Low (Green, 1–2), Medium (Yellow, 3–6), High (Orange, 8–9), Very High (Red, 12–16). 3×3 (1–9): 1–2 / 3–4 / 6 / 9. 5×5 (1–25): 1–4 / 5–9 / 10–15 / 16–25.
 - **Facilitator controls:**
   - Configurable vote reveal threshold (default: 4 votes). Votes remain hidden until the threshold is met or the facilitator manually triggers a reveal.
   - Calculated consensus recommendations based on the arithmetic mean, rounded up at `.5` (precautionary principle).
-  - Manual override to adjust and lock a risk's final cell position after group discussion.
-  - Projector mode with a toggleable full-screen QR code for late arrivals.
+  - Manual override to adjust and lock a risk's final cell position after group discussion, plus "Reset to suggestion" to undo an accidental cell click without touching the votes.
+  - Contextual locking: on a previous risk (e.g. after going back to redo the vote) a standalone "Lock placement" button appears that locks without creating a new risk.
+  - Projector mode with a toggleable full-screen QR code for late arrivals; the matrix scales down to fit smaller projector windows (e.g. beside a PowerPoint).
   - Secure admin handover via single-use QR code or link with a 5-minute expiry.
 - **Export options:**
   - **PNG:** High-resolution rendering of the complete summary matrix.
