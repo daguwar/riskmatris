@@ -4,7 +4,7 @@ Riskmatris Live is a real-time web application for collaborative risk assessment
 
 ## Try it live
 
-A hosted instance runs at [https://riskmatris.se/](https://riskmatris.se/) — create a session, share the QR code with participants, and run a risk workshop right away, no installation needed. Self-host with Docker when you're ready (see [Getting Started](#getting-started)).
+A hosted instance runs at [https://riskmatris.se/](https://riskmatris.se/) — create a session, share the QR code with participants, and run a risk workshop right away, no installation needed. Self-host with Docker if you want (see [Getting Started](#getting-started)).
 
 ## Features
 
